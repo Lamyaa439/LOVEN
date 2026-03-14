@@ -1,3 +1,26 @@
+# 📋 Stage 1 Report — Idea Development Documentation
+
+---
+
+## 👥 Team Formation
+
+The team was formed through a collaborative brainstorming session where 
+members proposed several project ideas. Each idea was evaluated based on 
+its potential impact, feasibility, and target users. After discussing the 
+strengths and challenges of each idea, the team agreed to select the 
+**Artists Platform** as the MVP because it was the most feasible to 
+implement while still addressing a meaningful problem.
+
+### Team Members
+| Name                    | Email                                        | Role                          |
+|-------------------------|----------------------------------------------|-------------------------------|
+| Lamyaa Mohammed Alghaihab | 11955@holbertonstudents.com               | 💻 Developer & ✍️ Documentation |
+| Thekira A. Ahmed          | 11968@holbertonstudents.com               | 💻 Developer & ✍️ Documentation |
+| Yara K. Alrasheed         | 11982@holbertonstudents.com               | 💻 Developer & ✍️ Documentation |
+| Alanoud Naif Alanazi      | alanazi.naif-alanoud@holbertonstudents.com| 💻 Developer & ✍️ Documentation |
+
+---
+
 # 📋 Section 2: Explored Ideas & Reasons for Rejection
 
 ---
