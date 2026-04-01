@@ -1,0 +1,38 @@
+# =====================
+# Python
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+.env.*
+
+# =====================
+# Node (if any)
+# =====================
+node_modules/
+
+# =====================
+# Flutter / Dart
+# =====================
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+pubspec.lock
+
+# =====================
+# OS files
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# VS Code
+# =====================
+.vscode/
