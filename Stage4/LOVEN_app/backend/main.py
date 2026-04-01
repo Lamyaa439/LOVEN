@@ -1,29 +1,26 @@
 from fastapi import FastAPI
-from pymongo import MongoClient
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from app.db.database import db
 
 app = FastAPI()
 
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client["myapp"]
-
 @app.get("/")
 def root():
-    return {"message": "Backend + MongoDB working"}
+    return {"message": "Backend connected"}
 
-@app.post("/users")
-def create_user(user: dict):
-    result = db.users.insert_one(user)
-    return {"id": str(result.inserted_id)}
+@app.get("/test-db")
+def test_db():
+    try:
+        db.command("ping")
+        return {"success": True, "message": "MongoDB connected"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/users")
 def get_users():
-    users = list(db.users.find())
-    
-    for user in users:
-        user["_id"] = str(user["_id"])
-    
-    return users
+    try:
+        users = list(db.users.find())
+        for user in users:
+            user["_id"] = str(user["_id"])
+        return {"success": True, "data": users}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
