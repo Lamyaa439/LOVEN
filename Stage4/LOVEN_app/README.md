@@ -4,7 +4,8 @@
 
 - The Presentation Layer (Flutter)
   * Facad: Handles the UI/UX, bilingual toggling (AR/EN), and local state
-  * Key Logic: * Artist Side: Dashboard for uploading art, managing galleries, and entering
+  * Key Logic:
+     * Artist Side: Dashboard for uploading art, managing galleries, and entering
     tracking numbers for shipping.
      * User Side: Browsing the feed, adding to cart, booking workshops, and posting
         upvotes in the forum.
