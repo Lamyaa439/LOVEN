@@ -1,5 +1,31 @@
 ## Project strcuture
 
+# Project structure layer
+
+- The Presentation Layer (Flutter)
+  * Facad: Handles the UI/UX, bilingual toggling (AR/EN), and local state
+  * Key Logic: * Artist Side: Dashboard for uploading art, managing galleries, and entering
+    tracking numbers for shipping.
+     * User Side: Browsing the feed, adding to cart, booking workshops, and posting
+        upvotes in the forum.
+     * Pro-Gate: Showing "Upgrade" prompts when a Basic artist tries to create a workshop.
+        
+- The Logic Layer (Python / FastAPI)
+  * Processes requests, authenticates users (JWT), and enforces business logic.
+  * Key Logic:
+     * Validation: Ensuring only buyers can leave reviews.
+     * Permission: Checking if an artist is "Pro" before allowing a workshop post.
+     * Communication: Triggering emails via mailer.py when an artist ships a package.
+     * Localization: Serving the correct en or ar strings based on the app's request.
+
+- The Data Layer (MongoDB & Cloud Storage)
+  * Persistent storage for all structured and unstructured data.
+  * Key Components:
+     * MongoDB: Stores flexible "Documents" for products (painting vs. knitting), user profiles, forum posts, and orders.
+     * Cloud Storage (S3/Cloudinary): Stores the actual high-resolution images for the galleries and workshops.
+     * Indexing: Speeding up searches so users can find "Handmade Blue Scarves" instantly.
+
+
 ```
 LOVEN_app/
 ├── backend/                        # Python (FastAPI/Flask) Core
