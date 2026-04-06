@@ -1,24 +1,6 @@
 ## Project strcuture
 
 ```
-app/
-   ├── database.py         # MongoDB connection & client setup
-   ├── main.py             # FastAPI/Flask initialization & router imports
-   ├── models/             # Pydantic schemas (Data validation)
-   │   ├── user.py
-   │   ├── product.py      # Includes handmade vs painting fields
-   │   ├── review.py       # Our new review logic
-   │   └── order.py
-   ├── routes/             # API Endpoints
-   │   ├── auth.py
-   │   ├── products.py
-   │   ├── reviews.py      # Handle GET/POST for reviews
-   │   └── orders.py
-   ├── utils/              # Helper functions (Auth, Image uploads, Translation)
-   └── config.py           # Environment variable loading
-```
-
-```
 LOVEN_app/
 ├── backend/                # Python FastAPI/Flask Application
 │   ├── app/
@@ -62,4 +44,29 @@ LOVEN_app/
 │   └── pubspec.yaml        # Flutter dependencies
 │
 └── README.md               # General project overview
+```
+
+```
+backend/
+├── app/
+│   ├── models/
+│   │   ├── user.py
+│   │   ├── product.py      # Individual artworks (Paintings/Handmade)
+│   │   ├── gallery.py      # NEW: Logic for grouping multiple artworks
+│   │   ├── review.py
+│   │   └── order.py
+│   │
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── products.py     # CRUD for single items
+│   │   ├── galleries.py    # NEW: Endpoints for creating/viewing galleries
+│   │   ├── reviews.py
+│   │   └── orders.py
+│   │
+│   ├── utils/
+│   │   ├── storage.py      # Critical for Gallery (handling multiple uploads)
+│   │   └── helpers.py
+│   │
+│   ├── main.py             # Register the new gallery router here
+│   └── database.py
 ```
