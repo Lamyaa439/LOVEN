@@ -33,12 +33,12 @@
 ```
 LOVEN_app/
 ├── backend/                        # Python (FastAPI) Logic
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                 # Entry point: Mounts Auth, Store, Workshops, Reports
-│   │   ├── database.py             # MongoDB Connection
-│   │   ├── config.py               # Env Secrets & Subscription Tier Settings
-│   │   │
+│   ├── main.py                 # Entry point: Mounts Auth, Store, Workshops, Reports
+│   ├── __init__.py
+│   ├── config.py               # Env Secrets & Subscription Tier Settings
+│   ├── app/              
+│   │   ├── db/                     # Database
+│   │   │   ├── database.py         # PostgreSQL connection
 │   │   ├── models/                 # Data Blueprints
 │   │   │   ├── user.py             # Basic/Pro tiers, Artist Verification
 │   │   │   ├── product.py          # Painting vs. Handmade details
