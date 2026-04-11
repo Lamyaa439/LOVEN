@@ -99,3 +99,4 @@ The following items are not included in the initial scope of LOVEN and may be co
 
 ## Project Charter (Word Document)
 - 📝 [Project Charter (Word)](https://github.com/user-attachments/files/26645604/LOVEN.-.Project.Charter.Development.-.final.docx)
+- 📝 [Project Charter (PDF)](https://github.com/user-attachments/files/26645622/LOVEN.-.Project.Charter.Development.-.final.pdf)
