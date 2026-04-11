@@ -96,3 +96,6 @@ The following items are not included in the initial scope of LOVEN and may be co
 | Technical Documentation | Week 5–6 | Prepare the system architecture, UML diagrams, technical design, and supporting documentation | Technical documentation finalized |
 | MVP Development | Week 6–10 | Build the first version of the mobile application with core marketplace features | MVP completed and tested |
 | Project Closure | Week 11–12 | Perform final testing, prepare the final presentation, and complete project submission and closure activities | Final presentation and project closure completed |
+
+## Project Charter (Word Document)
+[Download Project Charter](https://github.com/user-attachments/files/26645604/LOVEN.-.Project.Charter.Development.-.final.docx)
