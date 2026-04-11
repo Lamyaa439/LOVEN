@@ -27,17 +27,12 @@ The purpose of LOVEN is to develop a mobile marketplace that enables artists to 
 
 ## Team Roles
 
-**Lamyaa Alghaihab**  
-Backend Developer, Testing, Documentation, and Managing a GitHub repository and pull requests (PRs) to setting up a collaborative environment, enforcing code quality, and following a structured workflow for changes.
-
-**Yara Khalid Alrasheed**  
-Backend Developer, Testing, Documentation, and Project Planning.
-
-**Thikera A. Ahmed**  
-Backend Assistance and Mobile App Developer, Testing, and Documentation
-
-**Alanoud Naif Alanazi**  
-Mobile App Developer and UI Design, Testing, Documentation, and Progress Tracking.
+| Name | Role |
+|------|------|
+| Lamyaa Alghaihab | Backend Developer, Testing, Documentation, and Managing a GitHub repository and pull requests (PRs) to setting up a collaborative environment, enforcing code quality, and following a structured workflow for changes. |
+| Yara Khalid Alrasheed | Backend Developer, Testing, Documentation, and Project Planning. |
+| Thikera A. Ahmed | Backend Assistance and Mobile App Developer, Testing, and Documentation |
+| Alanoud Naif Alanazi | Mobile App Developer and UI Design, Testing, Documentation, and Progress Tracking. |
 
 ---
 
