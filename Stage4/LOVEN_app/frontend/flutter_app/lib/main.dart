@@ -50,9 +50,16 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final ref = FirebaseStorage.instance.ref().child('test.txt');
       await ref.putString("Hello from Flutter!");
-      print("Upload successful");
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Upload successful")),
+      );
     } catch (e) {
-      print("Upload failed: $e");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Upload failed: $e")),
+      );
     }
   }
 
@@ -74,7 +81,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const SizedBox(height: 20),
 
-            // 🔥 Test upload button
             ElevatedButton(
               onPressed: uploadTest,
               child: const Text("Test Firebase Storage Upload"),
