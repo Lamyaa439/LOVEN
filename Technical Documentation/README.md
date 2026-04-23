@@ -106,7 +106,7 @@ The LOVEN backend integrates with the following third-party services to offload 
 #### General Configuration
 - **Base URL:** 
 - **Content-Type:** `application/json`
-- **Authentication:** All protected endpoints require a `Bearer <token>` in the HTTP `Authorization` header.
+- **Authorization**: Bearer `<JWT_TOKEN>` (Required for all endpoints except `/auth/register`, `/auth/login`, and public GET catalog routes).
 - **Identifiers:** All resource IDs are secure, non-sequential **UUIDs**.
 
 #### Authentication & Identity Layer
