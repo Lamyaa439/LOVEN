@@ -113,12 +113,12 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/auth/register` | JSON (name, email, password) | User Object + Token | تسجيل مستخدم جديد (مشتري/فنان). |
+| `POST` | `/auth/register` | JSON (name, email, password) | User Object + Token | تسجيل مستخدم جديد . |
 | `POST` | `/auth/login` | JSON (email, password) | Auth Token | التحقق من الهوية واستلام توكن الدخول. |
-| `PATCH` | `/users/me/fcm-token` | JSON (fcm_token) | Success Message | **مهم:** تحديث عنوان الجهاز لإرسال التنبيهات. |
+| `PATCH` | `/users/me/fcm-token` | JSON (fcm_token) | Success Message |  تحديث عنوان الجهاز لإرسال التنبيه  |
 | `GET` | `/users/me` | None (Auth Header) | User Object | جلب بيانات البروفايل للمستخدم الحالي. |
-| `PUT` | `/users/me` | JSON (name, lang, city) | Updated User Object | تحديث البيانات الشخصية. |
-| `DELETE` | `/users/me` | None (Auth Header) | Success Message | تنفيذ الحذف المنطقي (Soft Delete). |
+| `PUT` | `/users/me` | JSON (name, email) | Updated User Object | تحديث البيانات الشخصية. |
+| `DELETE` | `/users/me` | None (Auth Header) | Success Message | Soft Delete |
 
 ---
 
@@ -141,7 +141,7 @@ The LOVEN backend integrates with the following third-party services to offload 
 | `GET` | `/artworks/{id}` | Path Param | Artwork Object | عرض تفاصيل العمل الفني والكمية المتوفرة. |
 | `POST` | `/artworks` | JSON (title, price, stock, images)| Created Artwork | إضافة عمل فني جديد (خاص بالفنانين فقط). |
 | `PUT` | `/artworks/{id}` | JSON (updatable fields) | Updated Artwork | تعديل بيانات العمل الفني. |
-| `DELETE` | `/artworks/{id}` | Path Param | Success Message | أرشفة العمل الفني (Soft Delete). |
+| `DELETE` | `/artworks/{id}` | Path Param | Success Message | Soft Delete|
 
 ---
 
