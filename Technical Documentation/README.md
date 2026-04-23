@@ -1,24 +1,27 @@
 # Technical Documentation
 
 # Design System Architecture
-Figure 1: System Architecture Diagram
+<p align="center">
+  <strong>Figure 1: System Architecture Diagram</strong><br><br>
 <img width="6458" height="3563" alt="Payment Processing Flow in-2026-04-23-090142" src="https://github.com/user-attachments/assets/bfd0e88e-2b3c-4fa7-9853-5916f5b27e5e" />
 This diagram illustrates the overall system architecture, showing the interaction between the mobile frontend, backend API, database, and external services such as payment processing, cloud storage, and push notifications.
 
 # Classes, and Database Design
 
 ## 1. Classes
-Figure 2: Class Diagram
 
-<img src="https://github.com/user-attachments/assets/08167734-75d6-4663-a80d-34cb2de49c17" width="600"/>
-
+<p align="center">
+  <strong>Figure 2: Class Diagram</strong><br><br>
+  <img src="https://github.com/user-attachments/assets/08167734-75d6-4663-a80d-34cb2de49c17" width="600"/>
+</p>
 This diagram illustrates the main back-end classes of the system, including their attributes, methods, and relationships. It represents the business logic and interactions between system components.
 
 ## 2. Database Design
-Figure 3: Entity Relationship Diagram (ERD)
 
-<img src="https://github.com/user-attachments/assets/3471af10-5c4e-4127-873a-fa658445ed26" width="600"/>
-
+<p align="center">
+  <strong>Figure 3: Entity Relationship Diagram (ERD)</strong><br><br>
+  <img src="https://github.com/user-attachments/assets/3471af10-5c4e-4127-873a-fa658445ed26" width="600"/>
+</p>
 This diagram represents the relational database design of the system. It shows tables, attributes, primary keys, foreign keys, and relationships between entities.
 
 # High-level sequence diagrams
