@@ -113,12 +113,12 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/auth/register` | JSON (name, email, password) | User Object + Token | تسجيل مستخدم جديد . |
-| `POST` | `/auth/login` | JSON (email, password) | Auth Token | التحقق من الهوية واستلام توكن الدخول. |
-| `PATCH` | `/users/me/fcm-token` | JSON (fcm_token) | Success Message |  تحديث عنوان الجهاز لإرسال التنبيه  |
-| `GET` | `/users/me` | None (Auth Header) | User Object | جلب بيانات البروفايل للمستخدم الحالي. |
-| `PUT` | `/users/me` | JSON (name, email) | Updated User Object | تحديث البيانات الشخصية. |
-| `DELETE` | `/users/me` | None (Auth Header) | Success Message | Soft Delete |
+| `POST` | `/auth/register` | JSON (name, email, password) | JSON (User Object + Token) | Creates a new user account. |
+| `POST` | `/auth/login` | JSON (email, password) | JSON (Token Object) | Authenticates user and returns JWT. |
+| `PATCH` | `/users/me/fcm-token` | JSON (fcm_token) | JSON (Success Message) | Updates Firebase Cloud Messaging token. |
+| `GET` | `/users/me` | None | JSON (User Object) | Retrieves current authenticated user profile. |
+| `PATCH` | `/users/me` | JSON (name, email) | JSON (Updated User Object) | Updates the authenticated user's personal information. |
+| `DELETE` | `/users/me` | None | JSON (Success Message) | Soft Delete |
 
 ---
 
@@ -126,10 +126,10 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/artists` | JSON (display_name, bio) | Artist Object | إنشاء بروفايل فنان لمستخدم مسجل. |
-| `GET` | `/artists/{id}` | Path Param | Artist + Artworks | العرض العام لبروفايل الفنان وأعماله. |
-| `PUT` | `/artists/me` | JSON (bio, city, policy) | Updated Artist | تحديث بيانات الفنان المهنية. |
-| `POST` | `/artists/me/verify`| JSON (doc_type, doc_no, inst) | Verification Object | تقديم طلب التوثيق الرسمي للإدارة. |
+| `POST` | `/artists` | JSON (display_name, bio) | JSON (Artist Object) | Initializes an artist profile. `Requires system_role = artist`. |
+| `GET` | `/artists/{id}` | Path Param | JSON (Artist + Artworks) | Public view of an artist's profile. |
+| `PATCH` | `/artists/me` | JSON (bio, city, policy) | JSON (Updated Artist Object) | Updates the artist's bio, city, or shipping policy. |
+| `POST` | `/artists/me/verify`| JSON (doc_type, doc_no, inst) | JSON (Verification Object) | Submits institutional data for identity verification. |
 
 ---
 
@@ -137,11 +137,11 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/artworks` | Query (`search, category, page`) | Paginated Array | تصفح المتجر مع دعم البحث والتقسيم (Pagination). |
-| `GET` | `/artworks/{id}` | Path Param | Artwork Object | عرض تفاصيل العمل الفني والكمية المتوفرة. |
-| `POST` | `/artworks` | JSON (title, price, stock, images)| Created Artwork | إضافة عمل فني جديد (خاص بالفنانين فقط). |
-| `PUT` | `/artworks/{id}` | JSON (updatable fields) | Updated Artwork | تعديل بيانات العمل الفني. |
-| `DELETE` | `/artworks/{id}` | Path Param | Success Message | Soft Delete|
+| `GET` | `/artworks` | Query Params (`search, category, page`) | JSON(Paginated Array) | Browse artworks. Filters: `?search=sky&page=1&limit=20` |
+| `GET` | `/artworks/{id}` | Path Param | JSON (Artwork Object) | Detailed view of a single artwork. |
+| `POST` | `/artworks` | JSON (title, price, stock, images)| JSON ( Artwork Object) | Adds a new artwork. Requires `artist` role |
+| `PUT` | `/artworks/{id}` | JSON (updatable fields) | JSON ( Artwork Object)| Modifies artwork details or pricing. |
+| `DELETE` | `/artworks/{id}` | Path Param | JSON (Success Message) | Soft Delete|
 
 ---
 
@@ -149,11 +149,11 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/cart` | None (Auth Header) | Cart Items + Total | جلب محتويات السلة الحالية. |
-| `POST` | `/cart/items` | JSON (artwork_id, qty) | Updated Cart | إضافة أو تحديث كمية منتج في السلة. |
-| `DELETE` | `/cart/items/{id}`| Path Param | Updated Cart | حذف منتج معين من السلة. |
-| `GET` | `/favorites` | None (Auth Header) | Array (Artworks) | عرض قائمة المفضلات للمستخدم. |
-| `POST` | `/favorites/toggle`| JSON (artwork_id) | `{ status: "added/removed" }`| **Toggle:** إضافة أو حذف من المفضلات بطلب واحد. |
+| `GET` | `/cart` | None | JSON (Cart Object + Total) | Retrieves the active cart and calculates the total. |
+| `POST` | `/cart/items` | JSON (artwork_id, qty) | JSON ( Cart Object) | Adds an artwork to the cart or updates its quantity. |
+| `DELETE` | `/cart/items/{id}`| Path Param | JSON ( Cart Object) | Removes a specific item from the cart.|
+| `GET` | `/favorites` | None | JSON (Array of Artworks) | Lists the user's saved artworks. |
+| `POST` | `/favorites/toggle`| JSON (artwork_id) | JSON (Status Object) | Toggles (adds/removes) an artwork in favorites. |
 
 ---
 
@@ -161,11 +161,12 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/orders` | JSON (payment_method) | Order Object | تحويل السلة إلى طلب والبدء في عملية الدفع. |
-| `GET` | `/orders` | Query (`?role=buyer/seller`) | Array (Orders) | عرض سجل الطلبات حسب دور المستخدم. |
-| `GET` | `/orders/{id}` | Path Param | Order Detailed Obj | تفاصيل الطلب، الفاتورة، وبيانات الشحن. |
-| `PATCH` | `/orders/{id}/status` | JSON (status) | Updated Order | تحديث حالة الطلب (Cancelled, Delivered). |
-| `PATCH` | `/orders/{id}/shipment`| JSON (company, tracking_no) | Updated Order | **للفنانين:** إضافة بيانات الشحن وإطلاق تنبيه FCM. |
+| `POST` | `/orders` | JSON | JSON (Order Object) | Validates cart availability, creates order, and returns Payment ID. |
+| `GET` | `/orders` | Query Params | JSON (Array of Orders) | Lists orders. Filter by role: `?role=buyer` or `?role=seller`. |
+| `GET` | `/orders/{id}` | Path Param | JSON (Order Detailed Obj) | Full status, order items, and shipping info. |
+| `PATCH` | `/orders/{id}/status` | JSON (status) | JSON ( Order Object)| Updates general order status (e.g., delivered, cancelled). |
+| `PATCH` | `/orders/{id}/shipment`| JSON (company, tracking_no) | JSON ( Order Object) | Artist Only: Sets shipping company/tracking. Triggers FCM. |
+| `POST` | `/payments/webhook` | JSON | JSON ( Success mes) | Moyasar gateway webhook to update payment status. |
 
 ---
 
@@ -173,8 +174,8 @@ The LOVEN backend integrates with the following third-party services to offload 
 
 | Method | Endpoint | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/reports` | JSON (artwork_id, reason, text) | Success Message | الإبلاغ عن محتوى مخالف. |
-| `POST` | `/feedback` | JSON (subject, message) | Success Message | إرسال مقترح أو ملاحظة للإدارة. |
+| `POST` | `/reports` | JSON (artwork_id, reason, text) | JSON (Success Message) | Submits a report for a problematic artwork listing. |
+| `POST` | `/feedback` | JSON (subject, message) | JSON (Success Message) | Submits general platform suggestions. |
 
 ---
 
