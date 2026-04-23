@@ -214,7 +214,8 @@ The use of **GitHub Flow** provides a simple and effective branching strategy th
 
 
 ###  0. User Stories & Mockups – LOVEN MVP
-🧩 1. User Stories (MoSCoW Prioritization)
+
+# 🧩 1. User Stories (MoSCoW Prioritization)
 🔴 Must Have (Core MVP Features)
 As a user, I want to create an account and log in, so that I can access the LOVEN platform securely.
 As a user, I want to browse artworks, so that I can discover art available for purchase.
@@ -231,3 +232,9 @@ You can say in your submission:
 I used Figma to design the mobile UI mockups for LOVEN.
 Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
 Canva to design the Logo of the app
+
+## Login screen page
+<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" />
+
+
+
