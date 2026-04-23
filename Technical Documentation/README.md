@@ -5,6 +5,7 @@
   <strong>Figure 1: System Architecture Diagram</strong><br><br>
 <img width="6458" height="3563" alt="Payment Processing Flow in-2026-04-23-090142" src="https://github.com/user-attachments/assets/bfd0e88e-2b3c-4fa7-9853-5916f5b27e5e" />
 This diagram illustrates the overall system architecture, showing the interaction between the mobile frontend, backend API, database, and external services such as payment processing, cloud storage, and push notifications.
+</p>
 
 # Classes, and Database Design
 
@@ -13,16 +14,16 @@ This diagram illustrates the overall system architecture, showing the interactio
 <p align="center">
   <strong>Figure 2: Class Diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/08167734-75d6-4663-a80d-34cb2de49c17" width="600"/>
-</p>
 This diagram illustrates the main back-end classes of the system, including their attributes, methods, and relationships. It represents the business logic and interactions between system components.
+</p>
 
 ## 2. Database Design
 
 <p align="center">
   <strong>Figure 3: Entity Relationship Diagram (ERD)</strong><br><br>
   <img src="https://github.com/user-attachments/assets/3471af10-5c4e-4127-873a-fa658445ed26" width="600"/>
-</p>
 This diagram represents the relational database design of the system. It shows tables, attributes, primary keys, foreign keys, and relationships between entities.
+</p>
 
 # High-level sequence diagrams
 This section presents high-level sequence diagrams that illustrate the interaction between system components during key use cases in the art marketplace system. The diagrams show communication between the client, frontend, backend API, database, and external services.
@@ -30,65 +31,61 @@ This section presents high-level sequence diagrams that illustrate the interacti
 1.	Artist registration
 * Goal: Create a new artist account while ensuring valid input and preventing duplicate registrations.
 * Actors/Components:
-    •	**Artist (Client)**: Enters registration details and submits the form.
-    •	**App Frontend**: Collects user input and sends registration request to backend.
-    •	**Backend API**: Validates input, checks email uniqueness, hashes password, and creates user and artist profile.
-    •	**Database**: Stores user and artist profile records and checks for existing email.
+    - **Artist (Client)**: Enters registration details and submits the form.
+    - **App Frontend**: Collects user input and sends registration request to backend.
+    - **Backend API**: Validates input, checks email uniqueness, hashes password, and creates user and artist profile.
+    - **Database**: Stores user and artist profile records and checks for existing email.
 
 <p align="center">
   <strong>Figure 4: Artist Registration Sequence Diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/5bac8d39-c1fc-4250-9529-2b506989ef0f" width="600"/>
-</p>
-
 The artist fills the registration form, and the frontend sends the request to the backend. The backend validates input data and checks whether the email already exists. If the email is already registered, an error is returned. Otherwise, the password is hashed, and both the user and artist profile records are created in the database. A success response is then returned to the frontend.
+</p>
 
 2.	Login
 * Goal: Allow a user to log in securely using their email and password.
 * Actors / Components:
-    •	**User (Client)**: Enters email and password to access the system.
-    •	**App Frontend**: Sends login request and displays response to the user.
-    •	**Backend API**: Validates credentials, verifies password, and generates access token.
-    •	**Database**: Retrieves user record based on email.
+    - **User (Client)**: Enters email and password to access the system.
+    - **App Frontend**: Sends login request and displays response to the user.
+    - **Backend API**: Validates credentials, verifies password, and generates access token.
+    - **Database**: Retrieves user record based on email.
 
 <p align="center">
   <strong>Figure 5: Login Sequence Diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/96f03add-3c99-45f7-842a-fca76e803cb8" width="600"/>
-</p>
-
 The user enters their email and password in the frontend. The frontend sends a login request to the backend API. The backend retrieves the user record from the database using the email.
 The backend then verifies the password. If the credentials are valid, the system generates and returns an access token. If the credentials are invalid, an error message is returned to the frontend.
+</p>
 
 3.	Artist uploads a new artwork
 * Goal: An artist uploads a new artwork by entering details and uploading an image.
 * Actors / Components 
-    •	**Artist (Client)**: Provides artwork details and uploads image.
-    •	**App Frontend**: Sends artwork data and image to backend.
-    •	**Backend API**: Verifies artist account, processes request and creates artwork records.
-    •	**Database**: Stores artwork and artwork image records.
-    •	**Image Storage**: Stores uploaded image and returns its URL.
+    - **Artist (Client)**: Provides artwork details and uploads image.
+    - **App Frontend**: Sends artwork data and image to backend.
+    - **Backend API**: Verifies artist account, processes request and creates artwork records.
+    - **Database**: Stores artwork and artwork image records.
+    - **Image Storage**: Stores uploaded image and returns its URL.
 
 <p align="center">
   <strong>Figure 6: Artist uploads a new artwork Sequence Diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/49d99fd2-dbed-4dae-91b7-e90350352439" width="600"/>
-</p>
-
 The artist submits artwork details and an image. The backend verifies the artist account, uploads the image to storage, and receives the image URL. Then, it creates the artwork and artwork image records in the database and returns a success response.
+</p>
 
 4.	Customer order
 * Goal: A customer places an order by adding items to the cart and completing payment.
 * Actors / Components 
-    •	**Customer (Client)**: Adds items to cart and initiates checkout.
-    •	**App Frontend**: Sends cart and order requests to backend and displays results.
-    •	**Backend API**: Handles business logic (availability check, total calculation, order creation).
-    •	**Database**: Stores cart, order, and order items; updates artwork stock.
-    •	**Payment Service**: Processes payment and returns success or failure.
+    - **Customer (Client)**: Adds items to cart and initiates checkout.
+    - **App Frontend**: Sends cart and order requests to backend and displays results.
+    - **Backend API**: Handles business logic (availability check, total calculation, order creation).
+    - **Database**: Stores cart, order, and order items; updates artwork stock.
+    - **Payment Service**: Processes payment and returns success or failure.
 
 <p align="center">
   <strong>Figure 7: Customer order sequence diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/a84eca90-2c2e-4990-8bcd-2df1b4932518" width="600"/>
-</p>
-
 The customer adds items to the cart, and the backend checks artwork availability and updates the cart. During checkout, the backend calculates totals and sends a payment request. Once payment is successful, the system creates the order and order items, updates stock, clears the cart, and returns confirmation.
+</p>
 
 # LOVEN — API Documentation
 
