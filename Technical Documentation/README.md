@@ -211,3 +211,23 @@ Testing focuses on core MVP functionalities to ensure system stability, usabilit
 
 ### 3. Technical Justification
 The use of **GitHub Flow** provides a simple and effective branching strategy that supports parallel development and safe integration of changes. Additionally, using **Postman** and **command-line tools** enables efficient and reliable API testing, allowing the team to validate backend functionality before integrating it with the mobile application. Continuous testing throughout development helps identify issues early, improves system reliability, and increases the likelihood of delivering a functional and stable MVP.
+
+
+###  0. User Stories & Mockups – LOVEN MVP
+🧩 1. User Stories (MoSCoW Prioritization)
+🔴 Must Have (Core MVP Features)
+As a user, I want to create an account and log in, so that I can access the LOVEN platform securely.
+As a user, I want to browse artworks, so that I can discover art available for purchase.
+As a user, I want to view artwork details (title, description, price, images), so that I can decide whether to buy.
+As a user, I want to add artworks to a cart, so that I can purchase multiple items easily.
+As a user, I want to complete a purchase, so that I can buy artworks.
+As a user, I want to view my orders, so that I can track my purchases.
+As an artist, I want to create and manage my profile, so that I can showcase my artwork.
+As an artist, I want to upload and manage artwork listings, so that I can sell my work.
+As an artist, I want to view incoming orders, so that I can manage sales.
+As an artist, I want to update shipment information (shipping company & tracking number), so that buyers can track deliveries.
+Tools for Your Mockups
+You can say in your submission:
+I used Figma to design the mobile UI mockups for LOVEN.
+Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
+Canva to design the Logo of the app
