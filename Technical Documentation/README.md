@@ -213,7 +213,7 @@ Testing focuses on core MVP functionalities to ensure system stability, usabilit
 The use of **GitHub Flow** provides a simple and effective branching strategy that supports parallel development and safe integration of changes. Additionally, using **Postman** and **command-line tools** enables efficient and reliable API testing, allowing the team to validate backend functionality before integrating it with the mobile application. Continuous testing throughout development helps identify issues early, improves system reliability, and increases the likelihood of delivering a functional and stable MVP.
 
 
-### User Stories & Mockups – LOVEN MVP
+### User Stories & Mockups – LOVEN MVP (For both User/ customer)
 
 # 1. User Stories (MoSCoW Prioritization)
 
@@ -276,7 +276,7 @@ Important to explicitly define to avoid scope creep.
 
 
 
-# 2.  Mockups (Main Screens Overview)
+# 2.  Mockups (Main Screens Overview) (4 enitites)
 
 ## 📱 Authentication Screens
 
