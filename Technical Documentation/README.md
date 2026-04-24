@@ -197,21 +197,56 @@ This structured workflow ensures better collaboration among team members, reduce
 The team uses **Visual Studio Code (VS Code)** as the main development environment, which is integrated with **Git** and **GitHub** to manage version control, track changes, and support collaboration.
 
 ### 2. Quality Assurance (QA) Plan
-To ensure the reliability and functionality of the LOVEN application, the team applies continuous testing throughout the development process.
+To ensure the **LOVEN** application is reliable, secure, and production-ready, a comprehensive **end-to-end (E2E)** testing strategy is implemented alongside **unit** and **integration** testing.
 
-The QA strategy includes:
-* API testing using **Postman** and **command-line tools (e.g., curl)** to verify endpoint functionality, request handling, and responses.
-* Manual testing of key user flows such as registration, login, browsing artworks, adding items to cart, and completing purchases.
-* Integration testing to ensure proper communication between the mobile application, backend services, and database.
-* Validation and error handling testing to ensure the system correctly handles invalid inputs and unexpected scenarios.
-* Authentication and authorization testing to verify secure access control and protected routes.
-* Regression testing to ensure that new changes do not negatively affect existing features.
-* Database testing to confirm correct storage, retrieval, and updating of data.
-Testing focuses on core MVP functionalities to ensure system stability, usability, and correctness before final delivery.
+**1. End-to-End (E2E) Testing**
+E2E testing validates complete user journeys across the entire system, from frontend to backend and external services. Key scenarios include:
+
+- User registration → login → profile access
+- Browsing artworks → adding to cart → checkout → payment → order confirmation
+- Artist uploading artwork → listing → customer purchase → shipment update
+
+These tests ensure that all system components (frontend, backend API, database, and third-party services) work together correctly.
+
+**2. API Testing**
+APIs are tested using Postman and command-line tools (e.g., curl) to verify:
+
+- Request/response correctness
+- Authentication handling
+- Error responses and edge cases
+
+**3. Integration Testing**
+Integration tests verify communication between:
+
+- Frontend and backend
+- Backend and database
+- Backend and external services (payments, storage, notifications)
+
+**4. Functional & User Flow Testing**
+Manual testing is conducted on critical user flows to validate usability and correctness:
+
+- Authentication (register/login/logout)
+- Artwork browsing and filtering
+- Cart and checkout process
+
+**5. Security Testing**
+
+- Authentication and authorization validation
+- Token handling and protected routes
+- Input validation and error handling
+
+**6. Regression Testing**
+Performed after each major update to ensure new changes do not break existing functionality.
+
+**7. Database Testing**
+Ensures:
+
+- Data consistency and integrity
+- Correct CRUD operations
+- Proper handling of relationships (users, artworks, orders)
 
 ### 3. Technical Justification
 The use of **GitHub Flow** provides a simple and effective branching strategy that supports parallel development and safe integration of changes. Additionally, using **Postman** and **command-line tools** enables efficient and reliable API testing, allowing the team to validate backend functionality before integrating it with the mobile application. Continuous testing throughout development helps identify issues early, improves system reliability, and increases the likelihood of delivering a functional and stable MVP.
-
 
 ### User Stories & Mockups – LOVEN MVP (For both User/ customer)
 
