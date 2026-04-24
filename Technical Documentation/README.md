@@ -203,9 +203,9 @@ To ensure the **LOVEN** application is reliable, secure, and production-ready, a
 
 E2E testing validates complete user journeys across the entire system, from frontend to backend and external services. Key scenarios include:
 
-- User registration → login → profile access
-- Browsing artworks → adding to cart → checkout → payment → order confirmation
-- Artist uploading artwork → listing → customer purchase → shipment update
+- ```User registration``` → ```login``` → ```profile access```
+- ```Browsing artworks``` → ```adding to cart``` → ```checkout``` → ```payment``` → ```order confirmation```
+- ```Artist uploading artwork``` → ```listing``` → ```customer purchase``` → ```shipment update```
 
 These tests ensure that all system components (frontend, backend API, database, and third-party services) work together correctly.
 
