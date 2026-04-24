@@ -200,6 +200,7 @@ The team uses **Visual Studio Code (VS Code)** as the main development environme
 To ensure the **LOVEN** application is reliable, secure, and production-ready, a comprehensive **end-to-end (E2E)** testing strategy is implemented alongside **unit** and **integration** testing.
 
 **1. End-to-End (E2E) Testing**
+
 E2E testing validates complete user journeys across the entire system, from frontend to backend and external services. Key scenarios include:
 
 - User registration → login → profile access
@@ -209,6 +210,7 @@ E2E testing validates complete user journeys across the entire system, from fron
 These tests ensure that all system components (frontend, backend API, database, and third-party services) work together correctly.
 
 **2. API Testing**
+
 APIs are tested using Postman and command-line tools (e.g., curl) to verify:
 
 - Request/response correctness
@@ -216,6 +218,7 @@ APIs are tested using Postman and command-line tools (e.g., curl) to verify:
 - Error responses and edge cases
 
 **3. Integration Testing**
+
 Integration tests verify communication between:
 
 - Frontend and backend
@@ -223,6 +226,7 @@ Integration tests verify communication between:
 - Backend and external services (payments, storage, notifications)
 
 **4. Functional & User Flow Testing**
+
 Manual testing is conducted on critical user flows to validate usability and correctness:
 
 - Authentication (register/login/logout)
@@ -236,9 +240,11 @@ Manual testing is conducted on critical user flows to validate usability and cor
 - Input validation and error handling
 
 **6. Regression Testing**
+
 Performed after each major update to ensure new changes do not break existing functionality.
 
 **7. Database Testing**
+
 Ensures:
 
 - Data consistency and integrity
