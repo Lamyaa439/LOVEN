@@ -282,7 +282,7 @@ The team uses **Visual Studio Code (VS Code)** as the main development environme
 ### 2. Quality Assurance (QA) Plan
 To ensure the **LOVEN** application is reliable, secure, and production-ready, a comprehensive **end-to-end (E2E)** testing strategy is implemented alongside **unit** and **integration** testing.
 
-**1. End-to-End (E2E) Testing**
+#### 1. End-to-End (E2E) Testing
 
 E2E testing validates complete user journeys across the entire system, from frontend to backend and external services. Key scenarios include:
 
@@ -292,7 +292,7 @@ E2E testing validates complete user journeys across the entire system, from fron
 
 These tests ensure that all system components (frontend, backend API, database, and third-party services) work together correctly.
 
-**2. API Testing**
+#### 2. API Testing
 
 APIs are tested using Postman and command-line tools (e.g., curl) to verify:
 
@@ -300,7 +300,7 @@ APIs are tested using Postman and command-line tools (e.g., curl) to verify:
 - Authentication handling
 - Error responses and edge cases
 
-**3. Integration Testing**
+#### 3. Integration Testing
 
 Integration tests verify communication between:
 
@@ -308,7 +308,7 @@ Integration tests verify communication between:
 - Backend and database
 - Backend and external services (payments, storage, notifications)
 
-**4. Functional & User Flow Testing**
+#### 4. Functional & User Flow Testing
 
 Manual testing is conducted on critical user flows to validate usability and correctness:
 
@@ -316,17 +316,17 @@ Manual testing is conducted on critical user flows to validate usability and cor
 - Artwork browsing and filtering
 - Cart and checkout process
 
-**5. Security Testing**
+#### 5. Security Testing
 
 - Authentication and authorization validation
 - Token handling and protected routes
 - Input validation and error handling
 
-**6. Regression Testing**
+#### 6. Regression Testing
 
 Performed after each major update to ensure new changes do not break existing functionality.
 
-**7. Database Testing**
+#### 7. Database Testing
 
 Ensures:
 
@@ -334,5 +334,33 @@ Ensures:
 - Correct CRUD operations
 - Proper handling of relationships (users, artworks, orders)
 
-### 3. Technical Justification
-The use of **GitHub Flow** provides a simple and effective branching strategy that supports parallel development and safe integration of changes. Additionally, using **Postman** and **command-line tools** enables efficient and reliable API testing, allowing the team to validate backend functionality before integrating it with the mobile application. Continuous testing throughout development helps identify issues early, improves system reliability, and increases the likelihood of delivering a functional and stable MVP.
+## Technical Justification
+
+### 1. Flutter for Cross-Platform Development
+Flutter was chosen because it allows the development of both Android and iOS applications using a single codebase. This significantly reduces development time and effort compared to building separate native applications. This choice aligns with the scope of the project as an MVP, where time and resources are limited, enabling faster delivery without compromising quality.
+
+### 2. Mobile App over Web Application
+A mobile application was selected instead of a web application to provide better accessibility and user engagement. Mobile apps allow users to easily browse artworks, make purchases, and receive real-time updates. This decision fits the scope of the system, as the platform focuses on frequent user interaction and benefits from mobile-specific features such as push notifications.
+
+### 3. High Performance UI with Flutter
+Flutter provides high performance because it compiles directly to native code, resulting in smooth animations and fast rendering. This is especially important for the LOVEN platform, where users interact with image-heavy content such as artwork listings. Ensuring a responsive UI within the scope of the MVP enhances user experience without requiring complex frontend optimization.
+
+### 4. UI/UX Design Tools – Figma & Canva
+Figma was used to design the mobile UI mockups for the LOVEN application, including screens such as Login, Home, Artwork Details, Cart, Orders, and the Artist Dashboard. It supports rapid prototyping and easy iteration, which is essential within the scope of an MVP, where quick design validation is needed.
+
+Canva was used to design the application logo due to its simplicity and efficiency in creating visual assets. It allows the team to produce professional-quality branding without requiring advanced design skills, making it suitable for the project’s limited scope and resources.
+
+### 5. Python for Rapid Development
+Python was selected as the backend programming language due to its simplicity and readability, which enables rapid development and easier collaboration. This makes it highly suitable for the limited scope and timeframe of an MVP, allowing the team to efficiently implement core features.
+
+### 6. Flask as a Lightweight Backend Framework
+Flask was chosen because it is a lightweight and flexible web framework that provides only the essential tools needed to build RESTful APIs. It avoids unnecessary complexity, making it ideal for the project scope, where a simple and maintainable backend is sufficient.
+
+### 7. RESTful API Design
+The backend follows a RESTful API design to ensure clear and standardized communication between the frontend and backend. This approach simplifies integration with the Flutter application and supports future scalability. It aligns with the scope of the system by providing a structured yet flexible architecture.
+
+### 8. PostgreSQL for Relational Data Management
+PostgreSQL was selected as the database because it provides strong support for relational data and ensures data integrity. The LOVEN system relies on structured relationships between entities such as users, artworks, and orders. This choice fits the scope of the application, where reliable data management is essential.
+
+### 9. Containerization using Docker
+Docker was used to containerize the application, ensuring a consistent development and execution environment across different machines. This eliminates issues related to dependency conflicts and environment configuration differences between team members. It also simplifies setup and deployment processes. This choice aligns with the scope of the project, as it improves development efficiency and collaboration without introducing unnecessary complexity.
