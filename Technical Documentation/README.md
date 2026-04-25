@@ -81,15 +81,9 @@ I used Figma to design the mobile UI mockups for LOVEN.
 Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
 Canva to design the Logo of the app
 
-#### Login screen page
-<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" />
-
-- page
-
-<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" />
-
-#### sign up Screen page
-<img width="282" height="616" alt="image" src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" />
+| Login | Splash Screen | Sign Up |
+|------|------|---------|
+| <img src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" width="200"/> | <img src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" width="200"/> | <img src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" width="200"/> |
 
 ## Design System Architecture
 <p align="center">
