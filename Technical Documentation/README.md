@@ -1,5 +1,96 @@
 <h1 align="center">Technical Documentation</h1>
 
+## User Stories & Mockups – LOVEN MVP (For both User/ customer)
+
+### 1. User Stories (MoSCoW Prioritization)
+
+#### Must Have (Core MVP – absolutely required)
+These are essential for the platform to function as a marketplace.
+
+* Authentication & Accounts
+
+ - As a user, I want to create an account and log in, so that I can access the LOVEN platform securely.
+ - As a user, I want to log out, so that I can protect my account.
+
+* Artwork Discovery & Purchase
+
+ - As a user, I want to browse artworks, so that I can discover art available for purchase.
+ - As a user, I want to view artwork details (title, description, price, images), so that I can decide whether to buy.
+ - As a user, I want to add artworks to a cart, so that I can purchase multiple items easily.
+ - As a user, I want to remove items from my cart, so that I can manage my selections.
+ - As a user, I want to complete a purchase, so that I can buy artworks.
+
+* Orders
+
+ - As a user, I want to view my orders, so that I can track my purchases.
+
+* Artist Core Features
+
+ - As an artist, I want to create and manage my profile, so that I can showcase my artwork.
+ - As an artist, I want to upload and manage artwork listings, so that I can sell my work.
+ - As an artist, I want to view incoming orders, so that I can manage sales.
+ - As an artist, I want to update shipment information (shipping company & tracking number), so that buyers can track deliveries.
+
+#### Should Have (Important but not blocking)
+
+These improve usability and trust but aren’t required for launch.
+
+ - As a user, I want to search for artworks, so that I can quickly find specific items.
+ - As a user, I want to filter artworks (price, category, artist), so that I can narrow down choices.
+ - As a user, I want to save artworks to a wishlist, so that I can revisit them later.
+ - As a user, I want to receive order status updates, so that I stay informed.
+ - As an artist, I want to edit pricing and availability, so that I can manage my listings effectively.
+ - As an artist, I want to see basic sales analytics, so that I can understand my performance.
+
+#### Could Have (Nice-to-have enhancements)
+
+These add polish and engagement but can wait.
+
+ - As a user, I want to rate or review artworks, so that I can share feedback.
+ - As a user, I want to follow artists, so that I can see their new work.
+ - As a user, I want personalized recommendations, so that I can discover relevant art.
+ - As an artist, I want to feature highlighted artworks, so that I can promote my best work.
+   
+#### Won’t Have (Out of scope for MVP)
+
+Important to explicitly define to avoid scope creep.
+
+ - Live chat between buyers and artists
+ - Auction/bidding system
+ - AR/VR artwork previews
+ - Multi-language support
+ - Advanced payment options (crypto, installment plans)
+
+
+
+### 2.  Mockups (Main Screens Overview) (4 enitites)
+
+#### 📱 Authentication Screens
+
+* Login Screen
+
+ - Email & password input, Login button, Link to Sign Up
+
+#### Sign Up Screen
+
+ - Name, email, password inputs
+Create account button
+
+Tools for Mockups:
+I used Figma to design the mobile UI mockups for LOVEN.
+Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
+Canva to design the Logo of the app
+
+#### Login screen page
+<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" />
+
+- page
+
+<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" />
+
+#### sign up Screen page
+<img width="282" height="616" alt="image" src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" />
+
 ## Design System Architecture
 <p align="center">
   <strong>Figure 1: System Architecture Diagram</strong><br><br>
@@ -253,98 +344,3 @@ Ensures:
 
 ### 3. Technical Justification
 The use of **GitHub Flow** provides a simple and effective branching strategy that supports parallel development and safe integration of changes. Additionally, using **Postman** and **command-line tools** enables efficient and reliable API testing, allowing the team to validate backend functionality before integrating it with the mobile application. Continuous testing throughout development helps identify issues early, improves system reliability, and increases the likelihood of delivering a functional and stable MVP.
-
-### User Stories & Mockups – LOVEN MVP (For both User/ customer)
-
-# 1. User Stories (MoSCoW Prioritization)
-
-## Must Have (Core MVP – absolutely required)
-These are essential for the platform to function as a marketplace.
-
-* Authentication & Accounts
-
- - As a user, I want to create an account and log in, so that I can access the LOVEN platform securely.
- - As a user, I want to log out, so that I can protect my account.
-
-* Artwork Discovery & Purchase
-
- - As a user, I want to browse artworks, so that I can discover art available for purchase.
- - As a user, I want to view artwork details (title, description, price, images), so that I can decide whether to buy.
- - As a user, I want to add artworks to a cart, so that I can purchase multiple items easily.
- - As a user, I want to remove items from my cart, so that I can manage my selections.
- - As a user, I want to complete a purchase, so that I can buy artworks.
-
-* Orders
-
- - As a user, I want to view my orders, so that I can track my purchases.
-
-* Artist Core Features
-
- - As an artist, I want to create and manage my profile, so that I can showcase my artwork.
- - As an artist, I want to upload and manage artwork listings, so that I can sell my work.
- - As an artist, I want to view incoming orders, so that I can manage sales.
- - As an artist, I want to update shipment information (shipping company & tracking number), so that buyers can track deliveries.
-
-## Should Have (Important but not blocking)
-
-These improve usability and trust but aren’t required for launch.
-
- - As a user, I want to search for artworks, so that I can quickly find specific items.
- - As a user, I want to filter artworks (price, category, artist), so that I can narrow down choices.
- - As a user, I want to save artworks to a wishlist, so that I can revisit them later.
- - As a user, I want to receive order status updates, so that I stay informed.
- - As an artist, I want to edit pricing and availability, so that I can manage my listings effectively.
- - As an artist, I want to see basic sales analytics, so that I can understand my performance.
-
-## Could Have (Nice-to-have enhancements)
-
-These add polish and engagement but can wait.
-
- - As a user, I want to rate or review artworks, so that I can share feedback.
- - As a user, I want to follow artists, so that I can see their new work.
- - As a user, I want personalized recommendations, so that I can discover relevant art.
- - As an artist, I want to feature highlighted artworks, so that I can promote my best work.
-   
-## Won’t Have (Out of scope for MVP)
-
-Important to explicitly define to avoid scope creep.
-
- - Live chat between buyers and artists
- - Auction/bidding system
- - AR/VR artwork previews
- - Multi-language support
- - Advanced payment options (crypto, installment plans)
-
-
-
-# 2.  Mockups (Main Screens Overview) (4 enitites)
-
-## 📱 Authentication Screens
-
-* Login Screen
-
- - Email & password input, Login button, Link to Sign Up
-
-# Sign Up Screen
-
- - Name, email, password inputs
-Create account button
-
-Tools for Mockups:
-I used Figma to design the mobile UI mockups for LOVEN.
-Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
-Canva to design the Logo of the app
-
-## Login screen page
-<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" />
-
-- page
-
-<img width="279" height="618" alt="image" src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" />
-
-
-## sign up Screen page
-<img width="282" height="616" alt="image" src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" />
-
-
-
