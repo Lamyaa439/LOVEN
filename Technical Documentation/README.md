@@ -120,8 +120,8 @@ This section presents high-level sequence diagrams that illustrate the interacti
     - **Database**: Stores user and artist profile records and checks for existing email.
 
 <p align="center">
+  <strong>Figure 4: Artist Registration Sequence Diagram</strong><br><br>
   <img src="https://github.com/user-attachments/assets/495fd6f0-9839-4cf0-bc0c-77eb99d0121f" width="600"/>
- <strong>Figure 4: Artist Registration Sequence Diagram</strong><br><br>
   </p>
 The artist fills the registration form, and the frontend sends the request to the backend. The backend validates input data and checks whether the email already exists. If the email is already registered, an error is returned. Otherwise, the password is hashed, and both the user and artist profile records are created in the database. A success response is then returned to the frontend.
 
@@ -165,8 +165,8 @@ The artist submits artwork details and an image. The backend verifies the artist
     - **Payment Service**: Processes payment and returns success or failure.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/918d6c47-277b-44ab-bf26-0d9e5a6eb5cf" width="600"/>
    <strong>Figure 7: Customer order sequence diagram</strong><br><br>
+  <img src="https://github.com/user-attachments/assets/918d6c47-277b-44ab-bf26-0d9e5a6eb5cf" width="600"/>
   </p>
 The customer adds items to the cart, and the backend checks artwork availability and updates the cart. During checkout, the backend calculates totals and sends a payment request. Once payment is successful, the system creates the order and order items, updates stock, clears the cart, and returns confirmation.
 
