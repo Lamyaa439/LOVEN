@@ -206,7 +206,7 @@ The artist submits artwork details and an image. The backend verifies the artist
 
 <p align="center">
    <strong>Figure 7: Customer order sequence diagram</strong><br><br>
-  <img src="https://github.com/user-attachments/assets/918d6c47-277b-44ab-bf26-0d9e5a6eb5cf" width="600"/>
+  <img src="https://github.com/user-attachments/assets/20204dfd-38f3-4764-b5d9-1b7f38969be1" width="600"/>
   </p>
 The customer adds items to the cart, and the backend checks artwork availability and updates the cart. During checkout, the backend calculates totals and sends a payment request. Once payment is successful, the system creates the order and order items, updates stock, clears the cart, and returns confirmation.
 
