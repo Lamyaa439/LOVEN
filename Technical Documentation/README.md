@@ -366,3 +366,24 @@ PostgreSQL was selected as the database because it provides strong support for r
 
 ### 9. Containerization using Docker
 Docker was used to containerize the application, ensuring a consistent development and execution environment across different machines. This eliminates issues related to dependency conflicts and environment configuration differences between team members. It also simplifies setup and deployment processes. This choice aligns with the scope of the project, as it improves development efficiency and collaboration without introducing unnecessary complexity.
+
+### 10. ACID Compliance for Transactions
+**PostgreSQL** was configured to ensure **ACID (Atomicity, Consistency, Isolation, Durability)** compliance for all database transactions. In a marketplace like **LOVEN**, where a single purchase involves multiple steps—such as deducting stock, creating an order record, and confirming payment—ACID properties guarantee that either all steps succeed or none do. This prevents data corruption and ensures that the system remains in a consistent state, which is critical for maintaining user trust and financial accuracy.
+
+### 11. Use of External Payment Gateway (Moyasar)
+**Moyasar** was integrated as the primary payment gateway to handle financial transactions securely. By offloading payment processing to a specialized provider, the system ensures compliance with **PCI DSS** standards without the need to store sensitive credit card information on the local server. Moyasar was specifically chosen for its robust support of local payment methods in Saudi Arabia, such as **Mada and Apple Pay**, which enhances the user experience and facilitates seamless transactions within the target market.
+
+### 12. Firebase Storage for Media Handling
+**Firebase Storage** was utilized to manage and serve high-resolution artwork and profile images. Storing binary media files directly in a relational database can significantly degrade performance; therefore, Firebase provides a scalable, cloud-based solution that offloads this burden. This choice ensures fast image delivery through a **Global CDN**, reducing latency for users browsing the marketplace while keeping the PostgreSQL database lightweight and optimized for relational queries.
+
+### 13. Firebase Cloud Messaging (FCM) for Notifications
+**Firebase Cloud Messaging (FCM)** was implemented to provide real-time push notifications for order updates, shipment tracking, and artist alerts. Since LOVEN is a mobile-first platform, keeping users engaged through timely updates is essential. FCM offers a reliable, cross-platform messaging solution that ensures users receive critical information instantly, even when the application is in the background, thereby improving overall user retention and satisfaction.
+
+### 14. JWT for Secure Authentication
+**JSON Web Tokens (JWT)** were adopted for secure, stateless authentication between the Flutter frontend and the Flask backend. JWT allows the server to verify user identity without the need to maintain session data in memory, which enhances system scalability. Each request is authenticated via a signed token, ensuring that sensitive actions—such as managing an artist profile or completing a purchase—are protected against unauthorized access.
+
+### 15. UUIDs for Resource Identification
+The system utilizes **UUIDs (Universally Unique Identifiers)** instead of sequential integers for identifying all primary resources (Users, Artworks, Orders). This approach enhances security by preventing **ID enumeration attacks**, where malicious actors could guess resource URLs by incrementing IDs. Additionally, UUIDs provide a future-proof foundation for database sharding or merging, ensuring that identifiers remain unique across different distributed systems.
+
+### 16. Modular System Architecture (Facade & Repositories)
+A **Modular Architecture**—incorporating the **Facade and Repository patterns**—was implemented to ensure a strict **Separation of Concerns**. The Repository layer abstracts database interactions, while the Facade layer orchestrates complex business logic. This modularity makes the codebase significantly easier to test, maintain, and scale. It also allows the team to modify specific components, such as changing a third-party service or updating database logic, with minimal impact on the rest of the system.
