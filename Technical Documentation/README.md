@@ -191,7 +191,7 @@ The backend then verifies the password. If the credentials are valid, the system
 
 <p align="center">
   <strong>Figure 6: Artist uploads a new artwork Sequence Diagram</strong><br><br>
-  <img src="https://github.com/user-attachments/assets/16c577d6-69e8-4e99-865a-746d5901caa4" width="600"/>
+  <img src="<https://github.com/user-attachments/assets/ce3b176f-0e40-4e58-b3b6-54105babddd9" /> width="600"/>
   </p>
 The artist submits artwork details and an image. The backend verifies the artist account, uploads the image to storage, and receives the image URL. Then, it creates the artwork and artwork image records in the database and returns a success response.
 
