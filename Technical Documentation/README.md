@@ -403,13 +403,12 @@ Flutter compiles directly to native code, enabling smooth animations and efficie
 
 # UI/UX Design Tools
 
+To support efficient design and rapid iteration, lightweight and collaborative design tools were selected for both interface design and branding.
+
 | Tool | Justification | Trade-off |
 | :--- | :------------ | :-------- | 
-| Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff. | Requires internet access and may have performance limits on large files. |
-
-Figma was used to design the mobile UI mockups for the LOVEN application, including screens such as Login, Home, Artwork Details, Cart, Orders, and the Artist Dashboard. It supports rapid prototyping and easy iteration, which is essential within the scope of an MVP, where quick design validation is needed.
-
-Canva was used to design the application logo due to its simplicity and efficiency in creating visual assets. It allows the team to produce professional-quality branding without requiring advanced design skills, making it suitable for the project’s limited scope and resources.
+| Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff | Requires internet access and may have performance limits on large files |
+| Canva | Quick and easy creation of branding assets like logos without advanced design skills | Less flexible and powerful than professional tools like Adobe Illustrator |
 
 ### 5. Python for Rapid Development
 Python was selected as the backend programming language due to its simplicity and readability, which enables rapid development and easier collaboration. This makes it highly suitable for the limited scope and timeframe of an MVP, allowing the team to efficiently implement core features.
