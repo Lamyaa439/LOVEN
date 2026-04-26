@@ -175,7 +175,7 @@ The artist fills the registration form, and the frontend sends the request to th
 
 <p align="center">
   <strong>Figure 5: Login Sequence Diagram</strong><br><br>
-  <img src="https://github.com/user-attachments/assets/edfa1020-30ca-48c1-83ba-4b0a7ab7c16c" width="600"/>
+  <img src= "https://github.com/user-attachments/assets/301365fd-36be-44c6-a340-77f89d44888b" width="600"/>
   </p>
 The user enters their email and password in the frontend. The frontend sends a login request to the backend API. The backend retrieves the user record from the database using the email.
 The backend then verifies the password. If the credentials are valid, the system generates and returns an access token. If the credentials are invalid, an error message is returned to the frontend.
