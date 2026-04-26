@@ -372,18 +372,16 @@ Ensures:
 
 ## Technical Justification
 
+## Frontend Platform & Technology (Mobile + Flutter)
+
 ### 1. Flutter for Cross-Platform Development
 
-* Why Flutter?
+It was chosen over other native development (```Kotlin```/```Swift```) to eliminate platform duplication and reduce maintenance overhead. While native apps may offer slightly better platform-specific optimizations, Flutter provides sufficient performance for an image-driven marketplace while significantly accelerating development and release cycles.
 
-It was chosen over other native development (Kotlin/Swift) to eliminate platform duplication and reduce maintenance overhead. While native apps may offer slightly better platform-specific optimizations, Flutter provides sufficient performance for an image-driven marketplace while significantly accelerating development and release cycles.
+It also reduces overall development effort by avoiding the need to build and maintain separate applications for different platforms. This aligns with the project scope as an MVP, where time and resources are limited and rapid delivery is a priority without compromising quality.
 
-It also significantly reduces development time and effort compared to building separate native applications. This choice aligns with the scope of the project as an MVP, where time and resources are limited, enabling faster delivery without compromising quality.
 
------------------------------------------
------------------------------------------
-
-### 2. Mobile App Vs Web Application
+### 2. Mobile-First Approach vs Web Application
 
 A mobile-first approach was selected instead of a web application due to the nature of user interaction within the platform. The system relies on frequent engagement, real-time updates, and personalized experiences, which are better supported in mobile environments.
 
@@ -395,8 +393,11 @@ Mobile applications enable:
 While web applications offer broader accessibility and easier deployment, they lack the same level of real-time engagement and user retention mechanisms required for this use case.
 
 
-### 3. High Performance UI with Flutter
-Flutter compiles directly to native code, enabling smooth animations and efficient UI rendering—important for an image-heavy platform like LOVEN. Unlike frameworks such as React Native, which rely on a JavaScript bridge, Flutter delivers more consistent performance across devices. The main trade-off is a larger application size.
+### 3. Performance Advantages of Flutter
+
+Flutter compiles directly to native code, which enables smooth animations and efficient UI rendering—particularly important for an image-heavy marketplace like LOVEN.
+
+Unlike frameworks such as ```React Native```, which rely on a ```JavaScript``` bridge, Flutter provides more consistent performance across devices. The main trade-off is a larger application size, which is acceptable within the scope of this project.
 
 
 ### 4. UI/UX Design Tools (Figma & Canva)
@@ -409,6 +410,9 @@ To support efficient design and rapid iteration, lightweight and collaborative d
 | :--- | :------------ | :-------- | 
 | Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff | Requires internet access and may have performance limits on large files |
 | Canva | Quick and easy creation of branding assets like logos without advanced design skills | Less flexible and powerful than professional tools like Adobe Illustrator |
+
+-----------------------------------------
+-----------------------------------------
 
 
 ## Backend Development (Python & Flask)
