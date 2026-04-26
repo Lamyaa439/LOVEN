@@ -96,7 +96,8 @@ This diagram illustrates the overall system architecture, showing the interactio
 
 <p align="center">
   <strong>Figure 2: Class Diagram</strong><br><br>
-  <img src="https://github.com/user-attachments/assets/08167734-75d6-4663-a80d-34cb2de49c17" width="600"/>
+  <img width="600" alt="ClassesLovenProject" src="https://github.com/user-attachments/assets/a10b0bc9-83eb-4002-a742-e56347367026" />
+
   </p>
 This diagram illustrates the main back-end classes of the system, including their attributes, methods, and relationships. It represents the business logic and interactions between system components.
 
