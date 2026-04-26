@@ -404,7 +404,7 @@ Flutter compiles directly to native code, enabling smooth animations and efficie
 # UI/UX Design Tools
 
 | Tool | Justification | Trade-off |
-| :--- | :--- | :--- | :--- | :--- |
+| :--- | :------------ | :-------- | 
 | Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff. | Requires internet access and may have performance limits on large files. |
 
 Figma was used to design the mobile UI mockups for the LOVEN application, including screens such as Login, Home, Artwork Details, Cart, Orders, and the Artist Dashboard. It supports rapid prototyping and easy iteration, which is essential within the scope of an MVP, where quick design validation is needed.
