@@ -90,6 +90,39 @@ Canva to design the Logo of the app
 This diagram illustrates the overall system architecture, showing the interaction between the mobile frontend, backend API, database, and external services such as payment processing, cloud storage, and push notifications.
 </p>
 
+## Front-End Components
+
+This section outlines the main user interface of the LOVEN mobile application, including key screens and reusable components that define how users interact with the system.
+
+### Main Screens
+
+- **Login Screen**: Allows users to sign in using their credentials.
+- **Sign Up Screen**: Enables users to create an account.
+- **Home Screen**: Displays featured artworks and main navigation.
+- **Explore Screen**: Allows users to browse and search for artworks.
+- **Artwork Details Screen**: Shows detailed information about a selected artwork.
+- **Artist Profile Screen**: Displays artist information and their artworks.
+- **Favorites Screen**: Shows saved artworks.
+- **Cart Screen**: Displays selected items and allows checkout.
+- **Orders Screen**: Displays user orders and their status.
+- **Upload Artwork Screen**: Allows artists to add new artworks.
+- **Artist Dashboard Screen**: Allows artists to manage orders and update status.
+- **Profile Screen**: Displays and updates user information.
+
+---
+
+### Reusable UI Components
+
+- **Primary Button**: Used for main actions.
+- **Input Field**: Used for user input in forms.
+- **Artwork Card**: Displays a preview of an artwork.
+- **Artist Card**: Displays basic artist information.
+- **Search Bar**: Allows users to search content.
+- **Category Filter**: Filters artworks by category.
+- **Cart Item**: Represents an item in the cart.
+- **Order Status Badge**: Displays order status.
+- **Bottom Navigation Bar**: Provides navigation between main sections.
+
 ## Classes, and Database Design
 
 ### 1. Classes
