@@ -400,16 +400,18 @@ Flutter compiles directly to native code, which enables smooth animations and ef
 Unlike frameworks such as ```React Native```, which rely on a ```JavaScript``` bridge, Flutter provides more consistent performance across devices. The main trade-off is a larger application size, which is acceptable within the scope of this project.
 
 
+
 ### 4. UI/UX Design Tools (Figma & Canva)
 
-# UI/UX Design Tools
 
+# UI/UX Design Tools
 To support efficient design and rapid iteration, lightweight and collaborative design tools were selected for both interface design and branding.
 
 | Tool | Justification | Trade-off |
 | :--- | :------------ | :-------- | 
 | Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff | Requires internet access and may have performance limits on large files |
 | Canva | Quick and easy creation of branding assets like logos without advanced design skills | Less flexible and powerful than professional tools like Adobe Illustrator |
+
 
 -----------------------------------------
 -----------------------------------------
