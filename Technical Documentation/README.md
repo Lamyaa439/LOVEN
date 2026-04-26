@@ -137,7 +137,7 @@ This diagram illustrates the main back-end classes of the system, including thei
 ### 2. Database Design
 
 <p align="center">
-  <strong>Figure 3: [!Entity Relationship Diagram (ERD)](https://www.drawdb.app/editor?shareId=5d16e3046a7c6619ad7deb3b41d75061)</strong><br><br>
+  <strong>Figure 3: [Entity Relationship Diagram (ERD)](https://www.drawdb.app/editor?shareId=5d16e3046a7c6619ad7deb3b41d75061)</strong><br><br>
 	<img width="5880" alt="finalll" src="https://github.com/user-attachments/assets/63d27741-6b89-419f-b303-bc36bb9880a4" />
   </p>
 This diagram represents the relational database design of the system. It shows tables, attributes, primary keys, unique keys, foreign keys, and relationships between entities.
