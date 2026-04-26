@@ -380,16 +380,32 @@ It was chosen over other native development (Kotlin/Swift) to eliminate platform
 
 It also significantly reduces development time and effort compared to building separate native applications. This choice aligns with the scope of the project as an MVP, where time and resources are limited, enabling faster delivery without compromising quality.
 
+-----------------------------------------
+-----------------------------------------
 
 ### 2. Mobile App Vs Web Application
 
+A mobile-first approach was selected instead of a web application due to the nature of user interaction within the platform. The system relies on frequent engagement, real-time updates, and personalized experiences, which are better supported in mobile environments.
 
-A mobile application was selected instead of a web application to provide better accessibility and user engagement. Mobile apps allow users to easily browse artworks, make purchases, and receive real-time updates. This decision fits the scope of the system, as the platform focuses on frequent user interaction and benefits from mobile-specific features such as push notifications.
+Mobile applications enable:
+- push notifications
+- persistent sessions
+- and tighter integration with device capabilities.
+
+While web applications offer broader accessibility and easier deployment, they lack the same level of real-time engagement and user retention mechanisms required for this use case.
+
 
 ### 3. High Performance UI with Flutter
-Flutter provides high performance because it compiles directly to native code, resulting in smooth animations and fast rendering. This is especially important for the LOVEN platform, where users interact with image-heavy content such as artwork listings. Ensuring a responsive UI within the scope of the MVP enhances user experience without requiring complex frontend optimization.
+Flutter compiles directly to native code, enabling smooth animations and efficient UI rendering—important for an image-heavy platform like LOVEN. Unlike frameworks such as React Native, which rely on a JavaScript bridge, Flutter delivers more consistent performance across devices. The main trade-off is a larger application size.
+
 
 ### 4. UI/UX Design Tools (Figma & Canva)
+
+# UI/UX Design Tools
+
+| Tool | Justification | Trade-off |
+| :--- | :--- | :--- | :--- | :--- |
+| Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff. | Requires internet access and may have performance limits on large files. |
 
 Figma was used to design the mobile UI mockups for the LOVEN application, including screens such as Login, Home, Artwork Details, Cart, Orders, and the Artist Dashboard. It supports rapid prototyping and easy iteration, which is essential within the scope of an MVP, where quick design validation is needed.
 
