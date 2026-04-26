@@ -404,17 +404,13 @@ Unlike frameworks such as ```React Native```, which rely on a ```JavaScript``` b
 ### 4. UI/UX Design Tools (Figma & Canva)
 
 
-# UI/UX Design Tools
+#### UI/UX Design Tools
 To support efficient design and rapid iteration, lightweight and collaborative design tools were selected for both interface design and branding.
 
 | Tool | Justification | Trade-off |
 | :--- | :------------ | :-------- | 
 | Figma | Enables real-time collaboration, rapid prototyping, and efficient design-to-development handoff | Requires internet access and may have performance limits on large files |
 | Canva | Quick and easy creation of branding assets like logos without advanced design skills | Less flexible and powerful than professional tools like Adobe Illustrator |
-
-
------------------------------------------
------------------------------------------
 
 
 ## Backend Development (Python & Flask)
