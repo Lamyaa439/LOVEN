@@ -121,7 +121,7 @@ This section presents high-level sequence diagrams that illustrate the interacti
 
 <p align="center">
   <strong>Figure 4: Artist Registration Sequence Diagram</strong><br><br>
-  <img alt="ClassesLovenProject" src="https://github.com/user-attachments/assets/1429b989-ee67-4688-8ecb-afa893933529" width="600"/>
+  <img src="https://github.com/user-attachments/assets/495fd6f0-9839-4cf0-bc0c-77eb99d0121f" width="600"/>
   </p>
 The artist fills the registration form, and the frontend sends the request to the backend. The backend validates input data and checks whether the email already exists. If the email is already registered, an error is returned. Otherwise, the password is hashed, and both the user and artist profile records are created in the database. A success response is then returned to the frontend.
 
