@@ -230,27 +230,23 @@ The customer adds items to the cart, and the backend checks artwork availability
 ---
 
 #### Firebase Cloud Storage (FCS)
-- **Base URL:** Admin SDK (`https://firebasestorage.googleapis.com`)
-- **Integration Method:** Firebase Admin SDK for Python.
-- **Authorization**: Google Service Account Key (`serviceAccountKey.json`).
-- **Purpose:** Handling high-resolution binary media efficiently.
+- **Integration Strategy:** **Direct-to-Cloud** (Frontend Upload / Backend Management).
+- **Authorization:** Google Service Account Key (`serviceAccountKey.json`).
+- **Purpose:** Efficient management and cleanup of cloud-hosted media assets while offloading binary processing from the Flask server.
 
-| Method | Endpoint / SDK Action | Input Format | Output Format | Description |
+| Method | SDK Action | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `bucket.blob().upload_from_file()`| File Stream / Binary | String (Public URL) | Uploads artwork images or artist profile pictures to the cloud CDN. |
-| `DELETE` | `bucket.blob().delete()` | String (File Name/Path) | Success / Exception | Deletes an image from storage when an artwork is archived or deleted. |
-
+| `DELETE` | `bucket.blob().delete()` | String (File Path) | Success / Exception | **Cleanup:** Permanently deletes physical files from cloud storage when an artwork or profile is removed from the database to prevent "orphaned" storage usage. |
 ---
 
 #### Firebase Cloud Messaging (FCM)
-- **Base URL:** Admin SDK (`https://fcm.googleapis.com/v1`)
 - **Integration Method:** Firebase Admin SDK for Python.
-- **Authorization**: Google Service Account Key (`serviceAccountKey.json`).
-- **Purpose:** Dispatched real-time push notifications to mobile clients.
+- **Authorization:** Google Service Account Key (`serviceAccountKey.json`).
+- **Purpose:** Real-time push notification delivery for order updates and system alerts.
 
-| Method | Endpoint / SDK Action | Input Format | Output Format | Description |
+| Method | SDK Action | Input Format | Output Format | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `Messaging` | JSON (fcm_token, title, body) | String (Message ID) | Sends a direct push notification to a specific user (e.g., Order Shipped). |
+| `POST` | `Messaging` | JSON (fcm_token, payload) | String (Message ID) | Dispatches a targeted notification to a specific user device. |
 
 ### 2. Internal API Specification
 
@@ -473,7 +469,7 @@ Docker was used to containerize the application, ensuring a consistent developme
 **Moyasar** was integrated as the primary payment gateway to handle financial transactions securely. By offloading payment processing to a specialized provider, the system ensures compliance with **PCI DSS** standards without the need to store sensitive credit card information on the local server. Moyasar was specifically chosen for its robust support of local payment methods in Saudi Arabia, such as **Mada and Apple Pay**, which enhances the user experience and facilitates seamless transactions within the target market.
 
 ### 12. Firebase Cloud Storage (FCS) for Media Handling
-**Firebase Cloud Storage (FCS)** Firebase Storage was integrated as the dedicated media handling solution for the LOVEN MVP to efficiently manage high-resolution artwork and user profile images. In a visually-driven art marketplace, storing heavy binary files directly within a relational database like PostgreSQL is an architectural anti-pattern that drastically degrades query performance and inflates storage requirements. By offloading media to Firebase, the system maintains a strict separation of concerns: the database remains lightweight and lightning-fast by storing only the persistent access URLs, while Firebase handles the heavy lifting of binary data storage. Furthermore, Firebase automatically serves these assets through a robust **Global CDN** (Content Delivery Network), significantly reducing latency and ensuring that image-heavy screens load instantly within the Flutter application. Coupled with the seamless backend integration provided by the **Firebase Admin SDK**, this approach delivers a scalable, high-performance media architecture without the overhead of configuring and maintaining a custom file server.
+The integration of **Firebase Cloud Storage (FCS)** via a **Direct-to-Cloud** architecture is a strategic decision designed to maximize system performance and scalability. By offloading binary data ingestion to Google’s specialized infrastructure, we eliminate the backend bottleneck, significantly reducing upload latency and freeing up server CPU and RAM for core business logic. This approach adheres to the **Separation of Concerns** principle, keeping the Flask backend stateless and lightweight while leveraging a **Global CDN** to ensure near-instant image delivery to users worldwide. Furthermore, this design optimizes operational costs by reducing server bandwidth consumption and prevents "orphaned storage" through a backend-controlled cleanup mechanism using the **Firebase Admin SDK**. Ultimately, this architecture ensures that the LOVEN platform remains responsive and resource-efficient, even as the high-resolution artwork catalog scales exponentially.
 
 ### 13. Firebase Cloud Messaging (FCM) for Notifications
 **Firebase Cloud Messaging (FCM)** was selected as the optimal push notification infrastructure for the LOVEN MVP due to its strategic alignment with our tech stack and operational efficiency. Since the frontend is built with **Flutter**, FCM provides a seamless "One Codebase" advantage, acting as a universal translator that reliably delivers notifications to both iOS and Android devices without the need to maintain separate logic for APNs and Android services. On the backend, the official **Python Admin SDK** allows for painless integration with Flask, enabling instant notification dispatch using the user's stored `fcm_token` without building complex HTTP requests. Crucially, unlike custom WebSocket solutions that drop when an app is closed, FCM connects directly at the OS level, guaranteeing delivery even when the app is in the background or fully terminated. Furthermore, it delivers this enterprise-grade, highly scalable notification system at **zero cost** for standard messages, making it the perfect resource-efficient choice for validating the MVP.
