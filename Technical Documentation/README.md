@@ -485,8 +485,8 @@ The system utilizes **UUIDs (Universally Unique Identifiers)** instead of sequen
 A **Modular Architecture**—incorporating the **Facade and Repository patterns**—was implemented to ensure a strict **Separation of Concerns**. The Repository layer abstracts database interactions, while the Facade layer orchestrates complex business logic. This modularity makes the codebase significantly easier to test, maintain, and scale. It also allows the team to modify specific components, such as changing a third-party service or updating database logic, with minimal impact on the rest of the system.
 
 # Technical Justification (Word & PDF)
-- 📝 [Technical Justification (Word)](https://github.com/user-attachments/files/27132031/TechnicalJustificstion.docx)
-- 📝 [Technical Justification (PDF)](https://github.com/user-attachments/files/27132030/TechnicalJustificstion.pdf)
+- 📝 [Technical Justification (Word)](https://github.com/user-attachments/files/27132468/TechnicalJustification.docx)
+- 📝 [Technical Justification (PDF)](https://github.com/user-attachments/files/27132485/TechnicalJustification.pdf)
 
 # Authors
 - Lamyaa Mohammed Alghaihab	<11955@holbertonstudents.com> ✍️ 
