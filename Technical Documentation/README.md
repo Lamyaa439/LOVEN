@@ -446,7 +446,7 @@ To support efficient design and rapid iteration, lightweight and collaborative d
 
 ## Backend Development (Python & Flask)
 
-### 5. the chose of Python and Flask
+### 5. The choice of Python and Flask
 
 * Python
 Python was selected as the backend language due to its readability and rapid development capabilities, which improve team productivity and simplify implementation of business logic. It allows faster iteration compared to alternatives such as Node.js, especially for teams prioritizing clarity and maintainability.
@@ -483,3 +483,13 @@ The system utilizes **UUIDs (Universally Unique Identifiers)** instead of sequen
 
 ### 15. Modular System Architecture (Facade & Repositories)
 A **Modular Architecture**—incorporating the **Facade and Repository patterns**—was implemented to ensure a strict **Separation of Concerns**. The Repository layer abstracts database interactions, while the Facade layer orchestrates complex business logic. This modularity makes the codebase significantly easier to test, maintain, and scale. It also allows the team to modify specific components, such as changing a third-party service or updating database logic, with minimal impact on the rest of the system.
+
+# Technical Justification (Word & PDF)
+- 📝 [Technical Justification (Word)](https://github.com/user-attachments/files/27132031/TechnicalJustificstion.docx)
+- 📝 [Technical Justification (PDF)](https://github.com/user-attachments/files/27132030/TechnicalJustificstion.pdf)
+
+# Authors
+- Lamyaa Mohammed Alghaihab	<11955@holbertonstudents.com> ✍️ 
+- Thekira A. Ahmed	<11968@holbertonstudents.com> ✍️ 
+- Yara K. Alrasheed	<11982@holbertonstudents.com> ✍️ 
+- Alanoud Naif Alanazi	<alanazi.naif-alanoud@holbertonstudents.com> ✍️ 
