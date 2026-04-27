@@ -79,9 +79,10 @@ I used Figma to design the mobile UI mockups for LOVEN.
 Screens include: Login, Home, Artwork Details, Cart, Orders, and Artist Dashboard.
 Canva to design the Logo of the app
 
-| Splash Screen | Login | Sign Up |
-|:-------------:|:-----:|:-------:|
-| <p align="center"><img src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" width="200"/></p> | <p align="center"><img src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" width="200"/></p> | <p align="center"><img src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" width="200"/></p> |
+| Splash Screen | Login | Sign Up | Home Page |
+|:-------------:|:-----:|:-------:|:-------:|
+| <p align="center"><img src="https://github.com/user-attachments/assets/7dcc8f08-5940-4df5-8d03-40a3400d6a43" width="200"/></p> | <p align="center"><img src="https://github.com/user-attachments/assets/8ddde36e-df2b-42e8-99c9-27bae2faaaa0" width="200"/></p> | <p align="center"><img src="https://github.com/user-attachments/assets/461dbbc1-209d-4dd0-abca-c273c519bb20" width="200"/></p> | <img width="379" height="815" alt="image" src="https://github.com/user-attachments/assets/d84c5677-8064-400f-ac6c-6f32764d0b3c" /> |
+
 
 ## Design System Architecture
 <p align="center">
