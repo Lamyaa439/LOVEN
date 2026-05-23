@@ -125,18 +125,22 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthFailure(_mapErrorMessage(e)));
     }
   }
-
+  
   Future<void> logout() async {
     emit(AuthLoading());
+    
     try {
       await _authRepository.logout();
+      await TokenStorage().clearAllTokens();
       await FirebaseAuth.instance.signOut();
-      emit(AuthInitial());
-    } catch (e) {
-      await TokenStorage().clearAccessToken();
-      emit(AuthInitial());
+      
+      emit(AuthGuest());
+      } catch (e) {
+        await TokenStorage().clearAllTokens();
+        await FirebaseAuth.instance.signOut();
+        emit(AuthGuest());
+      }
     }
-  }
 
   String _mapErrorMessage(Object error) {
     final errorText = error.toString();

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'firebase_options.dart';
@@ -25,6 +24,10 @@ import 'features/feedback/data/repositories/feedback_repository.dart';
 import 'features/feedback/controller/cubit/feedback_cubit.dart';
 import 'features/report/data/repositories/report_repository.dart';
 import 'features/report/controller/cubit/report_cubit.dart';
+import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
+import 'package:loven/features/favorites/data/repositories/favorites_repository.dart';
+import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
+import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
 
 // Theme Cubit defined in main
 class ThemeBloc extends Cubit<ThemeMode> {
@@ -63,6 +66,16 @@ class LovenApp extends StatelessWidget {
         BlocProvider(create: (context) => OrderCubit(OrderRepository())),
         BlocProvider(create: (context) => FeedbackCubit(FeedbackRepository())),
         BlocProvider(create: (context) => ReportCubit(ReportRepository())),
+        BlocProvider(
+          create: (_) => FavoritesCubit(
+            FavoritesRepository(),
+            )..loadFavorites(),
+          ),
+        BlocProvider(
+          create: (_) => VerificationRequestCubit(
+            VerificationRequestRepository(),
+          ),
+        ),
       ],
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
