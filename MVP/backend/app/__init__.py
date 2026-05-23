@@ -42,7 +42,7 @@ def create_app():
         from app.models.artwork import Artwork
         from app.models.cart import Cart
         from app.models.cart_item import CartItem
-        from app.models.verification_request import VerificationRequest
+        from app.models.verification_requests import VerificationRequest
         from app.models.order import Order
         from app.models.order_item import OrderItem
         from app.models.feedback import Feedback

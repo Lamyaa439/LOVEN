@@ -16,6 +16,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
+    get_jwt,
 )
 
 from app.services.facade.verification_request_facade import (
@@ -61,18 +62,15 @@ def get_authenticated_user_id():
 
 def get_authenticated_user_role():
     """
-    Extract authenticated user role from JWT payload.
+    Extract authenticated user role from JWT claims.
     """
 
-    current_user_identity = get_jwt_identity()
+    claims = get_jwt()
 
-    if isinstance(current_user_identity, dict):
-        return (
-            current_user_identity.get("role")
-            or current_user_identity.get("system_role")
-        )
-
-    return None
+    return (
+        claims.get("role")
+        or claims.get("system_role")
+    )
 
 
 def require_admin():
