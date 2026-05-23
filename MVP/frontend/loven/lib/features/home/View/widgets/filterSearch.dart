@@ -66,16 +66,17 @@ class _FilterSheetState extends State<FilterSheet> {
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
+            runSpacing: 10,
             children: _categories.map((category) {
               final isSelected = _selectedCategory == category;
               return ChoiceChip(
                 label: Text(category),
                 selected: isSelected,
-                selectedColor: AppColors.primaryPurple,
-                labelStyle: TextStyle(
-                  color:
-                      isSelected ? Colors.white : theme.colorScheme.onSurface,
-                ),
+                // selectedColor: AppColors.primaryPurple,
+                // labelStyle: TextStyle(
+                //   color:
+                //       isSelected ? Colors.white : theme.colorScheme.onSurface,
+                // ),
                 onSelected: (bool selected) {
                   setState(() => _selectedCategory = category);
                 },
