@@ -67,7 +67,7 @@ def create_app():
     app.register_blueprint(artist_profiles_bp, url_prefix="/api/v1")
     
     # Shopping cart routes
-    app.register_blueprint(carts_bp, url_prefix="/api/v1")
+    app.register_blueprint(carts_bp, url_prefix="/api/v1/carts")
 
     # Order management routes
     app.register_blueprint(order_bp, url_prefix="/api/v1/orders")

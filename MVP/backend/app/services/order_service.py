@@ -11,6 +11,8 @@ from app.external_services.firebase_service import (
     send_order_status_notification,
 )
 
+from app.extensions import db
+from app.models.artwork import Artwork
 
 # =========================================================
 # Service: Order Service
@@ -88,6 +90,18 @@ def create_user_order(data):
             quantity=quantity,
             price_at_purchase=price_at_purchase,
         )
+        
+        artwork = Artwork.query.get(artwork_id)
+        
+        if artwork:
+
+            artwork.quantity_available -= quantity
+
+            if artwork.quantity_available <= 0:
+                artwork.quantity_available = 0
+                artwork.status = "sold"
+                
+            db.session.commit()
 
         created_items.append({
             "id": str(order_item[0]),
