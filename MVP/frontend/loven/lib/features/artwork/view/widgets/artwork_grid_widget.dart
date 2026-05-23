@@ -4,19 +4,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 
-/// Grid of artworks — uses theme card surfaces and primary accent for price.
 class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
     super.key,
     required this.artworks,
+    required this.isGuest,
     this.canManage = false,
     this.onDelete,
   });
 
   final List<ArtworkModel> artworks;
-
+  final bool isGuest;
   final bool canManage;
-
   final Future<void> Function(ArtworkModel artwork)? onDelete;
 
   @override
@@ -52,6 +51,7 @@ class ArtworkGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           return _ArtworkCard(
             artwork: artworks[index],
+            isGuest: isGuest,
             canManage: canManage,
             onDelete: onDelete,
           );
@@ -64,14 +64,14 @@ class ArtworkGridWidget extends StatelessWidget {
 class _ArtworkCard extends StatelessWidget {
   const _ArtworkCard({
     required this.artwork,
+    required this.isGuest,
     required this.canManage,
     this.onDelete,
   });
 
   final ArtworkModel artwork;
-
+  final bool isGuest;
   final bool canManage;
-
   final Future<void> Function(ArtworkModel artwork)? onDelete;
 
   @override
@@ -79,11 +79,16 @@ class _ArtworkCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final hasImage = artwork.artworkImageUrl != null &&
-        artwork.artworkImageUrl!.isNotEmpty;
+    final hasImage =
+        artwork.artworkImageUrl != null && artwork.artworkImageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () {
+        if (isGuest) {
+          context.push('/auth');
+          return;
+        }
+
         context.push(
           '/art-details',
           extra: artwork,
@@ -113,7 +118,6 @@ class _ArtworkCard extends StatelessWidget {
                               const _ImagePlaceholder(),
                         )
                       : const _ImagePlaceholder(),
-
                   if (canManage)
                     Positioned(
                       top: 8,

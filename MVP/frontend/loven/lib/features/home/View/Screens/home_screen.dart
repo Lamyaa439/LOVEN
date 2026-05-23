@@ -11,7 +11,6 @@ import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 import '../widgets/art_card.dart';
-import '../../widgets/home_drawer.dart';
 
 class HomeScreen extends StatelessWidget {
   final bool isGuest;
@@ -99,105 +98,79 @@ await context.read<CartCubit>().getCart();
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor:
-          theme.scaffoldBackgroundColor,
-      drawer: HomeDrawer(isGuest: isGuest),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
           if (state is HomeLoading) {
             return const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             );
           }
 
           if (state is HomeLoaded) {
             return SingleChildScrollView(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-
                   _buildSearchBar(
                     theme,
                     context,
                   ),
-
                   const SizedBox(height: 10),
-
                   _buildCategories(
                     context,
                     state.categories,
                     state.selectedCategory,
                   ),
-
                   Padding(
-                    padding:
-                        const EdgeInsets.all(
+                    padding: const EdgeInsets.all(
                       16.0,
                     ),
                     child: Text(
                       'Discover and Collect Art',
-                      style: theme
-                          .textTheme
-                          .titleLarge,
+                      style: theme.textTheme.titleLarge,
                     ),
                   ),
-
                   SizedBox(
                     height: 350,
-                    child:
-                        state.artPieces.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'No pieces found matching filters.',
-                                ),
-                              )
-                            : ListView.builder(
-                                scrollDirection:
-                                    Axis.horizontal,
-                                padding:
-                                    const EdgeInsets.only(
-                                  left: 16,
-                                ),
-                                itemCount:
-                                    state.artPieces
-                                        .length,
-                                itemBuilder:
-                                    (
+                    child: state.artPieces.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No pieces found matching filters.',
+                            ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                            ),
+                            itemCount: state.artPieces.length,
+                            itemBuilder: (
+                              context,
+                              index,
+                            ) {
+                              final art = state.artPieces[index];
+
+                              return ArtCard(
+                                artwork: art,
+                                isGuest: isGuest,
+                                onActionPressed: () async {
+                                  if (isGuest) {
+                                    _goToSignup(
                                       context,
-                                      index,
-                                    ) {
-                                      final art =
-                                          state
-                                                  .artPieces[
-                                              index];
+                                    );
+                                    return;
+                                  }
 
-                                      return ArtCard(
-                                        artwork:
-                                            art,
-                                        isGuest:
-                                            isGuest,
-                                        onActionPressed:
-                                            () async {
-                                          if (isGuest) {
-                                            _goToSignup(
-                                              context,
-                                            );
-                                            return;
-                                          }
-
-                                          await _addArtworkToCart(
-                                            context:
-                                                context,
-                                            art:
-                                                art,
-                                          );
-                                        },
-                                      );
-                                    },
-                              ),
+                                  await _addArtworkToCart(
+                                    context: context,
+                                    art: art,
+                                  );
+                                },
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -225,19 +198,16 @@ await context.read<CartCubit>().getCart();
     BuildContext context,
   ) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 20,
       ),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: 15,
         ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius:
-              BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(25),
         ),
         child: TextField(
           onChanged: (text) {
@@ -248,25 +218,19 @@ await context.read<CartCubit>().getCart();
                 );
           },
           decoration: InputDecoration(
-            hintText:
-                'Search art, artists, categories...',
+            hintText: 'Search art, artists, categories...',
             hintStyle: TextStyle(
-              color: theme
-                  .colorScheme.onSurface
-                  .withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
             border: InputBorder.none,
             prefixIcon: Icon(
               Icons.tune,
               size: 20,
-              color:
-                  theme.colorScheme.primary,
+              color: theme.colorScheme.primary,
             ),
             suffixIcon: Icon(
               Icons.search,
-              color: theme
-                  .colorScheme.onSurface
-                  .withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ),
@@ -282,10 +246,8 @@ await context.read<CartCubit>().getCart();
     return SizedBox(
       height: 60,
       child: ListView.builder(
-        scrollDirection:
-            Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
           horizontal: 16,
         ),
         itemCount: categories.length,
@@ -293,16 +255,12 @@ await context.read<CartCubit>().getCart();
           context,
           index,
         ) {
-          final categoryName =
-              categories[index];
+          final categoryName = categories[index];
 
-          final isSelected =
-              categoryName ==
-                  selectedCategory;
+          final isSelected = categoryName == selectedCategory;
 
           return Padding(
-            padding:
-                const EdgeInsets.only(
+            padding: const EdgeInsets.only(
               right: 12,
             ),
             child: _buildCategoryCard(
@@ -332,39 +290,23 @@ await context.read<CartCubit>().getCart();
             );
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: 20,
         ),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? theme
-                      .colorScheme
-                      .secondary
-                  : theme
-                      .colorScheme
-                      .secondary
-                      .withOpacity(0.15),
-          borderRadius:
-              BorderRadius.circular(25),
+          color: isSelected
+              ? theme.colorScheme.secondary
+              : theme.colorScheme.secondary.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(25),
         ),
         child: Center(
           child: Text(
             title,
-            style: theme
-                .textTheme.titleSmall
-                ?.copyWith(
-              color:
-                  isSelected
-                      ? theme
-                          .colorScheme
-                          .onSecondary
-                      : theme
-                          .colorScheme
-                          .secondary,
-              fontWeight:
-                  FontWeight.bold,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: isSelected
+                  ? theme.colorScheme.onSecondary
+                  : theme.colorScheme.secondary,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),

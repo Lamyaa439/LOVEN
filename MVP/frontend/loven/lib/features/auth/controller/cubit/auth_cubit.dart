@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
@@ -39,6 +40,37 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       print("FCM TOKEN ERROR: $e");
       return null;
+    }
+  }
+
+  Future<void> checkAuthStatus() async {
+    // 1. Check if a user is already signed in (Email/Password)
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      if (user.isAnonymous) {
+        emit(AuthGuest());
+      } else {
+        // Already have a logged-in user
+        emit(AuthSuccess());
+      }
+    } else {
+      // 2. No session found? Automatically enter Guest Mode
+      await continueAsGuest();
+    }
+  }
+
+  Future<void> continueAsGuest() async {
+    emit(AuthLoading());
+    try {
+      // Corrected the typo below:
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInAnonymously();
+
+      emit(AuthGuest());
+    } catch (e) {
+      print("Guest error: $e");
+      emit(AuthFailure("Could not enter guest mode."));
     }
   }
 
@@ -98,6 +130,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthLoading());
     try {
       await _authRepository.logout();
+      await FirebaseAuth.instance.signOut();
       emit(AuthInitial());
     } catch (e) {
       await TokenStorage().clearAccessToken();
