@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
+import 'package:loven/features/auth/view/screens/profile_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
 import '../../../../main.dart';
+import 'package:loven/core/res/theme/app_colors.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
 import '../widget/navigation_widget.dart';
 import 'package:loven/features/cart/view/screens/cart_screen.dart';
@@ -47,15 +50,47 @@ class NavigationScreen extends StatelessWidget {
           children: [
             const HomeScreen(),
             isGuest
-            ? const Center(child: Text('Guest Mode: Sign in to view your cart'))
-            : const CartScreen(),
-            isGuest
-            ? const Center(child: Text('Guest Mode: Sign in to view profiles'))
-            : const ArtistProfileScreen(),
+                ? _buildGuestGate(context, "Sign in to view your cart")
+                : const CartScreen(),
+            // isGuest
+            //     ? _buildGuestGate(context, "Sign in to view profiles")
+            //     : const ArtistProfileScreen(),
+            const ProfileScreen()
           ],
         );
       }),
       bottomNavigationBar: const NavigationWidget(),
+    );
+  }
+
+  Widget _buildGuestGate(BuildContext context, String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryPurple,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
+              onPressed: () => context.push('/auth'),
+              child: const Text('Sign Up / Login'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

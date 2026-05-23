@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../controller/cubit/auth_cubit.dart';
 import '../../controller/cubit/auth_state.dart';
 import 'package:loven/core/router/app_router.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 
 class LoginPage extends StatefulWidget {
   final bool fromGuest;
@@ -44,15 +44,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _goToGuestHome() {
-    isUserBrowsingAsGuest = true;
     context.go('/');
   }
-  
+
   void _goToLoggedInHome() {
-    isUserBrowsingAsGuest = false;
-    
     if (!mounted) return;
-    
+
     GoRouter.of(context).go('/');
   }
 
@@ -178,8 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                                     color: theme.colorScheme.onSurface,
                                   ),
                                   validator: (value) {
-                                    if (value == null ||
-                                        value.trim().isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return 'Email is required';
                                     }
 
@@ -212,8 +208,8 @@ class _LoginPageState extends State<LoginPage> {
                                         obscurePassword
                                             ? Icons.visibility_off
                                             : Icons.visibility,
-                                        color: theme
-                                            .colorScheme.onSurfaceVariant,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                       onPressed: isLoading
                                           ? null
@@ -294,8 +290,7 @@ class _LoginPageState extends State<LoginPage> {
                                       foregroundColor:
                                           theme.colorScheme.onPrimary,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     onPressed: isLoading ? null : _login,
@@ -325,8 +320,8 @@ class _LoginPageState extends State<LoginPage> {
                                     Text(
                                       "Don't have an account? ",
                                       style: TextStyle(
-                                        color: theme
-                                            .colorScheme.onSurfaceVariant,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                     GestureDetector(
@@ -340,8 +335,7 @@ class _LoginPageState extends State<LoginPage> {
                                         style: TextStyle(
                                           color: theme.colorScheme.primary,
                                           fontWeight: FontWeight.bold,
-                                          decoration:
-                                              TextDecoration.underline,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                     ),

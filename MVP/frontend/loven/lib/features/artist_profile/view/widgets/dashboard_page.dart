@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/storage/token_storage.dart';
-import '../../splash/splash_screen.dart';
-import '../screens/home_screen.dart';
-import '../screens/settings_screen.dart';
-import '../screens/guest_settings_screen.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../presentation/splash/splash_screen.dart';
+import '../../../../presentation/home/screens/home_screen.dart';
+import '../../../../presentation/home/screens/settings_screen.dart';
+import '../../../../presentation/home/screens/guest_settings_screen.dart';
 
 class DashboardPage extends StatefulWidget {
   final bool isGuest;
@@ -98,12 +98,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isDarkMode
+                  decoration: BoxDecoration(
+                    color: isDarkMode
                         ? Colors.white10
                         : Colors.black.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Row(
                     children: [
                       _buildHeaderModeTab('Buyer', !isArtistMode),
@@ -144,16 +144,16 @@ class _DashboardPageState extends State<DashboardPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: isDarkMode
-                          ? Colors.white10
-                          : Colors.black.withOpacity(0.05),
+                              ? Colors.white10
+                              : Colors.black.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
                               blurRadius: 8,
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
