@@ -1,18 +1,20 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-import 'dart:convert';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
+import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
+
 import '../../../../core/res/theme/app_colors.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
 import '../../model/artist_repository.dart';
 import '../widgets/artist_header_widget.dart';
-import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
-import 'package:go_router/go_router.dart';
-import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
 
 class ArtistProfileScreen extends StatelessWidget {
   const ArtistProfileScreen({
@@ -31,9 +33,7 @@ class ArtistProfileScreen extends StatelessWidget {
     );
 
     if (_isPublicView) {
-      cubit.fetchPublicArtistProfile(
-        artistProfileId!,
-      );
+      cubit.fetchPublicArtistProfile(artistProfileId!);
     } else {
       cubit.fetchMyProfileData();
     }
@@ -83,6 +83,19 @@ class _ArtistProfileBody extends StatelessWidget {
         iconTheme: IconThemeData(
           color: colorScheme.onSurface,
         ),
+        actions: [
+          if (!isPublicView)
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await context.read<AuthCubit>().logout();
+
+                if (context.mounted) {
+                  context.go('/auth');
+                }
+              },
+            ),
+        ],
       ),
       body: BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
         listenWhen: (previous, current) =>
@@ -249,8 +262,11 @@ class _SuccessContent extends StatelessWidget {
                                       '/artist-profile/edit',
                                       extra: artist,
                                     );
+
                                     if (updated == true && context.mounted) {
-                                      context.read<ArtistProfileCubit>().fetchMyProfileData();
+                                      context
+                                          .read<ArtistProfileCubit>()
+                                          .fetchMyProfileData();
                                     }
                                   },
                                   icon: const Icon(Icons.edit_outlined),
@@ -261,9 +277,14 @@ class _SuccessContent extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
-                                    final created = await context.push('/artworks/create');
+                                    final created = await context.push(
+                                      '/artworks/create',
+                                    );
+
                                     if (created == true && context.mounted) {
-                                      context.read<ArtistProfileCubit>().fetchMyProfileData();
+                                      context
+                                          .read<ArtistProfileCubit>()
+                                          .fetchMyProfileData();
                                     }
                                   },
                                   icon: const Icon(Icons.add),
@@ -272,6 +293,27 @@ class _SuccessContent extends StatelessWidget {
                               ),
                             ],
                           ),
+                          if (!artist.isVerified) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final submitted = await context.push(
+                                    '/verification-request',
+                                  );
+
+                                  if (submitted == true && context.mounted) {
+                                    context
+                                        .read<ArtistProfileCubit>()
+                                        .fetchMyProfileData();
+                                  }
+                                },
+                                icon: const Icon(Icons.verified_outlined),
+                                label: const Text('Request Verification'),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 20),
                         ],
                         Text(
@@ -285,25 +327,27 @@ class _SuccessContent extends StatelessWidget {
               if (showArtistFeatures)
                 SliverToBoxAdapter(
                   child: ArtworkGridWidget(
-<<<<<<< HEAD
                     artworks: state.artworks,
+                    isGuest: context.read<AuthCubit>().state is AuthGuest,
                     canManage: !isPublicView,
                     onDelete: (artwork) async {
                       await ArtworkRepository().deleteArtwork(
                         artworkId: artwork.id,
                       );
+
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Artwork deleted')),
+                          const SnackBar(
+                            content: Text('Artwork deleted'),
+                          ),
                         );
-                        context.read<ArtistProfileCubit>().fetchMyProfileData();
+
+                        context
+                            .read<ArtistProfileCubit>()
+                            .fetchMyProfileData();
                       }
                     },
                   ),
-=======
-                      artworks: state.artworks,
-                      isGuest: context.read<AuthCubit>().state is AuthGuest),
->>>>>>> 769f0e1291d83b23ddae30d63ca27cabe596496f
                 ),
               const SliverToBoxAdapter(
                 child: SizedBox(height: 24),

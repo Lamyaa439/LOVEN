@@ -1,0 +1,31 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../data/repositories/verification_request_repository.dart';
+import 'verification_request_state.dart';
+
+class VerificationRequestCubit extends Cubit<VerificationRequestState> {
+  final VerificationRequestRepository _repository;
+
+  VerificationRequestCubit(this._repository)
+      : super(VerificationRequestInitial());
+
+  Future<void> submitRequest({
+    required String documentType,
+    required String institutionName,
+    required String documentNumber,
+  }) async {
+    emit(VerificationRequestLoading());
+
+    try {
+      await _repository.submitRequest(
+        documentType: documentType,
+        institutionName: institutionName,
+        documentNumber: documentNumber,
+      );
+
+      emit(VerificationRequestSuccess('Verification request submitted'));
+    } catch (e) {
+      emit(VerificationRequestError(e.toString()));
+    }
+  }
+}

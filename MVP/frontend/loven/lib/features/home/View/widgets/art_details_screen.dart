@@ -5,6 +5,10 @@ import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/model/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
+import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
@@ -106,6 +110,35 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
             color: theme.colorScheme.onSurface,
           ),
         ),
+        actions: [
+          BlocBuilder<FavoritesCubit, FavoritesState>(
+            builder: (context, state) {
+              final favoriteIds =
+              state is FavoritesLoaded
+              ? state.favoriteArtworkIds
+              : <String>{};
+              
+              final isFavorited =
+              favoriteIds.contains(widget.artItem.id);
+              
+              return IconButton(
+                icon: Icon(
+                  isFavorited
+                  ? Icons.favorite
+                  : Icons.favorite_border,
+                  color: Colors.red,
+                ),
+                onPressed: () {
+                  context
+                  .read<FavoritesCubit>()
+                  .toggleFavorite(
+                    widget.artItem.id,
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

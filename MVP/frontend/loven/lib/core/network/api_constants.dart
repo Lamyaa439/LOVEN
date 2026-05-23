@@ -58,4 +58,17 @@ class ApiConstants {
   // =====================================================
 
   static const String reports = '$baseUrl/reports/';
+
+// =====================================================
+// Favorites
+// =====================================================
+
+  static const String favorites = '$baseUrl/favorites/';
+  static const String favoriteCheck = '$baseUrl/favorites/check';
+
+// =====================================================
+// Verification Requests
+// =====================================================
+
+  static const String verificationRequests = '$baseUrl/verification-requests';
 }
