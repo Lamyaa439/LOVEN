@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
+import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
 class ArtCard extends StatelessWidget {
   final ArtworkModel artwork;
@@ -75,27 +79,40 @@ class ArtCard extends StatelessWidget {
                   left: 10,
                   child: Column(
                     children: [
-                      CircleAvatar(
-                        backgroundColor:
-                            Colors.white70,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.favorite_border,
-                            color: Colors.red,
-                          ),
-                          onPressed: () {
-                            if (isGuest) {
-                              context.push(
-                                '/auth',
-                              );
-                            } else {
-                              onActionPressed();
-                            }
+                      BlocBuilder<FavoritesCubit, FavoritesState>(
+                        builder: (context, state) {
+                          final favoriteIds =
+                          state is FavoritesLoaded
+                          ? state.favoriteArtworkIds
+                          : <String>{};
+                          
+                          final isFavorited =
+                          favoriteIds.contains(artwork.id);
+                          
+                          return CircleAvatar(
+                            backgroundColor: Colors.white70,
+                            child: IconButton(
+                              icon: Icon(
+                                isFavorited
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                                color: Colors.red,
+                              ),
+                              onPressed: () {
+                                if (isGuest) {
+                                  context.push('/auth');
+                                  } else {
+                                    context
+                                    .read<FavoritesCubit>()
+                                    .toggleFavorite(artwork.id);
+                                  }
+                                },
+                              ),
+                            );
                           },
                         ),
-                      ),
-
-                      const SizedBox(height: 8),
+                        
+                        const SizedBox(height: 8),
 
                       CircleAvatar(
                         backgroundColor:

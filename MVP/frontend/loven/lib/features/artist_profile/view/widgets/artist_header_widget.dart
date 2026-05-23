@@ -8,9 +8,11 @@ class ArtistHeaderWidget extends StatelessWidget {
   const ArtistHeaderWidget({
     super.key,
     required this.artist,
+    required this.artworkCount,
   });
 
   final ArtistModel artist;
+  final int artworkCount;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +66,47 @@ class ArtistHeaderWidget extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+
+          const SizedBox(height: 8),
+          
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: artist.isVerified
+              ? colorScheme.primary.withValues(alpha: 0.12)
+              : colorScheme.onSurface.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  artist.isVerified
+                  ? Icons.verified
+                  : Icons.pending_outlined,
+                  size: 16,
+                  color: artist.isVerified
+                  ? colorScheme.primary
+                  : colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  artist.isVerified
+                  ? 'Verified Artist'
+                  : 'Not verified yet',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: artist.isVerified
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           if (artist.city != null && artist.city!.isNotEmpty) ...[
