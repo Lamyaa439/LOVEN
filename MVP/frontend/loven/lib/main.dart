@@ -77,7 +77,7 @@ class LovenApp extends StatelessWidget {
                 routerConfig: router,
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
-                themeMode: themeMode,
+                themeMode: themeMode, //.system to match the users theme
                 localizationsDelegates: const [
                   GlobalMaterialLocalizations.delegate,
                   GlobalWidgetsLocalizations.delegate,

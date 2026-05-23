@@ -15,7 +15,7 @@ import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
 import 'package:loven/features/auth/view/screens/profile_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
-import 'package:loven/features/home/View/art_details_screen.dart';
+import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/auth/view/screens/signup_page.dart';
 import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';

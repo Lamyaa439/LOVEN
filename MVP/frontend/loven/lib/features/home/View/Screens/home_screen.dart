@@ -112,21 +112,20 @@ await context.read<CartCubit>().getCart();
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 40),
                   _buildSearchBar(
                     theme,
                     context,
                   ),
-                  const SizedBox(height: 10),
+                  // height between search and Boxes
+                  const SizedBox(height: 26),
                   _buildCategories(
                     context,
                     state.categories,
                     state.selectedCategory,
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(
-                      16.0,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16.0, 38.0, 16.0, 16.0),
                     child: Text(
                       'Discover and Collect Art',
                       style: theme.textTheme.titleLarge,
