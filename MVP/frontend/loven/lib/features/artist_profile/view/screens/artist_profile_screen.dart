@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'dart:convert';
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import '../../../../core/res/theme/app_colors.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
@@ -120,8 +122,7 @@ class _ArtistProfileBody extends StatelessWidget {
             case ArtistProfileStatus.error:
               if (state.artist == null) {
                 return _ErrorView(
-                  message:
-                      state.errorMessage ?? 'An unexpected error occurred',
+                  message: state.errorMessage ?? 'An unexpected error occurred',
                   onRetry: () => _reload(
                     context.read<ArtistProfileCubit>(),
                   ),
@@ -178,12 +179,10 @@ class _SuccessContent extends StatelessWidget {
       final sub = data['sub'];
 
       if (sub is Map<String, dynamic>) {
-        return sub['role']?.toString() ??
-            sub['system_role']?.toString();
+        return sub['role']?.toString() ?? sub['system_role']?.toString();
       }
 
-      return data['role']?.toString() ??
-          data['system_role']?.toString();
+      return data['role']?.toString() ?? data['system_role']?.toString();
     } catch (_) {
       return null;
     }
@@ -215,7 +214,6 @@ class _SuccessContent extends StatelessWidget {
                   color: theme.dividerColor,
                 ),
               ),
-
               if (!showArtistFeatures)
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -228,7 +226,6 @@ class _SuccessContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
               if (showArtistFeatures)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -257,12 +254,12 @@ class _SuccessContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
               if (showArtistFeatures)
                 SliverToBoxAdapter(
-                  child: ArtworkGridWidget(artworks: state.artworks),
+                  child: ArtworkGridWidget(
+                      artworks: state.artworks,
+                      isGuest: context.read<AuthCubit>().state is AuthGuest),
                 ),
-
               const SliverToBoxAdapter(
                 child: SizedBox(height: 24),
               ),
@@ -299,17 +296,13 @@ class _ErrorView extends StatelessWidget {
               size: 48,
               color: colorScheme.onSurface.withValues(alpha: 0.45),
             ),
-
             const SizedBox(height: 12),
-
             Text(
               'Could not load profile',
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 8),
-
             Text(
               message,
               textAlign: TextAlign.center,
@@ -318,9 +311,7 @@ class _ErrorView extends StatelessWidget {
                 fontSize: 13,
               ),
             ),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: onRetry,
               child: const Text('Retry'),

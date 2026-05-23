@@ -6,10 +6,9 @@ class AuthLoading extends AuthState {}
 
 class AuthSuccess extends AuthState {}
 
-class AuthUnauthenticated extends AuthState {}
+class AuthGuest extends AuthState {}
 
 class AuthFailure extends AuthState {
   final String message;
-
   AuthFailure(this.message);
 }

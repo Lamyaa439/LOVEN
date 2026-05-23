@@ -9,9 +9,11 @@ class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
     super.key,
     required this.artworks,
+    required this.isGuest,
   });
 
   final List<ArtworkModel> artworks;
+  final bool isGuest;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +48,7 @@ class ArtworkGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           return _ArtworkCard(
             artwork: artworks[index],
+            isGuest: isGuest,
           );
         },
       ),
@@ -56,24 +59,30 @@ class ArtworkGridWidget extends StatelessWidget {
 class _ArtworkCard extends StatelessWidget {
   const _ArtworkCard({
     required this.artwork,
+    required this.isGuest,
   });
 
   final ArtworkModel artwork;
+  final bool isGuest;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final hasImage = artwork.artworkImageUrl != null &&
-        artwork.artworkImageUrl!.isNotEmpty;
+    final hasImage =
+        artwork.artworkImageUrl != null && artwork.artworkImageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () {
-        context.push(
-          '/art-details',
-          extra: artwork,
-        );
+        if (isGuest) {
+          context.push('/auth');
+        } else {
+          context.push(
+            '/art-details',
+            extra: artwork,
+          );
+        }
       },
       child: Container(
         decoration: BoxDecoration(
@@ -92,8 +101,7 @@ class _ArtworkCard extends StatelessWidget {
                   ? Image.network(
                       artwork.artworkImageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const _ImagePlaceholder(),
+                      errorBuilder: (_, __, ___) => const _ImagePlaceholder(),
                     )
                   : const _ImagePlaceholder(),
             ),

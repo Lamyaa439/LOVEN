@@ -15,29 +15,22 @@ class SignupPage extends StatefulWidget {
   });
 
   @override
-  State<SignupPage> createState() =>
-      _SignupPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState
-    extends State<SignupPage> {
-  final _formKey =
-      GlobalKey<FormState>();
+class _SignupPageState extends State<SignupPage> {
+  final _formKey = GlobalKey<FormState>();
 
-  final nameController =
-      TextEditingController();
+  final nameController = TextEditingController();
 
-  final emailController =
-      TextEditingController();
+  final emailController = TextEditingController();
 
-  final passwordController =
-      TextEditingController();
+  final passwordController = TextEditingController();
 
   bool acceptedTerms = false;
   bool obscurePassword = true;
 
-  String selectedRole =
-      'customer';
+  String selectedRole = 'customer';
 
   @override
   void dispose() {
@@ -48,43 +41,30 @@ class _SignupPageState
   }
 
   void _signup() {
-    if (!_formKey.currentState!
-        .validate()) {
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final theme =
-        Theme.of(context);
+    final theme = Theme.of(context);
 
     if (!acceptedTerms) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
             'Please accept the terms and privacy policy',
           ),
-          backgroundColor:
-              theme.colorScheme.error,
+          backgroundColor: theme.colorScheme.error,
         ),
       );
 
       return;
     }
 
-    context
-        .read<AuthCubit>()
-        .signup(
-          name: nameController.text
-              .trim(),
-          email:
-              emailController.text
-                  .trim(),
-          password:
-              passwordController
-                  .text
-                  .trim(),
-          systemRole:
-              selectedRole,
+    context.read<AuthCubit>().signup(
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+          systemRole: selectedRole,
         );
   }
 
@@ -94,26 +74,19 @@ class _SignupPageState
   ) {
     return InputDecoration(
       hintText: hint,
-      hintStyle:
-          const TextStyle(
+      hintStyle: const TextStyle(
         color: Colors.grey,
         fontSize: 14,
       ),
       filled: true,
-      fillColor: theme
-          .colorScheme
-          .surfaceContainerHighest,
-      border:
-          OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(
+      fillColor: theme.colorScheme.surfaceContainerHighest,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(
           10,
         ),
-        borderSide:
-            BorderSide.none,
+        borderSide: BorderSide.none,
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: 14,
         vertical: 12,
       ),
@@ -129,9 +102,6 @@ class _SignupPageState
   }
 
   void _goToLoggedInHome() {
-    isUserBrowsingAsGuest =
-        false;
-
     if (!mounted) return;
 
     GoRouter.of(context).go('/');
@@ -139,19 +109,14 @@ class _SignupPageState
 
   @override
   Widget build(BuildContext context) {
-    final theme =
-        Theme.of(context);
+    final theme = Theme.of(context);
 
-    return BlocConsumer<
-      AuthCubit,
-      AuthState
-    >(
+    return BlocConsumer<AuthCubit, AuthState>(
       listener: (
         context,
         state,
       ) {
-        if (state
-            is AuthSuccess) {
+        if (state is AuthSuccess) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(
@@ -165,8 +130,7 @@ class _SignupPageState
           _goToLoggedInHome();
         }
 
-        if (state
-            is AuthFailure) {
+        if (state is AuthFailure) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(
@@ -174,10 +138,7 @@ class _SignupPageState
               content: Text(
                 state.message,
               ),
-              backgroundColor:
-                  theme
-                      .colorScheme
-                      .error,
+              backgroundColor: theme.colorScheme.error,
             ),
           );
         }
@@ -186,19 +147,13 @@ class _SignupPageState
         context,
         state,
       ) {
-        final isLoading =
-            state
-                is AuthLoading;
+        final isLoading = state is AuthLoading;
 
         return Directionality(
-          textDirection:
-              TextDirection.ltr,
+          textDirection: TextDirection.ltr,
           child: Scaffold(
-            resizeToAvoidBottomInset:
-                false,
-            backgroundColor:
-                theme
-                    .scaffoldBackgroundColor,
+            resizeToAvoidBottomInset: false,
+            backgroundColor: theme.scaffoldBackgroundColor,
             body: Stack(
               children: [
                 SafeArea(
@@ -207,180 +162,115 @@ class _SignupPageState
                       const SizedBox(
                         height: 10,
                       ),
-
                       Center(
-                        child:
-                            Image.asset(
+                        child: Image.asset(
                           'assets/images/loven-logo.png',
                           width: 72,
-                          fit: BoxFit
-                              .contain,
+                          fit: BoxFit.contain,
                         ),
                       ),
-
                       const SizedBox(
                         height: 10,
                       ),
-
                       Text(
                         'Create your LOVEN account',
-                        style:
-                            TextStyle(
-                          fontSize:
-                              20,
-                          fontWeight:
-                              FontWeight
-                                  .w600,
-                          color: theme
-                              .colorScheme
-                              .primary,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
-
                       const SizedBox(
                         height: 4,
                       ),
-
                       const Text(
                         'Join as a customer or artist',
-                        style:
-                            TextStyle(
-                          color:
-                              Colors
-                                  .grey,
-                          fontSize:
-                              13,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
                         ),
                       ),
-
                       const SizedBox(
                         height: 12,
                       ),
-
                       Expanded(
-                        child:
-                            Container(
-                          width:
-                              double
-                                  .infinity,
-                          padding:
-                              const EdgeInsets.fromLTRB(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(
                             30,
                             14,
                             30,
                             8,
                           ),
-                          decoration:
-                              BoxDecoration(
-                            color: theme
-                                .colorScheme
-                                .surfaceContainerLow,
-                            borderRadius:
-                                const BorderRadius.vertical(
-                              top:
-                                  Radius.circular(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerLow,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(
                                 32,
                               ),
                             ),
                           ),
-                          child:
-                              Form(
-                            key:
-                                _formKey,
-                            child:
-                                Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
                                   'Full Name',
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        14,
-                                    fontWeight:
-                                        FontWeight.w500,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      6,
+                                  height: 6,
                                 ),
-
                                 TextFormField(
-                                  controller:
-                                      nameController,
-                                  enabled:
-                                      !isLoading,
-                                  decoration:
-                                      inputDecoration(
+                                  controller: nameController,
+                                  enabled: !isLoading,
+                                  decoration: inputDecoration(
                                     'Type your full name',
                                     theme,
                                   ),
-                                  validator:
-                                      (
+                                  validator: (
                                     value,
                                   ) {
-                                    if (value ==
-                                            null ||
-                                        value
-                                            .trim()
-                                            .isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return 'Name is required';
                                     }
 
                                     return null;
                                   },
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      10,
+                                  height: 10,
                                 ),
-
                                 const Text(
                                   'Email',
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        14,
-                                    fontWeight:
-                                        FontWeight.w500,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      6,
+                                  height: 6,
                                 ),
-
                                 TextFormField(
-                                  controller:
-                                      emailController,
-                                  enabled:
-                                      !isLoading,
-                                  keyboardType:
-                                      TextInputType.emailAddress,
-                                  decoration:
-                                      inputDecoration(
+                                  controller: emailController,
+                                  enabled: !isLoading,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: inputDecoration(
                                     'Type your email',
                                     theme,
                                   ),
-                                  validator:
-                                      (
+                                  validator: (
                                     value,
                                   ) {
-                                    if (value ==
-                                            null ||
-                                        value
-                                            .trim()
-                                            .isEmpty) {
+                                    if (value == null || value.trim().isEmpty) {
                                       return 'Email is required';
                                     }
 
-                                    if (!value
-                                        .contains(
+                                    if (!value.contains(
                                       '@',
                                     )) {
                                       return 'Enter a valid email';
@@ -389,274 +279,195 @@ class _SignupPageState
                                     return null;
                                   },
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      10,
+                                  height: 10,
                                 ),
-
                                 const Text(
                                   'Password',
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        14,
-                                    fontWeight:
-                                        FontWeight.w500,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      6,
+                                  height: 6,
                                 ),
-
                                 TextFormField(
-                                  controller:
-                                      passwordController,
-                                  enabled:
-                                      !isLoading,
-                                  obscureText:
-                                      obscurePassword,
-                                  decoration:
-                                      inputDecoration(
+                                  controller: passwordController,
+                                  enabled: !isLoading,
+                                  obscureText: obscurePassword,
+                                  decoration: inputDecoration(
                                     'Type your password',
                                     theme,
                                   ).copyWith(
-                                    suffixIcon:
-                                        IconButton(
-                                      icon:
-                                          Icon(
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
                                         obscurePassword
                                             ? Icons.visibility_off
                                             : Icons.visibility,
                                       ),
-                                      onPressed:
-                                          isLoading
-                                              ? null
-                                              : () {
-                                                  setState(
-                                                    () {
-                                                      obscurePassword =
-                                                          !obscurePassword;
-                                                    },
-                                                  );
+                                      onPressed: isLoading
+                                          ? null
+                                          : () {
+                                              setState(
+                                                () {
+                                                  obscurePassword =
+                                                      !obscurePassword;
                                                 },
+                                              );
+                                            },
                                     ),
                                   ),
-                                  validator:
-                                      (
+                                  validator: (
                                     value,
                                   ) {
-                                    if (value ==
-                                            null ||
-                                        value
-                                            .isEmpty) {
+                                    if (value == null || value.isEmpty) {
                                       return 'Password is required';
                                     }
 
-                                    if (value
-                                            .length <
-                                        8) {
+                                    if (value.length < 8) {
                                       return 'Password must be at least 8 characters';
                                     }
 
                                     return null;
                                   },
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      10,
+                                  height: 10,
                                 ),
-
                                 const Text(
                                   'Role',
-                                  style:
-                                      TextStyle(
-                                    fontSize:
-                                        14,
-                                    fontWeight:
-                                        FontWeight.w500,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      6,
+                                  height: 6,
                                 ),
-
                                 Container(
-                                  height:
-                                      48,
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                    horizontal:
-                                        14,
+                                  height: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
                                   ),
-                                  decoration:
-                                      BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: theme
-                                        .colorScheme
-                                        .surfaceContainerHighest,
-                                    borderRadius:
-                                        BorderRadius.circular(
+                                        .colorScheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(
                                       10,
                                     ),
                                   ),
-                                  child:
-                                      DropdownButtonHideUnderline(
-                                    child:
-                                        DropdownButton<String>(
-                                      value:
-                                          selectedRole,
-                                      isExpanded:
-                                          true,
-                                      items:
-                                          const [
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: selectedRole,
+                                      isExpanded: true,
+                                      items: const [
                                         DropdownMenuItem(
-                                          value:
-                                              'customer',
-                                          child:
-                                              Text(
+                                          value: 'customer',
+                                          child: Text(
                                             'Customer',
                                           ),
                                         ),
                                         DropdownMenuItem(
-                                          value:
-                                              'artist',
-                                          child:
-                                              Text(
+                                          value: 'artist',
+                                          child: Text(
                                             'Artist',
                                           ),
                                         ),
                                       ],
-                                      onChanged:
-                                          isLoading
-                                              ? null
-                                              : (
-                                                  value,
-                                                ) {
-                                                  setState(
-                                                    () {
-                                                      selectedRole =
-                                                          value!;
-                                                    },
-                                                  );
+                                      onChanged: isLoading
+                                          ? null
+                                          : (
+                                              value,
+                                            ) {
+                                              setState(
+                                                () {
+                                                  selectedRole = value!;
                                                 },
+                                              );
+                                            },
                                     ),
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      8,
+                                  height: 8,
                                 ),
-
                                 Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     SizedBox(
-                                      height:
-                                          24,
-                                      width:
-                                          24,
-                                      child:
-                                          Checkbox(
-                                        value:
-                                            acceptedTerms,
-                                        visualDensity:
-                                            VisualDensity.compact,
+                                      height: 24,
+                                      width: 24,
+                                      child: Checkbox(
+                                        value: acceptedTerms,
+                                        visualDensity: VisualDensity.compact,
                                         materialTapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
-                                        onChanged:
-                                            isLoading
-                                                ? null
-                                                : (
-                                                    value,
-                                                  ) {
-                                                    setState(
-                                                      () {
-                                                        acceptedTerms =
-                                                            value ??
-                                                                false;
-                                                      },
-                                                    );
+                                        onChanged: isLoading
+                                            ? null
+                                            : (
+                                                value,
+                                              ) {
+                                                setState(
+                                                  () {
+                                                    acceptedTerms =
+                                                        value ?? false;
                                                   },
+                                                );
+                                              },
                                       ),
                                     ),
-
                                     const SizedBox(
-                                      width:
-                                          8,
+                                      width: 8,
                                     ),
-
                                     Expanded(
-                                      child:
-                                          RichText(
-                                        text:
-                                            TextSpan(
-                                          style:
-                                              TextStyle(
-                                            color:
-                                                theme.colorScheme.onSurface,
-                                            fontSize:
-                                                12,
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: TextStyle(
+                                            color: theme.colorScheme.onSurface,
+                                            fontSize: 12,
                                           ),
                                           children: [
                                             const TextSpan(
-                                              text:
-                                                  'I agree to the ',
+                                              text: 'I agree to the ',
                                             ),
                                             WidgetSpan(
-                                              child:
-                                                  GestureDetector(
-                                                onTap:
-                                                    () {
-                                                      context.push(
-                                                        '/terms',
-                                                      );
-                                                    },
-                                                child:
-                                                    Text(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  context.push(
+                                                    '/terms',
+                                                  );
+                                                },
+                                                child: Text(
                                                   'terms',
-                                                  style:
-                                                      TextStyle(
-                                                    color:
-                                                        theme.colorScheme.primary,
-                                                    decoration:
-                                                        TextDecoration.underline,
-                                                    fontSize:
-                                                        12,
+                                                  style: TextStyle(
+                                                    color: theme
+                                                        .colorScheme.primary,
+                                                    decoration: TextDecoration
+                                                        .underline,
+                                                    fontSize: 12,
                                                   ),
                                                 ),
                                               ),
                                             ),
                                             const TextSpan(
-                                              text:
-                                                  ' and ',
+                                              text: ' and ',
                                             ),
                                             WidgetSpan(
-                                              child:
-                                                  GestureDetector(
-                                                onTap:
-                                                    () {
-                                                      context.push(
-                                                        '/privacy-policy',
-                                                      );
-                                                    },
-                                                child:
-                                                    Text(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  context.push(
+                                                    '/privacy-policy',
+                                                  );
+                                                },
+                                                child: Text(
                                                   'privacy policy',
-                                                  style:
-                                                      TextStyle(
-                                                    color:
-                                                        theme.colorScheme.primary,
-                                                    decoration:
-                                                        TextDecoration.underline,
-                                                    fontSize:
-                                                        12,
+                                                  style: TextStyle(
+                                                    color: theme
+                                                        .colorScheme.primary,
+                                                    decoration: TextDecoration
+                                                        .underline,
+                                                    fontSize: 12,
                                                   ),
                                                 ),
                                               ),
@@ -667,85 +478,60 @@ class _SignupPageState
                                     ),
                                   ],
                                 ),
-
                                 const Spacer(),
-
                                 SizedBox(
-                                  width:
-                                      double.infinity,
-                                  height:
-                                      48,
-                                  child:
-                                      ElevatedButton(
-                                    onPressed:
-                                        isLoading
-                                            ? null
-                                            : _signup,
-                                    style:
-                                        ElevatedButton.styleFrom(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton(
+                                    onPressed: isLoading ? null : _signup,
+                                    style: ElevatedButton.styleFrom(
                                       backgroundColor:
                                           theme.colorScheme.primaryContainer,
                                       foregroundColor:
                                           theme.colorScheme.onPrimaryContainer,
-                                      shape:
-                                          RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
                                           30,
                                         ),
                                       ),
                                     ),
-                                    child:
-                                        isLoading
-                                            ? const Text(
-                                                'Creating account...',
-                                              )
-                                            : const Text(
-                                                'Create Account',
-                                              ),
+                                    child: isLoading
+                                        ? const Text(
+                                            'Creating account...',
+                                          )
+                                        : const Text(
+                                            'Create Account',
+                                          ),
                                   ),
                                 ),
-
                                 const SizedBox(
-                                  height:
-                                      10,
+                                  height: 10,
                                 ),
-
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       'Already have an account? ',
-                                      style:
-                                          TextStyle(
-                                        fontSize:
-                                            12,
+                                      style: TextStyle(
+                                        fontSize: 12,
                                         color:
                                             theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
-
                                     GestureDetector(
-                                      onTap:
-                                          isLoading
-                                              ? null
-                                              : () {
-                                                  context.go(
-                                                    '/login',
-                                                  );
-                                                },
-                                      child:
-                                          Text(
+                                      onTap: isLoading
+                                          ? null
+                                          : () {
+                                              context.go(
+                                                '/login',
+                                              );
+                                            },
+                                      child: Text(
                                         'Login',
-                                        style:
-                                            TextStyle(
-                                          fontSize:
-                                              12,
-                                          color:
-                                              theme.colorScheme.primary,
-                                          decoration:
-                                              TextDecoration.underline,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: theme.colorScheme.primary,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                     ),
@@ -759,25 +545,17 @@ class _SignupPageState
                     ],
                   ),
                 ),
-
                 Positioned(
                   top: 4,
                   right: 4,
                   child: SafeArea(
-                    child:
-                        IconButton(
-                      icon:
-                          Icon(
+                    child: IconButton(
+                      icon: Icon(
                         Icons.close,
                         size: 28,
-                        color: theme
-                            .colorScheme
-                            .onSurface,
+                        color: theme.colorScheme.onSurface,
                       ),
-                      onPressed:
-                          isLoading
-                              ? null
-                              : _handleCloseAction,
+                      onPressed: isLoading ? null : _handleCloseAction,
                     ),
                   ),
                 ),
