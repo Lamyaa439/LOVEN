@@ -21,13 +21,14 @@ from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
 
+from app.persistence.repositories.user_repo import UserRepository
 from app.models.artwork import Artwork
 from app.persistence.repositories.artwork_repo import ArtworkRepository
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 
 artwork_repo = ArtworkRepository()
 artist_profile_repo = ArtistProfileRepository()
-
+user_repo = UserRepository()
 
 # -------------------- Private/Internal Constant --------------------
 
@@ -182,8 +183,19 @@ def create_artwork(user_id, data):
     Required in data: title, price.
     Optional: description, quantity_available, shipping_fee, artwork_image_url, status.
     """
+
+    # نتأكد إن المستخدم فنان
+    user = user_repo.get_user_by_id(_as_uuid(user_id))
+
+    if not user:
+        return {"error": "User not found"}, 404
+
+    if user.system_role != "artist":
+        return {"error": "Only artists can upload artwork"}, 403
+
     # التحقق من هوية البائع (الفنان)
     profile = _profile_for_user(user_id)
+
     if not profile:
         return {"error": "Create an artist profile before listing artwork"}, 400
     

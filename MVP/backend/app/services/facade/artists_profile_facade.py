@@ -21,6 +21,20 @@ class ArtistsProfileFacade:
     """
 
     @staticmethod
+    def create_for_registration(user_id, data: dict):
+        """
+        Auto-create a profile after signup (called from AuthFacade.register).
+
+        Args:
+            user_id: New user's UUID string from register_user.
+            data: Original registration JSON (name, email, etc.).
+
+        Returns:
+            200/201 with profile on success; 4xx/5xx on failure.
+        """
+        return profile_service.bootstrap_artist_profile(user_id, data)
+
+    @staticmethod
     def create(user_id, data: dict):
         """
         Create a new artist profile, or restore a previously soft-deleted one.

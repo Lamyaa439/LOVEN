@@ -1,40 +1,56 @@
 services:
-# =========================================================================
+
+  # =========================================================================
   # BACKEND SERVICE: The Flask/Python Application
-# =========================================================================
+  # =========================================================================
   backend:
     build:
-      context: ./backend  # Tells Docker to build the image from the Dockerfile in the ./backend directory
+      context: ./backend
+
     container_name: loven-backend
+
     ports:
       - "5000:5000"
+
     env_file:
       - .env
+
     depends_on:
-      - db           # Architectural rule: The database starts before the backend server
-                     # since PostgreSQL database is heavier, so it needs a few seconde to allocate memory.
+      - db
+
     restart: always
+
     environment:
-      - PYTHONUNBUFFERED=1   # ensures print() shows instantly
-      - FLASK_ENV=development  # optional: better debug behavior
-# =========================================================================
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=development
+      - FIREBASE_CREDENTIALS_PATH=/app/firebaseKey.json
+
+    volumes:
+      - ./backend/firebaseKey.json:/app/firebaseKey.json:ro
+
+  # =========================================================================
   # DATABASE SERVICE: PostgreSQL 15 (Alpine)
-# =========================================================================
+  # =========================================================================
   db:
-    image: postgres:15-alpine  # Uses the official, lightweight Alpine version of PostgreSQL 15
+    image: postgres:15-alpine
     container_name: loven-db
+
     restart: always
+
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+
     ports:
-      - "5432:5432"  # Exposes the standard Postgres port so tools like SQLTools can connect
+      - "5432:5432"
+
     volumes:
-      - loven_db_data:/var/lib/postgresql/data # Persists the database data so it isn't lost when the container stops
+      - loven_db_data:/var/lib/postgresql/data
+
 
 # ===========================================================================
 # VOLUMES: Persistent Storage Declarations
 # ===========================================================================
 volumes:
-  loven_db_data: # Declares the named volume used by the database container above
+  loven_db_data:

@@ -5,11 +5,15 @@ This module defines the business logic for user registration and login.
 It connects the API layer with the persistence layer and security utilities.
 """
 
-from app.persistence.repositories.user_repo import UserRepository
+from sqlalchemy.exc import IntegrityError
+
+from app.extensions import db
 from app.models.user import User
+from app.persistence.repositories.user_repo import UserRepository
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 user_repo = UserRepository()
+
 
 def register_user(data):
     """
@@ -43,18 +47,18 @@ def register_user(data):
         return {"error": "User already exists"}, 400
     
     try:
-        # Create the User object
         new_user = User(
-        name = name,
-        email = email,
-        password = password,
-        fcm_token = fcm_token,
-        system_role = role
+            name=name,
+            email=email,
+            password=password,
+            fcm_token=fcm_token,
+            system_role=role,
         )
 
-        # Save to database securely using our Generic Repository 
-        user_repo.add(new_user)
-        
+        # User only — ArtistProfile is created by AuthFacade.register (orchestration).
+        db.session.add(new_user)
+        db.session.commit()
+
         # Generate JWT access token:
         # 1- Define user identity
         user_identity = str(new_user.id)
@@ -68,14 +72,19 @@ def register_user(data):
 
         return {
             "message": "User registered successfully",
+            "user_id": user_identity,
             "access_token": access_token,
-            "refresh_token": refresh_token
+            "refresh_token": refresh_token,
         }, 201
     
     except ValueError as e:
-        # Catching validation errors cleanly
+        db.session.rollback()
         return {"error": str(e)}, 400
-    except Exception as e:
+    except IntegrityError:
+        db.session.rollback()
+        return {"error": "Registration failed due to a duplicate value"}, 400
+    except Exception:
+        db.session.rollback()
         return {"error": "An internal error occurred during registration"}, 500
 
 

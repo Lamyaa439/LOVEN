@@ -1,90 +1,99 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
 from app.services.facade.order_facade import OrderFacade
 
-# =========================================================
-# Blueprint: Orders API
-# Description:
-# Handles all HTTP endpoints related to:
-# - customer orders
-# - artist incoming orders
-# - order status updates
-#
-# Responsibilities:
-# - Receive client requests
-# - Validate/request payload extraction
-# - Delegate orchestration/business logic to the Facade layer
-# - Return JSON responses
-#
-# Architectural Change:
-# Replaced direct service imports with OrderFacade.
-#
-# Purpose:
-# The Facade acts as an orchestration layer between:
-# - API routes
-# - order services
-# - future integrations such as:
-#   - payments
-#   - inventory management
-#   - Firebase shipment notifications
-#
-# Note:
-# This layer should remain thin and should NOT contain:
-# - SQL logic
-# - business rules
-# - orchestration logic
-# =========================================================
 
-# Blueprint for order-related routes
+# Order API routes.
+# This file only handles HTTP input/output.
+# The actual order logic stays in the facade, service, and repository layers.
+
 order_bp = Blueprint("orders", __name__)
 
 
+def get_authenticated_user_id():
+    """
+    Extract the current user's ID from the JWT token.
+
+    Supports both JWT formats used in the project:
+    - sub as a direct UUID string
+    - sub as a dictionary containing user_id
+    """
+
+    current_user_identity = get_jwt_identity()
+
+    if isinstance(current_user_identity, dict):
+        return current_user_identity.get("user_id")
+
+    return current_user_identity
+
+
 @order_bp.post("/")
+@jwt_required()
 def create_order():
     """
-    Create a new order.
+    Create an order for the authenticated buyer.
 
-    Expected JSON body:
-        {
-            "user_id": "...",
-            "total_price": 100.00,
-            "items": [
-                {
-                    "artwork_id": "...",
-                    "quantity": 1,
-                    "price": 100.00
-                }
-            ]
-        }
+    The client no longer needs to send buyer_id.
+    buyer_id is taken from the JWT token to prevent users
+    from creating orders under another user's account.
 
-    Returns:
-        JSON response containing:
-        - created order
-        - created order items
+    Expected body:
+    {
+        "subtotal": 150.00,
+        "shipping_fee": 20.00,
+        "total_amount": 170.00,
+        "items": [
+            {
+                "artwork_id": "...",
+                "quantity": 1,
+                "price_at_purchase": 150.00
+            }
+        ]
+    }
     """
 
-    # Extract request payload
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    # Delegate orchestration to the Facade
+    # Trust JWT identity, not request body
+    data["buyer_id"] = get_authenticated_user_id()
+
     result, status_code = OrderFacade.create_order(data)
 
     return jsonify(result), status_code
 
 
-@order_bp.get("/user/<user_id>")
-def view_user_orders(user_id):
+@order_bp.get("/mine")
+@jwt_required()
+def view_my_orders():
     """
-    Retrieve all orders placed by a user.
+    Retrieve orders for the authenticated buyer.
 
-    Route Params:
-        - user_id
-
-    Returns:
-        JSON list of user orders.
+    This replaces the need for the frontend to pass buyer_id
+    in the URL when the current user wants their own orders.
     """
 
-    # Delegate orchestration to the Facade
-    result, status_code = OrderFacade.get_customer_orders(user_id)
+    buyer_id = get_authenticated_user_id()
+
+    result, status_code = OrderFacade.get_customer_orders(
+        buyer_id
+    )
+
+    return jsonify(result), status_code
+
+
+@order_bp.get("/buyer/<buyer_id>")
+def view_buyer_orders(buyer_id):
+    """
+    Existing buyer lookup route.
+
+    Kept temporarily for testing/backward compatibility.
+    Prefer /mine for authenticated frontend usage.
+    """
+
+    result, status_code = OrderFacade.get_customer_orders(
+        buyer_id
+    )
 
     return jsonify(result), status_code
 
@@ -92,18 +101,16 @@ def view_user_orders(user_id):
 @order_bp.get("/artist/<artist_profile_id>")
 def view_artist_orders(artist_profile_id):
     """
-    Retrieve incoming orders for an artist.
+    Retrieve incoming orders for an artist profile.
 
-    Route Params:
-        - artist_profile_id
-
-    Returns:
-        JSON list of incoming artist orders.
+    This route is kept unchanged for now because it depends
+    on artist profile ownership rules.
     """
 
-    # Delegate orchestration to the Facade
-    result, status_code = OrderFacade.get_artist_incoming_orders(
-        artist_profile_id
+    result, status_code = (
+        OrderFacade.get_artist_incoming_orders(
+            artist_profile_id
+        )
     )
 
     return jsonify(result), status_code
@@ -112,34 +119,24 @@ def view_artist_orders(artist_profile_id):
 @order_bp.patch("/<order_id>/status")
 def update_status(order_id):
     """
-    Update the status of an existing order.
+    Update order status and shipment details.
 
-    Route Params:
-        - order_id
-
-    Expected JSON body:
-        {
-            "status": "shipped"
-        }
-
-    Example statuses:
-        - pending
-        - paid
-        - shipped
-        - delivered
-        - cancelled
-
-    Returns:
-        JSON response containing updated order information.
+    Usually used when an artist marks an order as shipped.
+    Role/ownership protection can be added once artist-order
+    permission rules are finalized.
     """
 
-    # Extract request payload
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    # Extract new order status
     status = data.get("status")
+    shipping_company = data.get("shipping_company")
+    tracking_number = data.get("tracking_number")
 
-    # Delegate orchestration to the Facade
-    result, status_code = OrderFacade.update_status(order_id, status)
+    result, status_code = OrderFacade.update_status(
+        order_id,
+        status,
+        shipping_company=shipping_company,
+        tracking_number=tracking_number,
+    )
 
     return jsonify(result), status_code

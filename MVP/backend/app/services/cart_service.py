@@ -276,6 +276,11 @@ def add_to_cart(user_id, data):
     artwork, err = _validate_artwork_for_cart(artwork_id)
     if err:
         return err
+    
+    # الفنان ما يقدر يشتري عمله الخاص
+    if artwork.artist and artwork.artist.user_id == uid:
+        return {"error": "Artists cannot buy their own artwork"}, 403
+    
     # نتأكد إن المخزون المطلوب إضافته للسلة متوفر
     if quantity > artwork.quantity_available:
         return {"error": "Requested quantity exceeds available stock"}, 400

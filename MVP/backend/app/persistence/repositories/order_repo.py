@@ -12,56 +12,98 @@ from app.extensions import db
 # Responsibilities:
 # - Create customer orders
 # - Create order items
-# - Retrieve user orders
+# - Retrieve buyer orders
 # - Retrieve incoming artist orders
-# - Update order status
+# - Update shipment/order status
 #
 # Architecture Notes:
 # - Uses SQLAlchemy session management
 # - Uses raw SQL via sqlalchemy.text()
-# - Keeps SQL/database logic isolated from services
+# - Keeps SQL isolated from service layer
 # =========================================================
 
 
-def create_order(user_id, total_price, status="pending"):
+# =========================================================
+# Create Order
+# =========================================================
+def create_order(
+    buyer_id,
+    subtotal,
+    shipping_fee,
+    total_amount,
+    status="pending",
+):
     """
-    Create a new order record.
+    Create a new order.
 
     Args:
-        user_id (UUID): Customer placing the order.
-        total_price (float): Total order amount.
+        buyer_id (UUID): Buyer user ID.
+        subtotal (float): Order subtotal.
+        shipping_fee (float): Shipping cost.
+        total_amount (float): Final order total.
         status (str): Initial order status.
 
     Returns:
         Row: Newly created order row.
     """
 
-    # Generate a unique order ID
+    # Generate unique order ID
     order_id = str(uuid.uuid4())
 
-    # Raw SQL query for inserting a new order
+    # Raw SQL insert query
     query = text("""
-        INSERT INTO orders (id, user_id, total_price, status)
-        VALUES (:id, :user_id, :total_price, :status)
-        RETURNING id, user_id, total_price, status, created_at
+        INSERT INTO orders (
+            id,
+            buyer_id,
+            subtotal,
+            shipping_fee,
+            total_amount,
+            status
+        )
+        VALUES (
+            :id,
+            :buyer_id,
+            :subtotal,
+            :shipping_fee,
+            :total_amount,
+            :status
+        )
+        RETURNING
+            id,
+            buyer_id,
+            subtotal,
+            shipping_fee,
+            total_amount,
+            status,
+            created_at
     """)
 
-    # Execute query with parameter binding
+    # Execute query
     result = db.session.execute(query, {
         "id": order_id,
-        "user_id": user_id,
-        "total_price": total_price,
+        "buyer_id": buyer_id,
+        "subtotal": subtotal,
+        "shipping_fee": shipping_fee,
+        "total_amount": total_amount,
         "status": status,
     })
 
-    # Persist transaction
+    # Commit transaction
     db.session.commit()
 
-    # Return inserted order row
+    # Return inserted row
     return result.fetchone()
 
 
-def create_order_item(order_id, artwork_id, quantity, price):
+# =========================================================
+# Create Order Item
+# =========================================================
+def create_order_item(
+    order_id,
+    artwork_id,
+    quantity,
+    price_at_purchase,
+):
     """
     Create a new order item.
 
@@ -69,7 +111,7 @@ def create_order_item(order_id, artwork_id, quantity, price):
         order_id (UUID): Parent order ID.
         artwork_id (UUID): Purchased artwork ID.
         quantity (int): Quantity purchased.
-        price (float): Artwork price at purchase time.
+        price_at_purchase (float): Locked purchase price.
 
     Returns:
         Row: Newly created order item row.
@@ -78,11 +120,28 @@ def create_order_item(order_id, artwork_id, quantity, price):
     # Generate unique order item ID
     order_item_id = str(uuid.uuid4())
 
-    # Raw SQL query for inserting order item
+    # Raw SQL insert query
     query = text("""
-        INSERT INTO order_items (id, order_id, artwork_id, quantity, price)
-        VALUES (:id, :order_id, :artwork_id, :quantity, :price)
-        RETURNING id, order_id, artwork_id, quantity, price
+        INSERT INTO order_items (
+            id,
+            order_id,
+            artwork_id,
+            quantity,
+            price_at_purchase
+        )
+        VALUES (
+            :id,
+            :order_id,
+            :artwork_id,
+            :quantity,
+            :price_at_purchase
+        )
+        RETURNING
+            id,
+            order_id,
+            artwork_id,
+            quantity,
+            price_at_purchase
     """)
 
     # Execute query
@@ -91,44 +150,54 @@ def create_order_item(order_id, artwork_id, quantity, price):
         "order_id": order_id,
         "artwork_id": artwork_id,
         "quantity": quantity,
-        "price": price,
+        "price_at_purchase": price_at_purchase,
     })
 
-    # Persist transaction
+    # Commit transaction
     db.session.commit()
 
-    # Return inserted order item
+    # Return inserted row
     return result.fetchone()
 
 
-def get_orders_by_user(user_id):
+# =========================================================
+# Retrieve Buyer Orders
+# =========================================================
+def get_orders_by_buyer(buyer_id):
     """
-    Retrieve all orders created by a user.
+    Retrieve all orders placed by a buyer.
 
     Args:
-        user_id (UUID): User ID.
+        buyer_id (UUID): Buyer user ID.
 
     Returns:
-        list: List of user orders ordered by newest first.
+        list: Buyer orders ordered by newest first.
     """
 
-    # Raw SQL query for retrieving user orders
     query = text("""
-        SELECT id, user_id, total_price, status, created_at
+        SELECT
+            id,
+            buyer_id,
+            subtotal,
+            shipping_fee,
+            total_amount,
+            status,
+            created_at
         FROM orders
-        WHERE user_id = :user_id
+        WHERE buyer_id = :buyer_id
         ORDER BY created_at DESC
     """)
 
-    # Execute query
     result = db.session.execute(query, {
-        "user_id": user_id,
+        "buyer_id": buyer_id,
     })
 
-    # Return all matching orders
     return result.fetchall()
 
 
+# =========================================================
+# Retrieve Artist Incoming Orders
+# =========================================================
 def get_incoming_orders_by_artist(artist_profile_id):
     """
     Retrieve all incoming orders for an artist.
@@ -136,7 +205,7 @@ def get_incoming_orders_by_artist(artist_profile_id):
     Logic:
     - Join orders with order_items
     - Join order_items with artworks
-    - Filter artworks belonging to the artist
+    - Filter artworks owned by artist
 
     Args:
         artist_profile_id (UUID): Artist profile ID.
@@ -145,65 +214,109 @@ def get_incoming_orders_by_artist(artist_profile_id):
         list: Incoming artist orders.
     """
 
-    # Raw SQL query for retrieving artist orders
     query = text("""
         SELECT DISTINCT
             o.id,
-            o.user_id,
-            o.total_price,
+            o.buyer_id,
+            o.subtotal,
+            o.shipping_fee,
+            o.total_amount,
             o.status,
             o.created_at
         FROM orders o
-        JOIN order_items oi ON o.id = oi.order_id
-        JOIN artworks a ON oi.artwork_id = a.id
+        JOIN order_items oi
+            ON o.id = oi.order_id
+        JOIN artworks a
+            ON oi.artwork_id = a.id
         WHERE a.artist_profile_id = :artist_profile_id
         ORDER BY o.created_at DESC
     """)
 
-    # Execute query
     result = db.session.execute(query, {
         "artist_profile_id": artist_profile_id,
     })
 
-    # Return matching orders
     return result.fetchall()
 
 
-def update_order_status(order_id, status):
+# =========================================================
+# Update Order Status
+# =========================================================
+def update_order_status(
+    order_id,
+    status,
+    shipping_company=None,
+    tracking_number=None,
+):
     """
-    Update the status of an existing order.
-
-    Example statuses:
-        - pending
-        - paid
-        - shipped
-        - delivered
-        - cancelled
+    Update order shipment and status information.
 
     Args:
         order_id (UUID): Order ID.
         status (str): New order status.
+        shipping_company (str): Shipping provider.
+        tracking_number (str): Shipment tracking number.
 
     Returns:
         Row: Updated order row.
     """
 
-    # Raw SQL query for updating order status
     query = text("""
         UPDATE orders
-        SET status = :status
+        SET
+            status = :status,
+            shipping_company = :shipping_company,
+            tracking_number = :tracking_number,
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = :order_id
-        RETURNING id, user_id, total_price, status, created_at
+        RETURNING
+            id,
+            buyer_id,
+            subtotal,
+            shipping_fee,
+            total_amount,
+            status,
+            shipping_company,
+            tracking_number,
+            created_at
     """)
 
-    # Execute query
     result = db.session.execute(query, {
         "order_id": order_id,
         "status": status,
+        "shipping_company": shipping_company,
+        "tracking_number": tracking_number,
     })
 
-    # Persist transaction
     db.session.commit()
 
-    # Return updated order
+    return result.fetchone()
+
+# =========================================================
+# Get buyer notification info
+# =========================================================
+
+def get_buyer_notification_info(buyer_id):
+    """
+    Retrieve the buyer name and Firebase token used for
+    shipment notifications.
+
+    The order service uses this after an order is marked
+    as shipped so the notification goes to the real buyer
+    instead of using a hardcoded placeholder token.
+    """
+
+    query = text("""
+        SELECT
+            name,
+            fcm_token
+        FROM users
+        WHERE id = :buyer_id
+          AND is_active = true
+    """)
+
+    result = db.session.execute(query, {
+        "buyer_id": buyer_id,
+    })
+
     return result.fetchone()

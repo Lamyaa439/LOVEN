@@ -1,152 +1,154 @@
 from app.persistence.repositories.order_repo import (
     create_order,
     create_order_item,
-    get_orders_by_user,
+    get_orders_by_buyer,
     get_incoming_orders_by_artist,
     update_order_status,
+    get_buyer_notification_info,
 )
 
 from app.external_services.firebase_service import (
     send_order_status_notification,
 )
 
+from app.extensions import db
+from app.models.artwork import Artwork
 
 # =========================================================
 # Service: Order Service
-# Description:
-# Contains business logic for order management.
-#
-# Responsibilities:
-# - Create orders
-# - Add order items
-# - Retrieve user purchase history
-# - Retrieve artist incoming orders
-# - Update order status
-# - Trigger shipment notifications
-#
-# Note:
-# This layer should contain business rules and validation.
-# SQL/database logic belongs in the repository layer.
 # =========================================================
 
 
 def create_user_order(data):
-    """
-    Create a new order and its order items.
 
-    Expected data:
-        - user_id
-        - total_price
-        - items: [
-            {
-                "artwork_id": "...",
-                "quantity": 1,
-                "price": 100.00
-            }
-        ]
-
-    Returns:
-        tuple: Response dictionary and HTTP status code.
-    """
-
-    user_id = data.get("user_id")
-    total_price = data.get("total_price")
+    buyer_id = data.get("buyer_id")
+    subtotal = data.get("subtotal")
+    shipping_fee = data.get("shipping_fee")
+    total_amount = data.get("total_amount")
     items = data.get("items", [])
 
-    # Validate user ID
-    if not user_id:
-        return {"error": "user_id is required"}, 400
+    # =====================================================
+    # Validation
+    # =====================================================
 
-    # Validate total price
-    if total_price is None:
-        return {"error": "total_price is required"}, 400
+    if not buyer_id:
+        return {"error": "buyer_id is required"}, 400
 
-    # Ensure order contains items
+    if subtotal is None:
+        return {"error": "subtotal is required"}, 400
+
+    if shipping_fee is None:
+        return {"error": "shipping_fee is required"}, 400
+
+    if total_amount is None:
+        return {"error": "total_amount is required"}, 400
+
     if not items:
         return {"error": "Order must contain at least one item"}, 400
 
-    # Create the parent order
+    # =====================================================
+    # Create parent order
+    # =====================================================
+
     order = create_order(
-        user_id=user_id,
-        total_price=total_price,
+        buyer_id=buyer_id,
+        subtotal=subtotal,
+        shipping_fee=shipping_fee,
+        total_amount=total_amount,
         status="pending",
     )
 
     order_id = order[0]
     created_items = []
 
-    # Create each order item
+    # =====================================================
+    # Create order items
+    # =====================================================
+
     for item in items:
+
         artwork_id = item.get("artwork_id")
         quantity = item.get("quantity")
-        price = item.get("price")
+        price_at_purchase = item.get("price_at_purchase")
 
-        # Validate item payload
-        if not artwork_id or not quantity or price is None:
+        if (
+            not artwork_id
+            or not quantity
+            or price_at_purchase is None
+        ):
             return {
-                "error": "Each item must include artwork_id, quantity, and price"
+                "error": (
+                    "Each item must include "
+                    "artwork_id, quantity, "
+                    "price_at_purchase"
+                )
             }, 400
 
-        # Persist order item
         order_item = create_order_item(
             order_id=order_id,
             artwork_id=artwork_id,
             quantity=quantity,
-            price=price,
+            price_at_purchase=price_at_purchase,
         )
+        
+        artwork = Artwork.query.get(artwork_id)
+        
+        if artwork:
+
+            artwork.quantity_available -= quantity
+
+            if artwork.quantity_available <= 0:
+                artwork.quantity_available = 0
+                artwork.status = "sold"
+                
+            db.session.commit()
 
         created_items.append({
             "id": str(order_item[0]),
             "order_id": str(order_item[1]),
             "artwork_id": str(order_item[2]),
             "quantity": order_item[3],
-            "price": float(order_item[4]),
+            "price_at_purchase": float(order_item[4]),
         })
 
     return {
         "message": "Order created successfully",
         "order": {
             "id": str(order[0]),
-            "user_id": str(order[1]),
-            "total_price": float(order[2]),
-            "status": order[3],
-            "created_at": order[4].isoformat() if order[4] else None,
+            "buyer_id": str(order[1]),
+            "subtotal": float(order[2]),
+            "shipping_fee": float(order[3]),
+            "total_amount": float(order[4]),
+            "status": order[5],
+            "created_at": (
+                order[6].isoformat()
+                if order[6]
+                else None
+            ),
             "items": created_items,
         },
     }, 201
 
 
-def get_user_orders(user_id):
-    """
-    Retrieve all orders placed by a user.
+def get_user_orders(buyer_id):
 
-    Args:
-        user_id (UUID): User ID.
+    if not buyer_id:
+        return {"error": "buyer_id is required"}, 400
 
-    Returns:
-        tuple: Response dictionary and HTTP status code.
-    """
-
-    if not user_id:
-        return {"error": "user_id is required"}, 400
-
-    # Retrieve user orders
-    orders = get_orders_by_user(user_id)
+    orders = get_orders_by_buyer(buyer_id)
 
     return {
         "orders": [
             {
                 "id": str(order[0]),
-                "user_id": str(order[1]),
-                "total_price": (
-                    float(order[2])
-                    if order[2] is not None
-                    else None
-                ),
-                "status": order[3],
+                "buyer_id": str(order[1]),
+                "subtotal": float(order[2]),
+                "shipping_fee": float(order[3]),
+                "total_amount": float(order[4]),
+                "status": order[5],
                 "created_at": (
-                    order[4].isoformat()
-                    if order[4]
+                    order[6].isoformat()
+                    if order[6]
                     else None
                 ),
             }
@@ -156,20 +158,10 @@ def get_user_orders(user_id):
 
 
 def get_artist_orders(artist_profile_id):
-    """
-    Retrieve incoming orders for an artist.
-
-    Args:
-        artist_profile_id (UUID): Artist profile ID.
-
-    Returns:
-        tuple: Response dictionary and HTTP status code.
-    """
 
     if not artist_profile_id:
         return {"error": "artist_profile_id is required"}, 400
 
-    # Retrieve artist orders
     orders = get_incoming_orders_by_artist(
         artist_profile_id
     )
@@ -178,16 +170,14 @@ def get_artist_orders(artist_profile_id):
         "orders": [
             {
                 "id": str(order[0]),
-                "user_id": str(order[1]),
-                "total_price": (
-                    float(order[2])
-                    if order[2] is not None
-                    else None
-                ),
-                "status": order[3],
+                "buyer_id": str(order[1]),
+                "subtotal": float(order[2]),
+                "shipping_fee": float(order[3]),
+                "total_amount": float(order[4]),
+                "status": order[5],
                 "created_at": (
-                    order[4].isoformat()
-                    if order[4]
+                    order[6].isoformat()
+                    if order[6]
                     else None
                 ),
             }
@@ -196,27 +186,19 @@ def get_artist_orders(artist_profile_id):
     }, 200
 
 
-def change_order_status(order_id, status):
-    """
-    Update the status of an order.
+def change_order_status(
+    order_id,
+    status,
+    shipping_company=None,
+    tracking_number=None,
+):
 
-    Args:
-        order_id (UUID): Order ID.
-        status (str): New order status.
-
-    Returns:
-        tuple: Response dictionary and HTTP status code.
-    """
-
-    # Validate order ID
     if not order_id:
         return {"error": "order_id is required"}, 400
 
-    # Validate status
     if not status:
         return {"error": "status is required"}, 400
 
-    # Allowed order statuses
     allowed_statuses = [
         "pending",
         "paid",
@@ -225,66 +207,53 @@ def change_order_status(order_id, status):
         "cancelled",
     ]
 
-    # Reject invalid statuses
     if status not in allowed_statuses:
         return {"error": "Invalid order status"}, 400
 
-    # Update order status
-    order = update_order_status(order_id, status)
+    order = update_order_status(
+        order_id=order_id,
+        status=status,
+        shipping_company=shipping_company,
+        tracking_number=tracking_number,
+    )
 
-    # Ensure order exists
     if not order:
         return {"error": "Order not found"}, 404
 
     # =====================================================
-    # Shipment Notification Integration
-    # =====================================================
-    # Reuses Firebase Cloud Messaging (FCM)
-    # infrastructure to notify buyers when
-    # their order has been shipped.
-    #
-    # NOTE:
-    # The buyer FCM token is temporarily mocked.
-    # Later this should be retrieved from the
-    # users table using the buyer's user_id.
+    # Firebase shipment notification
     # =====================================================
 
     if status == "shipped":
 
-        # TODO:
-        # Replace with real buyer FCM token lookup
-        buyer_fcm_token = "BUYER_FCM_TOKEN"
+        buyer_info = get_buyer_notification_info(
+            buyer_id=order[1]
+        )
 
-        # Dispatch shipment notification
-        send_order_status_notification(
-            fcm_token=buyer_fcm_token,
+        if buyer_info and buyer_info[1]:
             
-            # Temporary placeholder until buyer data
-            # is fetched from the database
-            user_name="Customer",
-            
-            # Order being updated
-            order_id=str(order[0]),
-            
-            # Current shipment state
-            status="shipped",
+            send_order_status_notification(
+                fcm_token=buyer_info[1],
+                user_name=buyer_info[0] or "Customer",
+                order_id=str(order[0]),
+                status="shipped",
             )
-
-    return {
-        "message": "Order status updated successfully",
-        "order": {
-            "id": str(order[0]),
-            "user_id": str(order[1]),
-            "total_price": (
-                float(order[2])
-                if order[2] is not None
-                else None
-            ),
-            "status": order[3],
-            "created_at": (
-                order[4].isoformat()
-                if order[4]
-                else None
-            ),
-        },
-    }, 200
+            
+            return {
+                "message": "Order status updated successfully",
+                "order": {
+                    "id": str(order[0]),
+                    "buyer_id": str(order[1]),
+                    "subtotal": float(order[2]),
+                    "shipping_fee": float(order[3]),
+                    "total_amount": float(order[4]),
+                    "status": order[5],
+                    "shipping_company": order[6],
+                    "tracking_number": order[7],
+                    "created_at": (
+                        order[8].isoformat()
+                        if order[8]
+                        else None
+                    ),
+                },
+            }, 200

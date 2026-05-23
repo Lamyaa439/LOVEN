@@ -56,6 +56,22 @@ def _as_uuid(value):
     return uuid.UUID(str(value))
 
 
+def _resolve_user_id(jwt_identity):
+    """
+    Extract the users.id UUID from JWT identity.
+
+    Tokens from register/login store identity as a plain UUID string.
+    Some routes may use a dict shape instead — support both.
+    """
+    if jwt_identity is None:
+        return None
+    if isinstance(jwt_identity, dict):
+        raw = jwt_identity.get("user_id") or jwt_identity.get("sub")
+    else:
+        raw = jwt_identity
+    return _as_uuid(raw)
+
+
 def _profile_to_dict(profile):
     """
     Serializes an ArtistProfile object into a JSON-compatible dictionary.
@@ -165,6 +181,58 @@ def _validate_shipping_policy(value):
 
 # ----------------------------- Public Functions ---------------------------------
 
+def bootstrap_artist_profile(user_id, data):
+    """
+    Create an empty artist profile right after registration.
+
+    Skips the artist-role check used by create_artist_profile so every new
+    account can call GET /artist-profiles/me. Idempotent if a profile exists.
+    """
+    uid = _resolve_user_id(user_id)
+    if not uid:
+        return {"error": "Invalid user id"}, 400
+
+    existing = artist_profile_repo.get_active_by_user_id(uid)
+    if existing:
+        return {"message": "Artist profile already exists", "profile": _profile_to_dict(existing)}, 200
+
+    email = (data or {}).get("email") or ""
+    raw_name = (
+        (data or {}).get("display_name")
+        or (data or {}).get("name")
+        or (data or {}).get("username")
+        or (email.split("@")[0] if email else None)
+        or "New Artist"
+    )
+    display_name = str(raw_name).strip()
+    if len(display_name) < 3:
+        display_name = "New Artist"
+    display_name = display_name[:255]
+
+    suffix = 1
+    base = display_name
+    while artist_profile_repo.display_name_is_taken(display_name):
+        display_name = f"{base[:240]}_{suffix}"
+        suffix += 1
+
+    try:
+        profile = ArtistProfile(
+            user_id=uid,
+            display_name=display_name,
+        )
+        artist_profile_repo.add(profile)
+        return {
+            "message": "Artist profile created",
+            "profile": _profile_to_dict(profile),
+        }, 201
+    except ValueError as e:
+        return {"error": str(e)}, 400
+    except IntegrityError:
+        return {"error": "Display name is already taken"}, 400
+    except Exception:
+        return {"error": "An internal error occurred"}, 500
+
+
 def create_artist_profile(user_id, data):
     """
     Create a new artist profile or restore a soft-deleted one for this user.
@@ -248,14 +316,23 @@ def get_my_profile(user_id):
     Retrieves the active artist profile for the authenticated user.
 
     Args:
-        user_id (str or uuid.UUID): The ID of the currently logged-in user.
+        user_id: JWT identity (UUID string or dict with user_id).
 
     Returns:
         tuple: A tuple containing a JSON-serializable dictionary with the profile data 
         (or an error message) and the corresponding HTTP status code.
     """
-    uid = _as_uuid(user_id)
-    profile = artist_profile_repo.get_active_by_user_id(uid)
+    uid = _resolve_user_id(user_id)
+    if not uid:
+        return {"error": "Invalid user identity"}, 401
+
+    # MUST match on artist_profiles.user_id — never artist_profiles.id.
+    profile = (
+        ArtistProfile.query.filter(
+            ArtistProfile.user_id == uid,
+            ArtistProfile.deleted_at.is_(None),
+        ).first()
+    )
     if not profile:
         return {"error": "Artist profile not found"}, 404
     return {"profile": _profile_to_dict(profile)}, 200

@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.services.facade.cart_facade import CartFacade
 
-carts_bp = Blueprint("carts", __name__, url_prefix="/carts")
+carts_bp = Blueprint("carts", __name__)
 
 # ----------------- Helper Functions -----------------
 def _json_body():
@@ -25,7 +25,7 @@ def _include_artwork_from_query():
 # --------------- Routes (API) ----------------
 
 # عرض السلة
-@carts_bp.get("")
+@carts_bp.get("/")
 @jwt_required()
 def get_cart():
     """
@@ -86,7 +86,7 @@ def remove_cart_item(item_id):
     return jsonify(result), status_code
 
 # حذف السلة بالكامل
-@carts_bp.delete("")
+@carts_bp.delete("/")
 @jwt_required()
 def clear_cart():
     """Remove all items from the cart."""

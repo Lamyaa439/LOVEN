@@ -69,10 +69,12 @@ def create_profile():
     return jsonify(result), status_code
 
 # استعراض البروفايل 
-@artist_profiles_bp.get("/me")
-@jwt_required()
+@artist_profiles_bp.route("/me", methods=["GET", "OPTIONS"])
+@jwt_required(optional=True)
 def get_my_profile():
-    """Return the authenticated user's active artist profile."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+
     result, status_code = ArtistsProfileFacade.get_my_profile(get_jwt_identity())
     return jsonify(result), status_code
 

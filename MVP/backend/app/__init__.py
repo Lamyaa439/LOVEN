@@ -6,19 +6,26 @@ from app.api.v1.auth import auth_bp
 from app.api.v1.artists_profiles import artist_profiles_bp
 from app.api.v1.carts import carts_bp
 from app.api.v1.orders import order_bp
+from app.api.v1.artworks import artwork_bp
+from app.api.v1.feedback import feedback_bp
+from app.api.v1.reports import report_bp
 from app.extensions import db
 from config import Config
 
 # Global JWT instance
 jwt = JWTManager()
 
-
 def create_app():
     app = Flask(__name__)
 
     # Enable CORS for API routes
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
-
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "http://localhost:57876"}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    )
     # Load application configuration
     app.config.from_object(Config)
 
@@ -35,7 +42,12 @@ def create_app():
         from app.models.artwork import Artwork
         from app.models.cart import Cart
         from app.models.cart_item import CartItem
-from app.models.verification_request import VerificationRequest
+        from app.models.verification_request import VerificationRequest
+        from app.models.order import Order
+        from app.models.order_item import OrderItem
+        from app.models.feedback import Feedback
+        from app.models.report import Report
+
         db.create_all()
 
     @app.route("/")
@@ -56,15 +68,23 @@ from app.models.verification_request import VerificationRequest
     app.register_blueprint(artist_profiles_bp, url_prefix="/api/v1")
     
     # Shopping cart routes
-    app.register_blueprint(carts_bp, url_prefix="/api/v1")
+    app.register_blueprint(carts_bp, url_prefix="/api/v1/carts")
 
     # Order management routes
     app.register_blueprint(order_bp, url_prefix="/api/v1/orders")
 
     # Artwork discovery routes
     app.register_blueprint(artwork_bp, url_prefix="/api/v1/artworks")
+
     # Verification request routes
-app.register_blueprint(verification_requests_bp, url_prefix="/api/v1")
+    app.register_blueprint(verification_requests_bp, url_prefix="/api/v1")
+    
+    # Feedback routes
+    app.register_blueprint(feedback_bp, url_prefix="/api/v1/feedback")
+    
+    # Reports routes
+    app.register_blueprint(report_bp, url_prefix="/api/v1/reports")
+
     # Print all registered routes
     print(app.url_map)
 

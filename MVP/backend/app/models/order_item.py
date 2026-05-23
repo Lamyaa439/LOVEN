@@ -1,71 +1,146 @@
 from app.extensions import db
-from app.models.base_model import BaseModel
-
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import CheckConstraint
+import uuid
 
 # =========================================================
 # Model: OrderItem
 # =========================================================
 # Description:
-# Represents a single artwork item inside an order.
+# Represents a single artwork inside a customer order.
 #
 # Relationships:
 # - Belongs to one order
 # - References one artwork
 #
 # Purpose:
-# Stores individual purchased artwork items
-# associated with a customer order.
+# Stores purchased artwork information and preserves
+# historical pricing using price_at_purchase.
 #
-# Inherited from BaseModel:
-# - id
-# - created_at
+# IMPORTANT:
+# This model intentionally DOES NOT inherit
+# from BaseModel.
+#
+# Reason:
+# The official schema does not include:
 # - updated_at
 # - deleted_at
-# - soft_delete()
-# - restore()
+# for order_items.
+#
+# Financial records should remain immutable.
 # =========================================================
 
-class OrderItem(BaseModel):
+
+class OrderItem(db.Model):
+
     # Database table name
     __tablename__ = "order_items"
 
-    # Reference to the parent order
+    # =====================================================
+    # Primary Key
+    # =====================================================
+
+    # Unique order item identifier
+    id = db.Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4
+    )
+
+    # =====================================================
+    # Foreign Keys
+    # =====================================================
+
+    # Reference to parent order
     order_id = db.Column(
-        db.UUID(as_uuid=True),
-        db.ForeignKey("orders.id"),
+        UUID(as_uuid=True),
+
+        # Financial records should never cascade delete
+        db.ForeignKey(
+            "orders.id",
+            ondelete="RESTRICT"
+        ),
+
         nullable=False
     )
 
-    # Reference to the purchased artwork
+    # Reference to purchased artwork
     artwork_id = db.Column(
-        db.UUID(as_uuid=True),
-        db.ForeignKey("artworks.id"),
+        UUID(as_uuid=True),
+
+        # Purchased artworks should remain protected
+        db.ForeignKey(
+            "artworks.id",
+            ondelete="RESTRICT"
+        ),
+
         nullable=False
     )
 
-    # Quantity of artwork units purchased
+    # =====================================================
+    # Purchase Information
+    # =====================================================
+
+    # Number of artwork units purchased
     quantity = db.Column(
         db.Integer,
-        nullable=False,
-        default=1
+        nullable=False
     )
 
-    # Price of the artwork at purchase time
-    # Stored separately in case artwork prices change later
-    price = db.Column(
+    # Historical artwork price at purchase time
+    #
+    # IMPORTANT:
+    # This preserves financial history even if
+    # artwork prices later change.
+    price_at_purchase = db.Column(
         db.Numeric(10, 2),
         nullable=False
     )
 
+    # =====================================================
+    # Audit Timestamp
+    # =====================================================
+
+    # Timestamp when order item was created
+    created_at = db.Column(
+        db.DateTime,
+        server_default=db.func.current_timestamp()
+    )
+
+    # =====================================================
+    # Database Constraints
+    # =====================================================
+
+    __table_args__ = (
+
+        # Quantity must be greater than zero
+        CheckConstraint(
+            "quantity > 0",
+            name="check_order_item_quantity_positive"
+        ),
+
+        # Price cannot be negative
+        CheckConstraint(
+            "price_at_purchase >= 0",
+            name="check_order_item_price_positive"
+        ),
+    )
+
+    # =====================================================
+    # Serialization Helper
+    # =====================================================
+
     def to_dict(self):
         """
-        Converts the OrderItem object into a serializable dictionary.
+        Convert OrderItem object into serializable dictionary.
 
         Returns:
-            dict: Order item data formatted for API responses.
+            dict: API-friendly order item data.
         """
+
         return {
-            # Convert UUID values into strings for JSON serialization
+
+            # Convert UUID values into strings
             "id": str(self.id) if self.id else None,
 
             # Parent order reference
@@ -82,30 +157,20 @@ class OrderItem(BaseModel):
                 else None
             ),
 
-            # Number of purchased units
+            # Purchase quantity
             "quantity": self.quantity,
 
-            # Convert Decimal values into float for API responses
-            "price": (
-                float(self.price)
-                if self.price is not None
+            # Historical locked price
+            "price_at_purchase": (
+                float(self.price_at_purchase)
+                if self.price_at_purchase is not None
                 else None
             ),
 
-            # Audit timestamps inherited from BaseModel
+            # Creation timestamp
             "created_at": (
                 self.created_at.isoformat()
                 if self.created_at
-                else None
-            ),
-            "updated_at": (
-                self.updated_at.isoformat()
-                if self.updated_at
-                else None
-            ),
-            "deleted_at": (
-                self.deleted_at.isoformat()
-                if self.deleted_at
                 else None
             ),
         }

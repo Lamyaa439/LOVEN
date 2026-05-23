@@ -4,7 +4,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_tok
 
 
 # Blueprint for authentication-related routes (register, login, logout)
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+# No url_prefix here — routes are /api/v1/register, /api/v1/login (matches Flutter ApiConstants).
+auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.post("/register")
 def register():
