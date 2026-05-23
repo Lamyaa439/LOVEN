@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
-import '../../model/artist_model.dart';
+import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 /// Grid of artworks — uses theme card surfaces and primary accent for price.
 class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
     super.key,
     required this.artworks,
+    this.canManage = false,
+    this.onDelete,
   });
 
   final List<ArtworkModel> artworks;
+
+  final bool canManage;
+
+  final Future<void> Function(ArtworkModel artwork)? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +52,8 @@ class ArtworkGridWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           return _ArtworkCard(
             artwork: artworks[index],
+            canManage: canManage,
+            onDelete: onDelete,
           );
         },
       ),
@@ -56,9 +64,15 @@ class ArtworkGridWidget extends StatelessWidget {
 class _ArtworkCard extends StatelessWidget {
   const _ArtworkCard({
     required this.artwork,
+    required this.canManage,
+    this.onDelete,
   });
 
   final ArtworkModel artwork;
+
+  final bool canManage;
+
+  final Future<void> Function(ArtworkModel artwork)? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +102,67 @@ class _ArtworkCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: hasImage
-                  ? Image.network(
-                      artwork.artworkImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          const _ImagePlaceholder(),
-                    )
-                  : const _ImagePlaceholder(),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  hasImage
+                      ? Image.network(
+                          artwork.artworkImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const _ImagePlaceholder(),
+                        )
+                      : const _ImagePlaceholder(),
+
+                  if (canManage)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Material(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text('Delete artwork?'),
+                                  content: Text(
+                                    'Are you sure you want to delete "${artwork.title}"?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(dialogContext, false);
+                                      },
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(dialogContext, true);
+                                      },
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirmed == true && onDelete != null) {
+                              await onDelete!(artwork);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(10),

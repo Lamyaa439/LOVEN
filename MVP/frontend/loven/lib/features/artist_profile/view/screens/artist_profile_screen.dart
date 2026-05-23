@@ -8,8 +8,9 @@ import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
 import '../../model/artist_repository.dart';
 import '../widgets/artist_header_widget.dart';
-import '../widgets/artwork_grid_widget.dart';
+import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
 
 class ArtistProfileScreen extends StatelessWidget {
   const ArtistProfileScreen({
@@ -23,18 +24,20 @@ class ArtistProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final cubit = ArtistProfileCubit(repository: ArtistRepository());
+    final cubit = ArtistProfileCubit(
+      repository: ArtistRepository(),
+    );
 
-        if (_isPublicView) {
-          cubit.fetchPublicArtistProfile(artistProfileId!);
-        } else {
-          cubit.fetchMyProfileData();
-        }
+    if (_isPublicView) {
+      cubit.fetchPublicArtistProfile(
+        artistProfileId!,
+      );
+    } else {
+      cubit.fetchMyProfileData();
+    }
 
-        return cubit;
-      },
+    return BlocProvider.value(
+      value: cubit,
       child: _ArtistProfileBody(
         isPublicView: _isPublicView,
         artistProfileId: artistProfileId,
@@ -207,7 +210,10 @@ class _SuccessContent extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: ArtistHeaderWidget(artist: artist),
+                child: ArtistHeaderWidget(
+                  artist: artist,
+                  artworkCount: state.artworks.length,
+                ),
               ),
               SliverToBoxAdapter(
                 child: Divider(
@@ -237,17 +243,39 @@ class _SuccessContent extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (!isPublicView) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                context.push('/artworks/create');
-                              },
-                              icon: const Icon(Icons.add),
-                              label: const Text('Upload Artwork'),
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final updated = await context.push(
+                                      '/artist-profile/edit',
+                                      extra: artist,
+                                    );
+                                    if (updated == true && context.mounted) {
+                                      context.read<ArtistProfileCubit>().fetchMyProfileData();
+                                    }
+                                  },
+                                  icon: const Icon(Icons.edit_outlined),
+                                  label: const Text('Edit Profile'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final created = await context.push('/artworks/create');
+                                    if (created == true && context.mounted) {
+                                      context.read<ArtistProfileCubit>().fetchMyProfileData();
+                                    }
+                                  },
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Upload'),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                         ],
                         Text(
                           isPublicView ? 'Artworks' : 'My Artworks',
@@ -260,7 +288,21 @@ class _SuccessContent extends StatelessWidget {
 
               if (showArtistFeatures)
                 SliverToBoxAdapter(
-                  child: ArtworkGridWidget(artworks: state.artworks),
+                  child: ArtworkGridWidget(
+                    artworks: state.artworks,
+                    canManage: !isPublicView,
+                    onDelete: (artwork) async {
+                      await ArtworkRepository().deleteArtwork(
+                        artworkId: artwork.id,
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Artwork deleted')),
+                        );
+                        context.read<ArtistProfileCubit>().fetchMyProfileData();
+                      }
+                    },
+                  ),
                 ),
 
               const SliverToBoxAdapter(

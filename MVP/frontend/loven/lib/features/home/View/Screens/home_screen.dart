@@ -7,6 +7,7 @@ import '../../controller/bloc/home_state.dart';
 import '../../controller/bloc/home_event.dart';
 
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
+import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 import '../widgets/art_card.dart';
@@ -24,37 +25,74 @@ class HomeScreen extends StatelessWidget {
     context.push('/signup?fromGuest=true');
   }
 
-  Future<void> _addArtworkToCart({
-    required BuildContext context,
-    required ArtworkModel art,
-  }) async {
-    final artworkId = art.id;
+Future<void> _addArtworkToCart({
+  required BuildContext context,
+  required ArtworkModel art,
+}) async {
+  final artworkId = art.id;
 
-    print('ART OBJECT: $art');
-    print('ARTWORK ID SENT TO CART: $artworkId');
-
-    if (artworkId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Artwork ID missing'),
-        ),
-      );
-      return;
-    }
-
-    await context.read<CartCubit>().addItem(
-          artworkId: artworkId,
-          quantity: 1,
-        );
-
+  if (artworkId.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${art.title} added to cart',
-        ),
-      ),
+      const SnackBar(content: Text('Artwork ID missing')),
     );
+    return;
   }
+
+  final cartState = context.read<CartCubit>().state;
+
+  int currentCartQuantity = 0;
+
+  if (cartState is CartLoaded) {
+    final items = cartState.cart['items'] as List? ?? [];
+
+    for (final item in items) {
+      final itemArtworkId =
+          item['artwork_id']?.toString() ??
+          item['artwork']?['id']?.toString() ??
+          '';
+
+      if (itemArtworkId == artworkId) {
+        currentCartQuantity = ((item['quantity'] as num?)?.toInt() ?? 0);
+        break;
+      }
+    }
+  }
+
+  final stock = art.quantityAvailable ?? 0;
+  
+  if (stock <= 0) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('This artwork is out of stock.'),
+    ),
+  );
+  return;
+}
+
+if (currentCartQuantity >= stock) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        stock == 1
+            ? 'Only 1 item is available in stock.'
+            : 'Only $stock items are available in stock.',
+      ),
+    ),
+  );
+  return;
+}
+
+await context.read<CartCubit>().addItem(
+  artworkId: artworkId,
+  quantity: 1,
+);
+
+await context.read<CartCubit>().getCart();
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('${art.title} added to cart')),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

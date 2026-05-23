@@ -9,6 +9,7 @@ from app.api.v1.orders import order_bp
 from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
+from app.api.v1.favorites import favorites_bp
 from app.extensions import db
 from config import Config
 
@@ -46,6 +47,7 @@ def create_app():
         from app.models.order_item import OrderItem
         from app.models.feedback import Feedback
         from app.models.report import Report
+        from app.models.favorites import Favorite
 
         db.create_all()
 
@@ -80,6 +82,9 @@ def create_app():
     
     # Reports routes
     app.register_blueprint(report_bp, url_prefix="/api/v1/reports")
+
+    # Favorites routes
+    app.register_blueprint(favorites_bp, url_prefix="/api/v1/favorites")
 
     # Print all registered routes
     print(app.url_map)

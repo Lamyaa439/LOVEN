@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
+import 'package:loven/features/artist_profile/model/artist_repository.dart';
 import 'package:loven/features/auth/view/screens/login_page.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
@@ -9,6 +12,7 @@ import 'package:loven/features/home/View/art_details_screen.dart';
 import 'package:loven/features/auth/view/screens/signup_page.dart';
 import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
+import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_screen.dart';
 
 bool isUserBrowsingAsGuest = true;
 
@@ -86,6 +90,19 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/artworks/create',
       builder: (context, state) => const CreateArtworkScreen(),
+    ),
+
+    GoRoute(
+      path: '/artist-profile/edit',
+      builder: (context, state) {
+        final artist = state.extra as ArtistModel;
+        return BlocProvider(
+          create: (_) => ArtistProfileCubit(
+            repository: ArtistRepository(),
+          ),
+          child: EditArtistProfileScreen(artist: artist),
+        );
+      },
     ),
     
     GoRoute(

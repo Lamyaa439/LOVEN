@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../controller/cubit/artwork_cubit.dart';
 import '../../controller/cubit/artwork_state.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
 
 class CreateArtworkScreen extends StatefulWidget {
   const CreateArtworkScreen({super.key});
@@ -64,7 +66,9 @@ class _CreateArtworkScreenState
             ),
           );
 
-          context.go('/');
+          context.read<HomeBloc>().add(FetchHomeData());
+
+          context.pop(true);
         }
 
         if (state is ArtworkError) {

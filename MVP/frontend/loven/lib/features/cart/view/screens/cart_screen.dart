@@ -112,11 +112,23 @@ class _CartScreenState extends State<CartScreen> {
                         return CartItemWidget(
                           item: item,
                           onIncrease: () {
-                            context.read<CartCubit>().updateItem(
-                                  itemId: item.id,
-                                  quantity: item.quantity + 1,
+                            if (item.quantity >= item.stockQuantity) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    item.stockQuantity == 1
+                                    ? 'Only 1 item is available in stock.'
+                                    : 'Only ${item.stockQuantity} items are available in stock.',
+                                    ),
+                                  ),
                                 );
-                          },
+                                return;
+                              }
+                              context.read<CartCubit>().updateItem(
+                                itemId: item.id,
+                                quantity: item.quantity + 1,
+                              );
+                            },
                           onDecrease: () {
                             if (item.quantity <= 1) {
                               context.read<CartCubit>().removeItem(
