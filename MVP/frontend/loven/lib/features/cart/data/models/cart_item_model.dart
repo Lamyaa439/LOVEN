@@ -6,6 +6,7 @@ class CartItemModel {
   final double price;
   final double shippingFee;
   final int quantity;
+  final int stockQuantity;
 
   CartItemModel({
     required this.id,
@@ -15,6 +16,7 @@ class CartItemModel {
     required this.price,
     required this.shippingFee,
     required this.quantity,
+    required this.stockQuantity,
   });
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
@@ -41,7 +43,15 @@ class CartItemModel {
         artwork['shipping_fee'] ??
             json['shipping_fee'],
       ),
+
       quantity: _toInt(json['quantity']),
+
+      stockQuantity: _toInt(
+        artwork['quantity_available'] ??
+            artwork['stock_quantity'] ??
+            json['stock_quantity'] ??
+            json['quantity_available'],
+      ),
     );
   }
 
