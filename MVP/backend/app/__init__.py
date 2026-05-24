@@ -22,11 +22,11 @@ def create_app():
     # Enable CORS for API routes
     CORS(
         app,
-        resources={r"/api/*": {"origins": "http://localhost:57876"}},
-        supports_credentials=True,
+        resources={r"/api/*": {"origins": "*"}},
         allow_headers=["Content-Type", "Authorization"],
         methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     )
+    
     # Load application configuration
     app.config.from_object(Config)
 

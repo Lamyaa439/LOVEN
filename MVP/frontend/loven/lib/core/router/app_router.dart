@@ -24,10 +24,12 @@ import 'package:loven/features/splash/splash_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
+
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
     _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
   }
+
   @override
   void dispose() {
     _subscription.cancel();
@@ -42,6 +44,7 @@ GoRouter createRouter(AuthCubit authCubit) {
     redirect: (context, state) {
       final authState = authCubit.state;
       final isGuest = authState is AuthGuest;
+      final isAuthenticated = authState is AuthSuccess;
 
       final path = state.matchedLocation;
 
@@ -55,6 +58,11 @@ GoRouter createRouter(AuthCubit authCubit) {
       if (isGuest && isProtectedPath) {
         return '/auth';
       }
+
+      if (isAuthenticated && path == '/splash_screen') {
+        return '/';
+      }
+
       return null;
     },
     routes: [
@@ -65,7 +73,9 @@ GoRouter createRouter(AuthCubit authCubit) {
         ),
       ),
       GoRoute(
-          path: '/profile', builder: (context, state) => const ProfileScreen()),
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
       GoRoute(
         path: '/auth',
         builder: (context, state) => const SignupPage(),
@@ -101,7 +111,7 @@ GoRouter createRouter(AuthCubit authCubit) {
         path: '/artist-profile/edit',
         builder: (context, state) {
           final artist = state.extra as ArtistModel;
-          
+
           return BlocProvider(
             create: (_) => ArtistProfileCubit(
               repository: ArtistRepository(),
@@ -128,6 +138,7 @@ GoRouter createRouter(AuthCubit authCubit) {
           final artItem = extra is ArtworkModel
               ? extra
               : ArtworkModel.fromJson(extra as Map<String, dynamic>);
+
           return ArtDetailsScreen(
             artItem: artItem,
           );

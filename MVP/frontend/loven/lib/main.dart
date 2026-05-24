@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 
 import 'firebase_options.dart';
 import 'core/res/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'features/auth/controller/cubit/auth_cubit.dart';
-import 'features/auth/controller/cubit/auth_state.dart';
 import 'features/home/controller/bloc/home_bloc.dart';
 import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
@@ -23,23 +22,22 @@ import 'features/order/controller/cubit/order_cubit.dart';
 import 'features/feedback/data/repositories/feedback_repository.dart';
 import 'features/feedback/controller/cubit/feedback_cubit.dart';
 import 'features/report/data/repositories/report_repository.dart';
-import 'features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/data/repositories/favorites_repository.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
 
-// Theme Cubit defined in main
 class ThemeBloc extends Cubit<ThemeMode> {
   ThemeBloc() : super(ThemeMode.light);
-  void toggleTheme() =>
-      emit(state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
+
+  void toggleTheme() {
+    emit(state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
+  }
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -57,10 +55,12 @@ class LovenApp extends StatelessWidget {
         BlocProvider(create: (context) => NavigationBarCubit()),
         BlocProvider(create: (context) => HomeBloc()..add(FetchHomeData())),
         BlocProvider(create: (context) => ThemeBloc()),
-        BlocProvider(create: (context) => AuthCubit()..checkAuthStatus()),
+        BlocProvider(create: (context) => AuthCubit()),
         BlocProvider(
-            create: (context) =>
-                ArtistProfileCubit(repository: ArtistRepository())),
+          create: (context) => ArtistProfileCubit(
+            repository: ArtistRepository(),
+          ),
+        ),
         BlocProvider(create: (context) => CartCubit(CartRepository())),
         BlocProvider(create: (context) => ArtworkCubit(ArtworkRepository())),
         BlocProvider(create: (context) => OrderCubit(OrderRepository())),
@@ -69,17 +69,16 @@ class LovenApp extends StatelessWidget {
         BlocProvider(
           create: (_) => FavoritesCubit(
             FavoritesRepository(),
-            )..loadFavorites(),
-          ),
+          )..loadFavorites(),
+        ),
         BlocProvider(
           create: (_) => VerificationRequestCubit(
             VerificationRequestRepository(),
           ),
         ),
       ],
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          // Router is now defined here, linked to AuthCubit
+      child: Builder(
+        builder: (context) {
           final router = createRouter(context.read<AuthCubit>());
 
           return BlocBuilder<ThemeBloc, ThemeMode>(
@@ -90,7 +89,7 @@ class LovenApp extends StatelessWidget {
                 routerConfig: router,
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
-                themeMode: themeMode, //.system to match the users theme
+                themeMode: themeMode,
                 localizationsDelegates: const [
                   GlobalMaterialLocalizations.delegate,
                   GlobalWidgetsLocalizations.delegate,
@@ -98,7 +97,7 @@ class LovenApp extends StatelessWidget {
                 ],
                 supportedLocales: const [
                   Locale('en', 'US'),
-                  Locale('ar', 'SA')
+                  Locale('ar', 'SA'),
                 ],
               );
             },

@@ -44,35 +44,31 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> checkAuthStatus() async {
-    // 1. Check if a user is already signed in (Email/Password)
     final user = FirebaseAuth.instance.currentUser;
-
+    
     if (user != null) {
       if (user.isAnonymous) {
         emit(AuthGuest());
       } else {
-        // Already have a logged-in user
         emit(AuthSuccess());
       }
-    } else {
-      // 2. No session found? Automatically enter Guest Mode
-      await continueAsGuest();
+      } else {
+        emit(AuthInitial());
+      }
     }
-  }
-
-  Future<void> continueAsGuest() async {
-    emit(AuthLoading());
-    try {
-      // Corrected the typo below:
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInAnonymously();
-
-      emit(AuthGuest());
-    } catch (e) {
-      print("Guest error: $e");
-      emit(AuthFailure("Could not enter guest mode."));
-    }
-  }
+    
+    Future<void> continueAsGuest() async {
+      emit(AuthLoading());
+      
+      try {
+        await FirebaseAuth.instance.signInAnonymously();
+        
+        emit(AuthGuest());
+        } catch (e) {
+          print("Guest error: $e");
+          emit(AuthFailure("Could not enter guest mode."));
+        }
+      }
 
   Future<void> login({
     required String email,
