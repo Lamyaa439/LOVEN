@@ -39,7 +39,7 @@ class ThemeBloc extends Cubit<ThemeMode> {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
+  // Initialize Firebase configuration before running the app
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -47,20 +47,46 @@ Future<void> main() async {
   runApp(const LovenApp());
 }
 
-class LovenApp extends StatelessWidget {
+// Changed to StatefulWidget to initialize the router only once
+class LovenApp extends StatefulWidget {
   const LovenApp({super.key});
+
+  @override
+  State<LovenApp> createState() => _LovenAppState();
+}
+
+class _LovenAppState extends State<LovenApp> {
+  // 1. Declare persistent instances for AuthCubit and AppRouter
+  late final AuthCubit _authCubit;
+  late final AppRouter _appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    // 2. Initialize variables exactly once during app startup
+    _authCubit = AuthCubit()..checkAuthStatus();
+    _appRouter = AppRouter(_authCubit);
+  }
+
+  // تنظيف الذاكرة إذا أغلق التطبيق
+  @override
+  void dispose() {
+    // 3. Clean up memory and close the cubit when the app is terminated
+    _authCubit.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        // Provide the already initialized AuthCubit using BlocProvider.value
+        BlocProvider.value(value: _authCubit),
         BlocProvider(create: (context) => NavigationBarCubit()),
         BlocProvider(create: (context) => HomeBloc()..add(FetchHomeData())),
         BlocProvider(create: (context) => ThemeBloc()),
-        BlocProvider(create: (context) => AuthCubit()..checkAuthStatus()),
-        BlocProvider(
-            create: (context) =>
-                ArtistProfileCubit(repository: ArtistRepository())),
+        // Note: ArtistProfileCubit and VerificationRequestCubit were removed 
+        // from global providers. They are now scoped directly in app_router.dart.
         BlocProvider(create: (context) => CartCubit(CartRepository())),
         BlocProvider(create: (context) => ArtworkCubit(ArtworkRepository())),
         BlocProvider(create: (context) => OrderCubit(OrderRepository())),
@@ -77,17 +103,14 @@ class LovenApp extends StatelessWidget {
           ),
         ),
       ],
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          // Router is now defined here, linked to AuthCubit
-          final router = createRouter(context.read<AuthCubit>());
-
-          return BlocBuilder<ThemeBloc, ThemeMode>(
+      // 4. Removed the BlocBuilder for AuthCubit that was wrapping the MaterialApp 
+      // to prevent the entire navigation stack from rebuilding continuously.
+      child: BlocBuilder<ThemeBloc, ThemeMode>(
             builder: (context, themeMode) {
               return MaterialApp.router(
                 title: 'LOVEN',
                 debugShowCheckedModeBanner: false,
-                routerConfig: router,
+                routerConfig: _appRouter.router, // Inject the persistent router
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeMode, //.system to match the users theme
@@ -102,9 +125,7 @@ class LovenApp extends StatelessWidget {
                 ],
               );
             },
-          );
-        },
-      ),
-    );
-  }
-}
+          ),
+        );
+      }
+    }
