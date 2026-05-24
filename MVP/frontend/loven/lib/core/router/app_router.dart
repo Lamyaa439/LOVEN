@@ -35,8 +35,11 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-GoRouter createRouter(AuthCubit authCubit) {
-  return GoRouter(
+class AppRouter {
+  final AuthCubit authCubit;
+  AppRouter(this.authCubit);
+  
+  late final GoRouter router = GoRouter(
     initialLocation: '/splash_screen',
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
@@ -80,7 +83,10 @@ GoRouter createRouter(AuthCubit authCubit) {
       ),
       GoRoute(
         path: '/my-profile',
-        builder: (context, state) => const ArtistProfileScreen(),
+        builder: (context, state) => BlocProvider(
+          create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
+          child: const ArtistProfileScreen(),
+          ),
       ),
       GoRoute(
         path: '/artist/:artistId',
@@ -125,12 +131,17 @@ GoRouter createRouter(AuthCubit authCubit) {
         path: '/art-details',
         builder: (context, state) {
           final extra = state.extra;
-          final artItem = extra is ArtworkModel
+          try {
+            final artItem = extra is ArtworkModel
               ? extra
               : ArtworkModel.fromJson(extra as Map<String, dynamic>);
-          return ArtDetailsScreen(
+            return ArtDetailsScreen(
             artItem: artItem,
           );
+          } catch (e) {
+            return const Scaffold(
+              body: Center(child: Text('Failed to load artwork details')));
+          }
         },
       ),
     ],
