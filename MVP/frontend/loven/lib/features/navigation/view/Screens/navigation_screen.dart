@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
-import 'package:loven/features/auth/view/screens/profile_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
 import '../../../../main.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
@@ -50,13 +49,12 @@ class NavigationScreen extends StatelessWidget {
           children: [
             const HomeScreen(),
             isGuest
-                ? _buildGuestGate(context, "Sign in to view your cart")
-                : const CartScreen(),
-            // isGuest
-            //     ? _buildGuestGate(context, "Sign in to view profiles")
-            //     : const ArtistProfileScreen(),
-            const ProfileScreen()
-          ],
+              ? _buildGuestGate(context, "Sign in to view your cart")
+              : const CartScreen(),
+            isGuest
+              ? _buildGuestGate(context, "Sign in to view your profile")
+              : const ArtistProfileScreen(),
+            ],
         );
       }),
       bottomNavigationBar: const NavigationWidget(),
