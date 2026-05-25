@@ -1,4 +1,7 @@
 PODS:
+  - Firebase/Auth (12.13.0):
+    - Firebase/CoreOnly
+    - FirebaseAuth (~> 12.13.0)
   - Firebase/CoreOnly (12.13.0):
     - FirebaseCore (~> 12.13.0)
   - Firebase/Messaging (12.13.0):
@@ -7,6 +10,10 @@ PODS:
   - Firebase/Storage (12.13.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.13.0)
+  - firebase_auth (6.5.1):
+    - Firebase/Auth (= 12.13.0)
+    - firebase_core
+    - Flutter
   - firebase_core (4.9.0):
     - Firebase/CoreOnly (= 12.13.0)
     - Flutter
@@ -19,6 +26,15 @@ PODS:
     - firebase_core
     - Flutter
   - FirebaseAppCheckInterop (12.13.0)
+  - FirebaseAuth (12.13.0):
+    - FirebaseAppCheckInterop (~> 12.13.0)
+    - FirebaseAuthInterop (~> 12.13.0)
+    - FirebaseCore (~> 12.13.0)
+    - FirebaseCoreExtension (~> 12.13.0)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+    - RecaptchaInterop (~> 101.0)
   - FirebaseAuthInterop (12.13.0)
   - FirebaseCore (12.13.0):
     - FirebaseCoreInternal (~> 12.13.0)
@@ -89,8 +105,10 @@ PODS:
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
   - PromisesObjC (2.4.0)
+  - RecaptchaInterop (101.0.0)
 
 DEPENDENCIES:
+  - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
@@ -102,6 +120,7 @@ SPEC REPOS:
   trunk:
     - Firebase
     - FirebaseAppCheckInterop
+    - FirebaseAuth
     - FirebaseAuthInterop
     - FirebaseCore
     - FirebaseCoreExtension
@@ -114,8 +133,11 @@ SPEC REPOS:
     - GTMSessionFetcher
     - nanopb
     - PromisesObjC
+    - RecaptchaInterop
 
 EXTERNAL SOURCES:
+  firebase_auth:
+    :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_messaging:
@@ -131,10 +153,12 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Firebase: 7d62445aeabdaea36f7d372f33052fed9a72514f
+  firebase_auth: bba295912fb4b0e71c91b2737d29403f4c2c3573
   firebase_core: 0013f886fbd0b4950865551eaab47784424bfdb5
   firebase_messaging: b875e4088ddd9ecd1834f6c89f6e0a1ffc7d98f0
   firebase_storage: 400da7dd1eaeb5f4b5e583dd67cdabe4ce62b4d6
   FirebaseAppCheckInterop: db09d7412340fb4b5a8727d4d410e5a5c780dd56
+  FirebaseAuth: fedecd40125af7f898ba4f0a328ac9f3a9c3b8c4
   FirebaseAuthInterop: 63d36ca102054d7336f87aec87b1c68a0bab77e0
   FirebaseCore: 58905958aa00a061397a0fd759ae4b55bddb3576
   FirebaseCoreExtension: 5b94169f1ee96ecc2dbde40bc53690e4d65eb652
@@ -150,6 +174,7 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 127211aeec0b1e904fc49f4f6f895dcc535b0ecf
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
 
 PODFILE CHECKSUM: c5714cc7a0136ee60f7fc0458c3f5839a0c04db8
 
