@@ -141,6 +141,21 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthGuest());
       }
     }
+    
+  /// Checks asynchronously if the email is already taken in the database.
+  /// 
+  /// This bridges the live client-side debounced validation with the repository.
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      // استدعاء المستودع ليفحص قاعدة البيانات مباشرة
+      final isExist = await _authRepository.checkEmailDuplication(email);
+      return isExist;
+    } catch (e) {
+      print("EMAIL CHECK ERROR: $e");
+      // صمام أمان: في حال حدوث خطأ في الشبكة نرجع false لكي لا نعطل المستخدم
+      return false;
+    }
+  }
 
   String _mapErrorMessage(Object error) {
     final errorText = error.toString();
