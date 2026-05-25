@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: primaryColor,
       body: Center(
         child: Image.asset(
-          'assets/images/logo.png',
+          'assets/images/loven-logo.png',
           width: 180, 
         ),
       ),
