@@ -40,7 +40,6 @@ def create_app():
     # Create database tables from SQLAlchemy models
     with app.app_context():
         from app import models
-        db.create_all()
 
     @app.route("/")
     def home():
