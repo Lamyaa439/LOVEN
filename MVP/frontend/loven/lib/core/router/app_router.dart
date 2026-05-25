@@ -21,6 +21,7 @@ import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
+import 'package:loven/features/splash/onboarding_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
@@ -82,6 +83,10 @@ class AppRouter {
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
         path: '/my-profile',
         builder: (context, state) => BlocProvider(
           create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
@@ -92,7 +97,10 @@ class AppRouter {
         path: '/artist/:artistId',
         builder: (context, state) {
           final artistId = state.pathParameters['artistId']!;
-          return ArtistProfileScreen(artistProfileId: artistId);
+          return BlocProvider(
+            create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
+            child: ArtistProfileScreen(artistProfileId: artistId),
+          );
         },
       ),
       GoRoute(
