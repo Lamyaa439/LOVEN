@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:loven/core/storage/token_storage.dart';
+
 /// ========================================================================
 /// API Client Configuration & Endpoints
 /// 
@@ -9,6 +11,12 @@ import 'package:flutter/foundation.dart';
 /// It implements Clean Architecture principles by separating the 
 /// endpoints (ApiEndpoints) from the networking logic (ApiClient).
 /// Base URLs are securely loaded from environment variables (.env).
+///
+/// Authentication:
+/// An [InterceptorsWrapper] automatically reads the JWT from
+/// [TokenStorage] and attaches it as a Bearer token on every outgoing
+/// request. Public endpoints (login, register) simply have no stored
+/// token, so the header is skipped — no per-route opt-out needed.
 /// ========================================================================
 
 
@@ -83,12 +91,17 @@ class ApiConstants {
 }
 
 /// Centralized Dio client for handling all network requests safely.
+///
+/// Accepts a [TokenStorage] instance to power the automatic auth interceptor.
+/// Create once at app startup and inject into all repositories.
 class ApiClient {
   late final Dio _dio;
+  final TokenStorage _tokenStorage;
 
-  ApiClient() {
-    // Load Base URL from .env, fallback to AWS IP if not found
-    final String baseUrl = dotenv.env['BASE_URL'] ?? 'http://16.170.246.241:5000/api/v1';
+  ApiClient({required TokenStorage tokenStorage})
+      : _tokenStorage = tokenStorage {
+    final String baseUrl =
+        dotenv.env['BASE_URL'] ?? 'http://16.170.246.241:5000/api/v1';
 
     _dio = Dio(
       BaseOptions(
@@ -102,7 +115,24 @@ class ApiClient {
       ),
     );
 
-    // Add logging interceptor only in Debug mode to track requests/responses
+    // =====================================================================
+    // Auth Interceptor
+    // Reads the JWT from secure storage before every request and attaches
+    // it as a Bearer token. For unauthenticated endpoints (login, register)
+    // the token will be null and the header is simply not added.
+    // =====================================================================
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _tokenStorage.getAccessToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
+    );
+
     if (kDebugMode) {
       _dio.interceptors.add(LogInterceptor(
         requestBody: true,
@@ -141,12 +171,17 @@ class ApiClient {
   // Error Handler
   // =======================================================================
 
-  /// Extracts backend error messages safely to be displayed in the UI
+  /// Extracts backend error messages safely to be displayed in the UI.
+  ///
+  /// The Flask backend returns errors under either the `"error"` key
+  /// (auth/validation) or the `"message"` key (general responses).
+  /// This handler checks both to ensure no error string is lost.
   String _handleError(DioException error) {
     if (error.response != null && error.response?.data != null) {
       final data = error.response!.data;
-      if (data is Map && data.containsKey('message')) {
-        return data['message'];
+      if (data is Map) {
+        if (data.containsKey('error')) return data['error'];
+        if (data.containsKey('message')) return data['message'];
       }
     }
     return "Network error occurred. Please try again later.";
