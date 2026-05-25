@@ -1,6 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from app.extensions import db
+from config import Config
+
+# import Blueprints
 from app.api.v1.verification_requests import verification_requests_bp
 from app.api.v1.auth import auth_bp
 from app.api.v1.artists_profiles import artist_profiles_bp
@@ -10,25 +14,20 @@ from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
-from app.extensions import db
-from config import Config
 
 # Global JWT instance
 jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-
-    # Enable CORS for API routes
-    CORS(
-        app,
-        resources={r"/api/*": {"origins": "http://localhost:57876"}},
-        supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization"],
-        methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    )
     # Load application configuration
     app.config.from_object(Config)
+
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": "*"}},
+        supports_credentials=True,
+    )
 
     # Initialize database
     db.init_app(app)
@@ -38,18 +37,7 @@ def create_app():
 
     # Create database tables from SQLAlchemy models
     with app.app_context():
-        from app.models.user import User
-        from app.models.artist_profile import ArtistProfile
-        from app.models.artwork import Artwork
-        from app.models.cart import Cart
-        from app.models.cart_item import CartItem
-        from app.models.verification_requests import VerificationRequest
-        from app.models.order import Order
-        from app.models.order_item import OrderItem
-        from app.models.feedback import Feedback
-        from app.models.report import Report
-        from app.models.favorites import Favorite
-
+        from app import models
         db.create_all()
 
     @app.route("/")
@@ -57,8 +45,7 @@ def create_app():
         """
         Health check route.
         """
-        return {"message": "LOVEN on Air!"}
-
+        return {"status": "success", "message": "LOVEN Backend API is running on AWS"}
     # =========================================================
     # Register API Blueprints
     # =========================================================
