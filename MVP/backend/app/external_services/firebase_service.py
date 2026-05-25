@@ -10,7 +10,7 @@ import os
 
 
 # Configuration: Use environment variables for security with local fallbacks
-SERVICE_ACCOUNT_KEY = os.getenv("FIREBASE_CREDENTIALS_PATH", "firebaseKey.json")
+SERVICE_ACCOUNT_KEY = os.getenv("FIREBASE_CREDENTIALS_PATH", "/app/firebaseKey.json")
 STORAGE_BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", "loven-88b0a.appspot.com")
 
 def initialize_firebase():
@@ -24,6 +24,12 @@ def initialize_firebase():
 
     # Check if Firebase has already been initialized
     if not firebase_admin._apps:
+        if not os.path.exists(SERVICE_ACCOUNT_KEY):
+            raise FileNotFoundError(
+                f"CRITICAL: Firebase key missing at {SERVICE_ACCOUNT_KEY}"
+                f"Ensure the file is properly mounted via Docker volumes."
+            )
+        
         try:
             # Load the service account credentials
             cred = credentials.Certificate(SERVICE_ACCOUNT_KEY)
@@ -36,8 +42,7 @@ def initialize_firebase():
             print("Firebase SDK: Successfully initialized (FCM + Storage).")
         except Exception as e: 
             # Catch and log any initialization errors gracefully
-            print(f"Firebase SDK: Initialization failed: {e}")
-
+            raise RuntimeError(f"CRITICAL ERROR: Firebase initialization failed: {e}")
 
 # Auto-initialize Firebase when this module is imported
 initialize_firebase()
