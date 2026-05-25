@@ -63,6 +63,14 @@ class AppRouter {
     },
     routes: [
       GoRoute(
+        path: '/splash_screen',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
         path: '/',
         builder: (context, state) => NavigationScreen(
           isGuest: authCubit.state is AuthGuest,
@@ -77,14 +85,6 @@ class AppRouter {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(fromGuest: true),
-      ),
-      GoRoute(
-        path: '/splash_screen',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: '/my-profile',
