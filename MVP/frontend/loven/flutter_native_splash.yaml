@@ -1,0 +1,12 @@
+# Configures the native OS (iOS/Android) splash screens.
+# This synchronizes the initial device launch screen with Flutter's 
+# animated splash screen, eliminating the double-flash effect.
+
+flutter_native_splash:
+  color: "#D0B1E6"
+  image: "assets/images/loven-logo.png"
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: true
