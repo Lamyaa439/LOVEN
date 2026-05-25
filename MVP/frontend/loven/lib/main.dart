@@ -8,6 +8,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'core/res/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+import 'core/network/api_constants.dart';
+import 'core/storage/token_storage.dart';
+import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/controller/cubit/auth_cubit.dart';
 import 'features/auth/controller/cubit/auth_state.dart';
 import 'features/home/controller/bloc/home_bloc.dart';
@@ -59,15 +62,23 @@ class LovenApp extends StatefulWidget {
 }
 
 class _LovenAppState extends State<LovenApp> {
-  // 1. Declare persistent instances for AuthCubit and AppRouter
+  // Shared singletons created once and injected down the dependency chain.
+  final TokenStorage _tokenStorage = TokenStorage();
+  late final ApiClient _apiClient;
+  late final AuthRepository _authRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
 
   @override
   void initState() {
     super.initState();
-    // 2. Initialize variables exactly once during app startup
-    _authCubit = AuthCubit()..checkAuthStatus();
+
+    _apiClient = ApiClient(tokenStorage: _tokenStorage);
+    _authRepository = AuthRepository(
+      apiClient: _apiClient,
+      tokenStorage: _tokenStorage,
+    );
+    _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
     _appRouter = AppRouter(_authCubit);
   }
 
