@@ -71,4 +71,8 @@ class ApiConstants {
 // =====================================================
 
   static const String verificationRequests = '$baseUrl/verification-requests';
+  
+  static String verificationRequestStatus(String requestId) =>
+    '$verificationRequests/$requestId/status';
+    
 }

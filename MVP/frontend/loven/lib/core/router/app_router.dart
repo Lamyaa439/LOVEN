@@ -21,6 +21,8 @@ import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
+import 'package:loven/features/admin/view/screens/admin_dashboard_screen.dart';
+import 'package:loven/features/admin/view/screens/admin_verification_requests_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
@@ -44,25 +46,21 @@ GoRouter createRouter(AuthCubit authCubit) {
     redirect: (context, state) {
       final authState = authCubit.state;
       final isGuest = authState is AuthGuest;
-      final isAuthenticated = authState is AuthSuccess;
-
+      
       final path = state.matchedLocation;
-
+      
       final isProtectedPath = path.startsWith('/cart') ||
-          path.startsWith('/my-profile') ||
-          path.startsWith('/artist') ||
-          path.startsWith('/art-details') ||
-          path.startsWith('/artworks/create') ||
-          path.startsWith('/verification-request');
-
+      path.startsWith('/my-profile') ||
+      path.startsWith('/artist') ||
+      path.startsWith('/art-details') ||
+      path.startsWith('/artworks/create') ||
+      path.startsWith('/admin') ||
+      path.startsWith('/verification-request');
+      
       if (isGuest && isProtectedPath) {
         return '/auth';
       }
-
-      if (isAuthenticated && path == '/splash_screen') {
-        return '/';
-      }
-
+      
       return null;
     },
     routes: [
@@ -75,6 +73,10 @@ GoRouter createRouter(AuthCubit authCubit) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
         path: '/auth',
@@ -98,6 +100,28 @@ GoRouter createRouter(AuthCubit authCubit) {
           final artistId = state.pathParameters['artistId']!;
           return ArtistProfileScreen(artistProfileId: artistId);
         },
+      ),
+      GoRoute(
+        path: '/admin/verification-requests',
+        builder: (context, state) {
+          return BlocProvider(
+            create: (_) => VerificationRequestCubit(
+              VerificationRequestRepository(),
+              )..fetchAllRequests(),
+              child: const AdminVerificationRequestsScreen(),
+            );
+          },
+        ),
+      GoRoute(
+        path: '/admin/reports',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Admin Reports'),
+          ),
+          body: const Center(
+            child: Text('Admin Reports'),
+          ),
+        ),
       ),
       GoRoute(
         path: '/cart',

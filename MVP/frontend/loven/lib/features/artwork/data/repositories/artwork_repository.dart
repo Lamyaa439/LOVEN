@@ -40,7 +40,7 @@ class ArtworkRepository {
     final token = await _tokenStorage.getAccessToken();
 
     final response = await http.get(
-      Uri.parse('${ApiConstants.artworks}/$artworkId'),
+      Uri.parse('${ApiConstants.artworks}$artworkId'),
       headers: {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
@@ -188,7 +188,7 @@ class ArtworkRepository {
     if (status != null) body['status'] = status;
 
     final response = await http.patch(
-      Uri.parse('${ApiConstants.artworks}/$artworkId'),
+      Uri.parse('${ApiConstants.artworks}$artworkId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -211,7 +211,7 @@ class ArtworkRepository {
     final token = await _tokenStorage.getAccessToken();
 
     final response = await http.delete(
-      Uri.parse('${ApiConstants.artworks}/$artworkId'),
+      Uri.parse('${ApiConstants.artworks}$artworkId'),
       headers: {
         'Authorization': 'Bearer $token',
       },

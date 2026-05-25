@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'dart:convert';
+import 'package:loven/core/storage/token_storage.dart';
 import '../../controller/cubit/auth_state.dart';
 import 'package:loven/core/router/app_router.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
@@ -46,12 +47,46 @@ class _LoginPageState extends State<LoginPage> {
   void _goToGuestHome() {
     context.go('/');
   }
-
-  void _goToLoggedInHome() {
+  
+  Future<void> _goToLoggedInHome() async {
     if (!mounted) return;
-
-    GoRouter.of(context).go('/');
-  }
+    
+    final token = await TokenStorage().getAccessToken();
+    String? role;
+    
+    if (token != null && token.isNotEmpty) {
+      try {
+        final parts = token.split('.');
+        
+        if (parts.length == 3) {
+          final payload = utf8.decode(
+            base64Url.decode(base64Url.normalize(parts[1])),
+          );
+          
+          final data = jsonDecode(payload);
+          print('JWT PAYLOAD: $data');
+          final sub = data['sub'];
+          print('JWT SUB: ${data['sub']}');
+          
+          if (sub is Map<String, dynamic>) {
+            role = sub['role']?.toString() ?? sub['system_role']?.toString();
+          } else {
+            role = data['role']?.toString() ?? data['system_role']?.toString();
+          }
+        }
+      } catch (_) {
+        role = null;
+      }
+    }
+    
+    if (!mounted) return;
+    
+    if (role == 'admin') {
+      context.go('/admin');
+      } else {
+        context.go('/');
+      }
+    }
 
   InputDecoration inputDecoration(String hint, ThemeData theme) {
     return InputDecoration(
