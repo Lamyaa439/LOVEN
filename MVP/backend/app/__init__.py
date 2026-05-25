@@ -14,6 +14,7 @@ from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
+from flask_migrate import Migrate
 
 # Global JWT instance
 jwt = JWTManager()
@@ -32,6 +33,7 @@ def create_app():
     # Initialize database
     db.init_app(app)
 
+    migrate = Migrate(app, db)
     # Initialize JWT manager
     jwt.init_app(app)
 
