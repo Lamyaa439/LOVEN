@@ -47,3 +47,5 @@ app.*.map.json
 backend/firebaseKey.json
 firebaseKey.json
 lib/build/
+
+.env

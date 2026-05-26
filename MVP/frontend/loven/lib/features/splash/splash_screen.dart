@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/res/theme/app_colors.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
@@ -18,62 +19,53 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState
     extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-  late Animation<double> fadeAnimation;
-  late Animation<double> scaleAnimation;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    controller = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration:
-          const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1200),
     );
 
-    fadeAnimation = CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeIn,
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
     );
 
-    scaleAnimation = Tween<double>(
+    _scaleAnimation = Tween<double>(
       begin: 0.85,
       end: 1.0,
     ).animate(
       CurvedAnimation(
-        parent: controller,
+        parent: _animationController,
         curve: Curves.easeOutBack,
       ),
     );
 
-    controller.forward();
-
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) {
-      _checkAuthAndNavigate();
-    });
+    _executeSplashSequence();
   }
 
-  Future<void>
-      _checkAuthAndNavigate() async {
+  Future<void> _executeSplashSequence() async {
+    await _animationController.forward();
+
     await Future.delayed(
-      const Duration(seconds: 2),
+      const Duration(milliseconds: 500),
     );
 
     if (!mounted) return;
 
-    await context
-        .read<AuthCubit>()
-        .checkAuthStatus();
+    await context.read<AuthCubit>().checkAuthStatus();
 
     if (!mounted) return;
 
-    final authState =
-        context.read<AuthCubit>().state;
+    final authState = context.read<AuthCubit>().state;
 
-    if (authState is AuthSuccess ||
-        authState is AuthGuest) {
+    if (authState is AuthSuccess || authState is AuthGuest) {
       context.go('/');
     } else {
       context.go('/onboarding');
@@ -82,19 +74,19 @@ class _SplashScreenState
 
   @override
   void dispose() {
-    controller.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.primaryPurple,
       body: Center(
         child: FadeTransition(
-          opacity: fadeAnimation,
+          opacity: _fadeAnimation,
           child: ScaleTransition(
-            scale: scaleAnimation,
+            scale: _scaleAnimation,
             child: Image.asset(
               'assets/images/loven-logo.png',
               width: 180,

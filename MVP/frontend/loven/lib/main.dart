@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,7 +7,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'core/res/theme/app_theme.dart';
 import 'core/router/app_router.dart';
-
+import 'core/network/api_constants.dart';
+import 'core/storage/token_storage.dart';
+import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/controller/cubit/auth_cubit.dart';
 import 'features/home/controller/bloc/home_bloc.dart';
 import 'features/home/controller/bloc/home_event.dart';
@@ -48,6 +51,9 @@ class ThemeBloc extends Cubit<ThemeMode> {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
+
+  // Initialize Firebase configuration before running the app
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -63,16 +69,31 @@ class LovenApp extends StatefulWidget {
 }
 
 class _LovenAppState extends State<LovenApp> {
+
+  // Shared singletons created once and injected down the dependency chain.
+  final TokenStorage _tokenStorage = TokenStorage();
+  late final ApiClient _apiClient;
+  late final AuthRepository _authRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
-
+  
   @override
   void initState() {
     super.initState();
-
-    _authCubit = AuthCubit()..checkAuthStatus();
-    _appRouter = AppRouter(_authCubit);
-  }
+    
+    _apiClient = ApiClient(tokenStorage: _tokenStorage);
+    
+    _authRepository = AuthRepository(
+      apiClient: _apiClient,
+      tokenStorage: _tokenStorage,
+    );
+    
+    _authCubit = AuthCubit(
+      authRepository: _authRepository,
+      )..checkAuthStatus();
+      
+      _appRouter = AppRouter(_authCubit);
+    }
 
   @override
   void dispose() {

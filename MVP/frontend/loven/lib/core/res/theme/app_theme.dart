@@ -132,6 +132,27 @@ class AppTheme {
           ),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: false,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        hintStyle: TextStyle(
+          fontFamily: 'Almarai',
+          fontSize: 14,
+          color: Colors.grey.shade400,
+        ),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: AppColors.primaryBlue, width: 1.5),
+        ),
+        errorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade400),
+        ),
+        focusedErrorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+        ),
+      ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryBlue.withOpacity(0.15),
         selectedColor: AppColors.primaryBlue,
@@ -238,6 +259,27 @@ class AppTheme {
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: false,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        hintStyle: TextStyle(
+          fontFamily: 'Almarai',
+          fontSize: 14,
+          color: Colors.grey.shade600,
+        ),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey.shade700),
+        ),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: AppColors.primaryPurple, width: 1.5),
+        ),
+        errorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade400),
+        ),
+        focusedErrorBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
         ),
       ),
       chipTheme: ChipThemeData(
