@@ -162,5 +162,20 @@ class User(BaseModel):
         except ValueError:
             return False
     
+    def to_dict(self):
+        """
+        API-safe serialization. Deliberately excludes ``password`` to
+        prevent accidental credential leakage in JSON responses.
+        """
+        return {
+            "id": str(self.id) if self.id else None,
+            "name": self.name,
+            "email": self.email,
+            "system_role": self.system_role,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
     def __repr__(self):
         return f"<User(email={self.email}, role={self.system_role})>"

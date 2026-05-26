@@ -212,5 +212,25 @@ class Artwork(BaseModel):
 
         return value
 
+    def to_dict(self):
+        """
+        Canonical serialization matching the shape previously produced by
+        ``_artwork_to_dict()`` in the service layer. Decimals are converted
+        to strings to preserve financial precision across JSON transport.
+        """
+        return {
+            "id": str(self.id) if self.id else None,
+            "artist_profile_id": str(self.artist_profile_id) if self.artist_profile_id else None,
+            "title": self.title,
+            "description": self.description,
+            "price": str(self.price) if self.price is not None else None,
+            "quantity_available": self.quantity_available,
+            "shipping_fee": str(self.shipping_fee) if self.shipping_fee is not None else None,
+            "artwork_image_url": self.artwork_image_url,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
     def __repr__(self):
         return f"<Artwork(title={self.title}, price={self.price}, status={self.status})>"

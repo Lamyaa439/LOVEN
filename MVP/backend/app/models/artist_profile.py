@@ -148,5 +148,23 @@ class ArtistProfile(BaseModel):
 
         return clean_url
 
+    def to_dict(self):
+        """
+        Canonical serialization matching the shape previously produced by
+        ``_profile_to_dict()`` in the service layer.
+        """
+        return {
+            "id": str(self.id) if self.id else None,
+            "user_id": str(self.user_id) if self.user_id else None,
+            "display_name": self.display_name,
+            "city": self.city,
+            "bio": self.bio,
+            "profile_image_url": self.profile_image_url,
+            "is_verified": self.is_verified,
+            "shipping_policy": self.shipping_policy,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
     def __repr__(self):
         return f"<ArtistProfile(display_name={self.display_name}, user_id={self.user_id})>"
