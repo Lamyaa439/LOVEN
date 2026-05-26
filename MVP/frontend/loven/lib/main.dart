@@ -132,7 +132,7 @@ class _LovenAppState extends State<LovenApp> {
         BlocProvider(
           create: (_) => FavoritesCubit(
             FavoritesRepository(),
-          )..loadFavorites(),
+          ),
         ),
 
         BlocProvider(

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 
 class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
@@ -42,7 +43,8 @@ class ArtworkGridWidget extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: artworks.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
@@ -80,7 +82,8 @@ class _ArtworkCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final hasImage =
-        artwork.artworkImageUrl != null && artwork.artworkImageUrl!.isNotEmpty;
+        artwork.artworkImageUrl != null &&
+            artwork.artworkImageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () {
@@ -89,9 +92,19 @@ class _ArtworkCard extends StatelessWidget {
           return;
         }
 
-        context.push(
-          '/art-details',
-          extra: artwork,
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) {
+            return FractionallySizedBox(
+              heightFactor: 0.92,
+              child: ArtDetailsScreen(
+                artItem: artwork,
+                isGuest: isGuest,
+              ),
+            );
+          },
         );
       },
       child: Container(
@@ -99,12 +112,15 @@ class _ArtworkCard extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.onSurface.withValues(alpha: 0.12),
+            color: colorScheme.onSurface.withValues(
+              alpha: 0.12,
+            ),
           ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment:
+              CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: Stack(
@@ -114,16 +130,20 @@ class _ArtworkCard extends StatelessWidget {
                       ? Image.network(
                           artwork.artworkImageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const _ImagePlaceholder(),
+                          errorBuilder:
+                              (_, __, ___) =>
+                                  const _ImagePlaceholder(),
                         )
                       : const _ImagePlaceholder(),
+
                   if (canManage)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Material(
-                        color: Colors.black.withValues(alpha: 0.45),
+                        color: Colors.black.withValues(
+                          alpha: 0.45,
+                        ),
                         shape: const CircleBorder(),
                         child: IconButton(
                           icon: const Icon(
@@ -132,34 +152,52 @@ class _ArtworkCard extends StatelessWidget {
                             size: 20,
                           ),
                           onPressed: () async {
-                            final confirmed = await showDialog<bool>(
+                            final confirmed =
+                                await showDialog<bool>(
                               context: context,
-                              builder: (dialogContext) {
+                              builder:
+                                  (dialogContext) {
                                 return AlertDialog(
-                                  title: const Text('Delete artwork?'),
+                                  title: const Text(
+                                    'Delete artwork?',
+                                  ),
                                   content: Text(
                                     'Are you sure you want to delete "${artwork.title}"?',
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pop(dialogContext, false);
+                                        Navigator.pop(
+                                          dialogContext,
+                                          false,
+                                        );
                                       },
-                                      child: const Text('Cancel'),
+                                      child: const Text(
+                                        'Cancel',
+                                      ),
                                     ),
+
                                     ElevatedButton(
                                       onPressed: () {
-                                        Navigator.pop(dialogContext, true);
+                                        Navigator.pop(
+                                          dialogContext,
+                                          true,
+                                        );
                                       },
-                                      child: const Text('Delete'),
+                                      child: const Text(
+                                        'Delete',
+                                      ),
                                     ),
                                   ],
                                 );
                               },
                             );
 
-                            if (confirmed == true && onDelete != null) {
-                              await onDelete!(artwork);
+                            if (confirmed == true &&
+                                onDelete != null) {
+                              await onDelete!(
+                                artwork,
+                              );
                             }
                           },
                         ),
@@ -168,26 +206,39 @@ class _ArtworkCard extends StatelessWidget {
                 ],
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     artwork.title,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    overflow:
+                        TextOverflow.ellipsis,
+                    style: theme
+                        .textTheme.titleMedium
+                        ?.copyWith(
                       fontSize: 13,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
-                    _formatPrice(artwork.price),
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    _formatPrice(
+                      artwork.price,
+                    ),
+                    style: theme
+                        .textTheme.bodyMedium
+                        ?.copyWith(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.deepPurple,
+                      fontWeight:
+                          FontWeight.w600,
+                      color:
+                          AppColors.deepPurple,
                     ),
                   ),
                 ],
@@ -200,12 +251,16 @@ class _ArtworkCard extends StatelessWidget {
   }
 
   String _formatPrice(double? price) {
-    if (price == null) return 'Price unavailable';
+    if (price == null) {
+      return 'Price unavailable';
+    }
+
     return 'SAR ${price.toStringAsFixed(0)}';
   }
 }
 
-class _ImagePlaceholder extends StatelessWidget {
+class _ImagePlaceholder
+    extends StatelessWidget {
   const _ImagePlaceholder();
 
   @override
@@ -215,7 +270,9 @@ class _ImagePlaceholder extends StatelessWidget {
       child: Icon(
         Icons.image_outlined,
         size: 40,
-        color: AppColors.deepPurple.withValues(alpha: 0.7),
+        color: AppColors.deepPurple.withValues(
+          alpha: 0.7,
+        ),
       ),
     );
   }

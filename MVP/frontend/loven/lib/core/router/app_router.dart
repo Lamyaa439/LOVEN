@@ -18,12 +18,14 @@ import 'package:loven/features/artist_profile/view/screens/artist_profile_screen
 import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_screen.dart';
 import 'package:loven/features/verification_request/view/screens/verification_request_screen.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
-import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_dashboard_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_verification_requests_screen.dart';
 import 'package:loven/features/splash/onboarding_screen.dart';
+import 'package:loven/features/home/View/Screens/artists_list_screen.dart';
+import 'package:loven/features/home/View/Screens/artworks_list_screen.dart';
+import 'package:loven/features/home/View/Screens/settings_screen.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
@@ -70,9 +72,18 @@ class AppRouter {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => NavigationScreen(
-          isGuest: authCubit.state is AuthGuest,
-        ),
+        builder: (context, state) {
+          final extra =
+          state.extra as Map<String, dynamic>?;
+          
+          final isGuest =
+          extra?['isGuest'] as bool? ??
+          (authCubit.state is AuthGuest);
+          
+          return NavigationScreen(
+            isGuest: isGuest,
+          );
+        },
       ),
       GoRoute(
         path: '/profile',
@@ -106,12 +117,26 @@ class AppRouter {
           ),
       ),
       GoRoute(
+        path: '/artists',
+        builder: (context, state) => const ArtistsListScreen(),
+      ),
+      GoRoute(
         path: '/artist/:artistId',
         builder: (context, state) {
           final artistId = state.pathParameters['artistId']!;
           return BlocProvider(
             create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
             child: ArtistProfileScreen(artistProfileId: artistId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/artworks-list/:type',
+        builder: (context, state) {
+          final type = state.pathParameters['type'] ?? 'featured';
+          
+          return ArtworksListScreen(
+            type: type,
           );
         },
       ),
@@ -126,6 +151,10 @@ class AppRouter {
             );
           },
         ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
       GoRoute(
         path: '/admin/reports',
         builder: (context, state) => Scaffold(
@@ -139,7 +168,19 @@ class AppRouter {
       ),
       GoRoute(
         path: '/cart',
-        builder: (context, state) => const SizedBox.shrink(),
+        builder: (context, state) {
+          final extra =
+          state.extra as Map<String, dynamic>?;
+          
+          final isGuest =
+          extra?['isGuest'] as bool? ??
+          (authCubit.state is AuthGuest);
+          
+          return NavigationScreen(
+            isGuest: isGuest,
+            initialIndex: 2,
+          );
+        },
       ),
       GoRoute(
         path: '/artworks/create',
@@ -167,23 +208,6 @@ class AppRouter {
             ),
             child: const VerificationRequestScreen(),
           );
-        },
-      ),
-      GoRoute(
-        path: '/art-details',
-        builder: (context, state) {
-          final extra = state.extra;
-          try {
-            final artItem = extra is ArtworkModel
-              ? extra
-              : ArtworkModel.fromJson(extra as Map<String, dynamic>);
-              return ArtDetailsScreen(
-            artItem: artItem,
-          );
-          } catch (e) {
-            return const Scaffold(
-              body: Center(child: Text('Failed to load artwork details')));
-          }
         },
       ),
     ],

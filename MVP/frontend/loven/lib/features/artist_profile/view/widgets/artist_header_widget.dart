@@ -26,168 +26,133 @@ class ArtistHeaderWidget extends StatelessWidget {
         artist.shippingPolicy != null && artist.shippingPolicy!.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: colorScheme.onSurface.withValues(alpha: 0.08),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: AppColors.primaryPurple.withValues(
-                    alpha: 0.35,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 58,
+            backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.30),
+            backgroundImage: hasImage ? NetworkImage(artist.profileImageUrl!) : null,
+            child: hasImage
+                ? null
+                : Text(
+                    artist.displayName.isNotEmpty
+                        ? artist.displayName[0].toUpperCase()
+                        : '?',
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: AppColors.primaryBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  backgroundImage:
-                      hasImage ? NetworkImage(artist.profileImageUrl!) : null,
-                  child: hasImage
-                      ? null
-                      : Text(
-                          artist.displayName.isNotEmpty
-                              ? artist.displayName[0].toUpperCase()
-                              : '?',
-                          style: theme.textTheme.displaySmall?.copyWith(
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            'Artist',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.55),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  artist.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              artist.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (artist.isVerified) ...[
-                            const SizedBox(width: 6),
-                            Icon(
-                              Icons.verified,
-                              size: 20,
-                              color: colorScheme.primary,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: artist.isVerified
-                              ? colorScheme.primary.withValues(alpha: 0.12)
-                              : colorScheme.onSurface.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              artist.isVerified
-                                  ? Icons.verified
-                                  : Icons.pending_outlined,
-                              size: 15,
-                              color: artist.isVerified
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface.withValues(
-                                      alpha: 0.55,
-                                    ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              artist.isVerified
-                                  ? 'Verified Artist'
-                                  : 'Not verified yet',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: artist.isVerified
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurface.withValues(
-                                        alpha: 0.6,
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (hasCity) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_outlined,
-                              size: 16,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.55,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                artist.city!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      Text(
-                        hasBio ? artist.bio! : 'No bio provided',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: hasBio
-                              ? colorScheme.onSurface.withValues(alpha: 0.7)
-                              : colorScheme.onSurface.withValues(alpha: 0.45),
-                          fontStyle:
-                              hasBio ? FontStyle.normal : FontStyle.italic,
-                        ),
-                      ),
-                    ],
+              ),
+              if (artist.isVerified) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.verified_rounded,
+                  size: 22,
+                  color: colorScheme.primary,
+                ),
+              ],
+            ],
+          ),
+
+          if (hasCity) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 16,
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    artist.city!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            Divider(
-              color: colorScheme.onSurface.withValues(alpha: 0.08),
+          ],
+
+          const SizedBox(height: 22),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'About',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-            const SizedBox(height: 14),
-            Row(
+          ),
+
+          const SizedBox(height: 8),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              hasBio ? artist.bio! : 'No bio provided.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: hasBio
+                    ? colorScheme.onSurface.withValues(alpha: 0.65)
+                    : colorScheme.onSurface.withValues(alpha: 0.45),
+                height: 1.45,
+                fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
               children: [
                 _ProfileStat(
                   icon: Icons.image_outlined,
@@ -195,16 +160,10 @@ class ArtistHeaderWidget extends StatelessWidget {
                   label: 'Artworks',
                 ),
                 const _VerticalDivider(),
-                const _ProfileStat(
-                  icon: Icons.favorite_border,
-                  value: '0',
-                  label: 'Favorites',
-                ),
-                const _VerticalDivider(),
-                const _ProfileStat(
-                  icon: Icons.shopping_bag_outlined,
-                  value: '0',
-                  label: 'Orders',
+                _ProfileStat(
+                  icon: Icons.verified_outlined,
+                  value: artist.isVerified ? 'Yes' : 'No',
+                  label: 'Verified',
                 ),
                 const _VerticalDivider(),
                 _ProfileStat(
@@ -214,8 +173,8 @@ class ArtistHeaderWidget extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -243,15 +202,16 @@ class _ProfileStat extends StatelessWidget {
           Icon(
             icon,
             size: 20,
-            color: colorScheme.onSurface.withValues(alpha: 0.55),
+            color: colorScheme.primary,
           ),
           const SizedBox(height: 6),
           Text(
             value,
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(

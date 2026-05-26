@@ -14,38 +14,71 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     try {
       final data = await _repository.listFavorites();
       final favorites = data['favorites'] as List? ?? [];
-
+      
       final ids = favorites
-          .map((item) => item['id']?.toString() ?? '')
-          .where((id) => id.isNotEmpty)
-          .toSet();
+      .map((item) =>
+        item['artwork_id']?.toString() ??
+        item['artwork']?['id']?.toString() ??
+        item['id']?.toString() ??
+        '')
+      .where((id) => id.isNotEmpty)
+      .toSet();
 
-      emit(FavoritesLoaded(ids));
+      emit(
+        FavoritesLoaded(
+          favoriteArtworkIds: ids,
+          favorites: favorites,
+        ),
+      );
     } catch (e) {
       emit(FavoritesError(e.toString()));
     }
   }
 
-  Future<void> toggleFavorite(String artworkId) async {
-    final currentState = state;
+Future<void> toggleFavorite(String artworkId) async {
+  final currentState = state;
 
-    final currentIds = currentState is FavoritesLoaded
-        ? Set<String>.from(currentState.favoriteArtworkIds)
-        : <String>{};
+  final currentIds = currentState is FavoritesLoaded
+      ? Set<String>.from(currentState.favoriteArtworkIds)
+      : <String>{};
 
-    try {
-      if (currentIds.contains(artworkId)) {
-        await _repository.removeFavorite(artworkId);
-        currentIds.remove(artworkId);
+  final currentFavorites = currentState is FavoritesLoaded
+      ? List<dynamic>.from(currentState.favorites)
+      : <dynamic>[];
+
+  try {
+    if (currentIds.contains(artworkId)) {
+      await _repository.removeFavorite(artworkId);
+      currentIds.remove(artworkId);
+
+      currentFavorites.removeWhere(
+        (item) =>
+        item['artwork_id']?.toString() == artworkId ||
+        item['artwork']?['id']?.toString() == artworkId ||
+        item['id']?.toString() == artworkId,
+        );
       } else {
         await _repository.addFavorite(artworkId);
         currentIds.add(artworkId);
+        await loadFavorites();
+        return;
       }
 
-      emit(FavoritesLoaded(currentIds));
-    } catch (e) {
-      emit(FavoritesError(e.toString()));
-      emit(FavoritesLoaded(currentIds));
-    }
+    emit(
+      FavoritesLoaded(
+        favoriteArtworkIds: currentIds,
+        favorites: currentFavorites,
+      ),
+    );
+  } catch (e) {
+    emit(FavoritesError(e.toString()));
+
+    emit(
+      FavoritesLoaded(
+        favoriteArtworkIds: currentIds,
+        favorites: currentFavorites,
+      ),
+    );
   }
+}
 }

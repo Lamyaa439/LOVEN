@@ -16,7 +16,7 @@ import '../../controller/artist_profile_state.dart';
 import '../../model/artist_repository.dart';
 import '../widgets/artist_header_widget.dart';
 
-class ArtistProfileScreen extends StatelessWidget {
+class ArtistProfileScreen extends StatefulWidget {
   const ArtistProfileScreen({
     super.key,
     this.artistProfileId,
@@ -24,42 +24,50 @@ class ArtistProfileScreen extends StatelessWidget {
 
   final String? artistProfileId;
 
-  bool get _isPublicView => artistProfileId != null;
+  @override
+  State<ArtistProfileScreen> createState() =>
+      _ArtistProfileScreenState();
+}
+
+class _ArtistProfileScreenState
+    extends State<ArtistProfileScreen> {
+  late final ArtistProfileCubit cubit;
+
+  bool get _isPublicView =>
+      widget.artistProfileId != null;
 
   @override
-  Widget build(BuildContext context) {
-    final cubit = ArtistProfileCubit(
+  void initState() {
+    super.initState();
+
+    cubit = ArtistProfileCubit(
       repository: ArtistRepository(),
     );
 
-    if (_isPublicView) {
-      cubit.fetchPublicArtistProfile(artistProfileId!);
-    } else {
-      cubit.fetchMyProfileData();
-    }
-
-    return BlocProvider.value(
-      value: cubit,
-      child: _ArtistProfileBody(
-        isPublicView: _isPublicView,
-        artistProfileId: artistProfileId,
-      ),
-    );
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+      if (_isPublicView) {
+        cubit.fetchPublicArtistProfile(
+          widget.artistProfileId!,
+        );
+      } else {
+        cubit.fetchMyProfileData();
+      }
+    });
   }
-}
 
-class _ArtistProfileBody extends StatelessWidget {
-  const _ArtistProfileBody({
-    required this.isPublicView,
-    this.artistProfileId,
-  });
+  @override
+  void dispose() {
+    cubit.close();
+    super.dispose();
+  }
 
-  final bool isPublicView;
-  final String? artistProfileId;
-
-  Future<void> _reload(ArtistProfileCubit cubit) {
-    if (isPublicView && artistProfileId != null) {
-      return cubit.fetchPublicArtistProfile(artistProfileId!);
+  Future<void> _reload() {
+    if (_isPublicView &&
+        widget.artistProfileId != null) {
+      return cubit.fetchPublicArtistProfile(
+        widget.artistProfileId!,
+      );
     }
 
     return cubit.fetchMyProfileData();
@@ -70,99 +78,105 @@ class _ArtistProfileBody extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          isPublicView ? 'Artist Profile' : 'My Profile',
-          style: theme.textTheme.titleMedium,
-        ),
-        iconTheme: IconThemeData(
-          color: colorScheme.onSurface,
-        ),
-        actions: [
-          if (!isPublicView)
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () async {
-                await context.read<AuthCubit>().logout();
-
-                if (context.mounted) {
-                  context.go('/auth');
-                }
-              },
+    return BlocProvider.value(
+      value: cubit,
+      child: Scaffold(
+        backgroundColor:
+            theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor:
+              theme.scaffoldBackgroundColor,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: IconThemeData(
+            color: colorScheme.onSurface,
+          ),
+          title: Text(
+            _isPublicView
+                ? 'Artist'
+                : 'My Profile',
+            style: theme.textTheme.titleMedium
+                ?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-        ],
-      ),
-      body: BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
-        listenWhen: (previous, current) =>
-            current.status == ArtistProfileStatus.error &&
-            current.errorMessage != null &&
-            current.artist != null,
-        listener: (context, state) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? 'Something went wrong',
-                ),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: colorScheme.primary,
+          ),
+          actions: [
+            if (!_isPublicView)
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () {
+                  context.push('/settings');
+                },
               ),
-            );
-        },
-        builder: (context, state) {
-          switch (state.status) {
-            case ArtistProfileStatus.initial:
-            case ArtistProfileStatus.loading:
-              if (state.artist != null) {
+          ],
+        ),
+        body: BlocConsumer<
+            ArtistProfileCubit,
+            ArtistProfileState>(
+          listenWhen: (previous, current) =>
+              current.status ==
+                  ArtistProfileStatus.error &&
+              current.errorMessage != null &&
+              current.artist != null,
+          listener: (context, state) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.errorMessage ??
+                        'Something went wrong',
+                  ),
+                  behavior:
+                      SnackBarBehavior.floating,
+                  backgroundColor:
+                      colorScheme.primary,
+                ),
+              );
+          },
+          builder: (context, state) {
+            switch (state.status) {
+              case ArtistProfileStatus.initial:
+              case ArtistProfileStatus.loading:
+                if (state.artist != null) {
+                  return _SuccessContent(
+                    state: state,
+                    isPublicView: _isPublicView,
+                    onRefresh: _reload,
+                  );
+                }
+
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: colorScheme.primary,
+                  ),
+                );
+
+              case ArtistProfileStatus.error:
+                if (state.artist == null) {
+                  return _ErrorView(
+                    message:
+                        state.errorMessage ??
+                            'An unexpected error occurred',
+                    onRetry: _reload,
+                  );
+                }
+
                 return _SuccessContent(
                   state: state,
-                  isPublicView: isPublicView,
-                  onRefresh: () => _reload(
-                    context.read<ArtistProfileCubit>(),
-                  ),
+                  isPublicView: _isPublicView,
+                  onRefresh: _reload,
                 );
-              }
 
-              return Center(
-                child: CircularProgressIndicator(
-                  color: colorScheme.primary,
-                ),
-              );
-
-            case ArtistProfileStatus.error:
-              if (state.artist == null) {
-                return _ErrorView(
-                  message: state.errorMessage ?? 'An unexpected error occurred',
-                  onRetry: () => _reload(
-                    context.read<ArtistProfileCubit>(),
-                  ),
+              case ArtistProfileStatus.success:
+                return _SuccessContent(
+                  state: state,
+                  isPublicView: _isPublicView,
+                  onRefresh: _reload,
                 );
-              }
-
-              return _SuccessContent(
-                state: state,
-                isPublicView: isPublicView,
-                onRefresh: () => _reload(
-                  context.read<ArtistProfileCubit>(),
-                ),
-              );
-
-            case ArtistProfileStatus.success:
-              return _SuccessContent(
-                state: state,
-                isPublicView: isPublicView,
-                onRefresh: () => _reload(
-                  context.read<ArtistProfileCubit>(),
-                ),
-              );
-          }
-        },
+            }
+          },
+        ),
       ),
     );
   }
@@ -180,25 +194,37 @@ class _SuccessContent extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   Future<String?> _getRoleFromToken() async {
-    final token = await TokenStorage().getAccessToken();
-    if (token == null || token.isEmpty) return null;
+    final token =
+        await TokenStorage().getAccessToken();
+
+    if (token == null || token.isEmpty) {
+      return null;
+    }
 
     try {
       final parts = token.split('.');
+
       if (parts.length != 3) return null;
 
       final payload = utf8.decode(
-        base64Url.decode(base64Url.normalize(parts[1])),
+        base64Url.decode(
+          base64Url.normalize(parts[1]),
+        ),
       );
 
       final data = jsonDecode(payload);
+
       final sub = data['sub'];
 
       if (sub is Map<String, dynamic>) {
-        return sub['role']?.toString() ?? sub['system_role']?.toString();
+        return sub['role']?.toString() ??
+            sub['system_role']
+                ?.toString();
       }
 
-      return data['role']?.toString() ?? data['system_role']?.toString();
+      return data['role']?.toString() ??
+          data['system_role']
+              ?.toString();
     } catch (_) {
       return null;
     }
@@ -213,26 +239,42 @@ class _SuccessContent extends StatelessWidget {
       future: _getRoleFromToken(),
       builder: (context, snapshot) {
         final role = snapshot.data;
-        final showArtistFeatures = isPublicView || role == 'artist';
+
+        final showArtistFeatures =
+            isPublicView ||
+                role == 'artist';
 
         return RefreshIndicator(
           color: AppColors.deepPurple,
           onRefresh: onRefresh,
           child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+            physics:
+                const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
                 child: ArtistHeaderWidget(
                   artist: artist,
-                  artworkCount: state.artworks.length,
+                  artworkCount:
+                      state.artworks.length,
                 ),
               ),
+
               SliverToBoxAdapter(
-                child: Divider(
-                  height: 1,
-                  color: theme.dividerColor,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(
+                    20,
+                    4,
+                    20,
+                    0,
+                  ),
+                  child: Divider(
+                    height: 1,
+                    color: theme.dividerColor,
+                  ),
                 ),
               ),
+
               if (!showArtistFeatures)
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -240,117 +282,203 @@ class _SuccessContent extends StatelessWidget {
                     child: Center(
                       child: Text(
                         'Customer accounts do not have artist galleries.',
-                        textAlign: TextAlign.center,
+                        textAlign:
+                            TextAlign.center,
                       ),
                     ),
                   ),
                 ),
+
               if (showArtistFeatures)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    padding:
+                        const EdgeInsets.fromLTRB(
+                      20,
+                      24,
+                      20,
+                      12,
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         if (!isPublicView) ...[
                           Row(
                             children: [
                               Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final updated = await context.push(
+                                child:
+                                    OutlinedButton.icon(
+                                  onPressed:
+                                      () async {
+                                    final updated =
+                                        await context
+                                            .push(
                                       '/artist-profile/edit',
-                                      extra: artist,
+                                      extra:
+                                          artist,
                                     );
 
-                                    if (updated == true && context.mounted) {
+                                    if (updated ==
+                                            true &&
+                                        context
+                                            .mounted) {
                                       context
-                                          .read<ArtistProfileCubit>()
+                                          .read<
+                                              ArtistProfileCubit>()
                                           .fetchMyProfileData();
                                     }
                                   },
-                                  icon: const Icon(Icons.edit_outlined),
-                                  label: const Text('Edit Profile'),
+                                  icon: const Icon(
+                                    Icons
+                                        .edit_outlined,
+                                  ),
+                                  label: const Text(
+                                    'Edit Profile',
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+
+                              const SizedBox(
+                                width: 12,
+                              ),
+
                               Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    final created = await context.push(
+                                child:
+                                    ElevatedButton.icon(
+                                  onPressed:
+                                      () async {
+                                    final created =
+                                        await context
+                                            .push(
                                       '/artworks/create',
                                     );
 
-                                    if (created == true && context.mounted) {
+                                    if (created ==
+                                            true &&
+                                        context
+                                            .mounted) {
                                       context
-                                          .read<ArtistProfileCubit>()
+                                          .read<
+                                              ArtistProfileCubit>()
                                           .fetchMyProfileData();
                                     }
                                   },
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Upload'),
+                                  icon:
+                                      const Icon(
+                                    Icons.add,
+                                  ),
+                                  label:
+                                      const Text(
+                                    'Upload',
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          if (!artist.isVerified) ...[
-                            const SizedBox(height: 12),
+
+                          if (!artist
+                              .isVerified) ...[
+                            const SizedBox(
+                              height: 12,
+                            ),
+
                             SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  final submitted = await context.push(
+                              width:
+                                  double.infinity,
+                              child:
+                                  OutlinedButton.icon(
+                                onPressed:
+                                    () async {
+                                  final submitted =
+                                      await context
+                                          .push(
                                     '/verification-request',
                                   );
 
-                                  if (submitted == true && context.mounted) {
+                                  if (submitted ==
+                                          true &&
+                                      context
+                                          .mounted) {
                                     context
-                                        .read<ArtistProfileCubit>()
+                                        .read<
+                                            ArtistProfileCubit>()
                                         .fetchMyProfileData();
                                   }
                                 },
-                                icon: const Icon(Icons.verified_outlined),
-                                label: const Text('Request Verification'),
+                                icon:
+                                    const Icon(
+                                  Icons
+                                      .verified_outlined,
+                                ),
+                                label:
+                                    const Text(
+                                  'Request Verification',
+                                ),
                               ),
                             ),
                           ],
-                          const SizedBox(height: 20),
+
+                          const SizedBox(
+                            height: 28,
+                          ),
                         ],
+
                         Text(
-                          isPublicView ? 'Artworks' : 'My Artworks',
-                          style: theme.textTheme.titleMedium,
+                          'Gallery',
+                          style: theme
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                            fontWeight:
+                                FontWeight.w800,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+
               if (showArtistFeatures)
                 SliverToBoxAdapter(
                   child: ArtworkGridWidget(
                     artworks: state.artworks,
-                    isGuest: context.read<AuthCubit>().state is AuthGuest,
-                    canManage: !isPublicView,
-                    onDelete: (artwork) async {
-                      await ArtworkRepository().deleteArtwork(
-                        artworkId: artwork.id,
+                    isGuest: context
+                            .read<AuthCubit>()
+                            .state
+                        is AuthGuest,
+                    canManage:
+                        !isPublicView,
+                    onDelete:
+                        (artwork) async {
+                      await ArtworkRepository()
+                          .deleteArtwork(
+                        artworkId:
+                            artwork.id,
                       );
 
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(
+                                context)
+                            .showSnackBar(
                           const SnackBar(
-                            content: Text('Artwork deleted'),
+                            content: Text(
+                              'Artwork deleted',
+                            ),
                           ),
                         );
 
                         context
-                            .read<ArtistProfileCubit>()
+                            .read<
+                                ArtistProfileCubit>()
                             .fetchMyProfileData();
                       }
                     },
                   ),
                 ),
+
               const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
+                child: SizedBox(height: 30),
               ),
             ],
           ),
@@ -372,38 +500,57 @@ class _ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme =
+        theme.colorScheme;
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding:
+            const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center,
           children: [
             Icon(
               Icons.error_outline,
               size: 48,
-              color: colorScheme.onSurface.withValues(alpha: 0.45),
+              color: colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.45),
             ),
+
             const SizedBox(height: 12),
+
             Text(
               'Could not load profile',
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
+              style:
+                  theme.textTheme.titleMedium,
+              textAlign:
+                  TextAlign.center,
             ),
+
             const SizedBox(height: 8),
+
             Text(
               message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
+              textAlign:
+                  TextAlign.center,
+              style: theme
+                  .textTheme.bodyMedium
+                  ?.copyWith(
+                color: colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.6),
                 fontSize: 13,
               ),
             ),
+
             const SizedBox(height: 20),
+
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child:
+                  const Text('Retry'),
             ),
           ],
         ),

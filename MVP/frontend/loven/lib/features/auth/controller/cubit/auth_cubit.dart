@@ -42,20 +42,24 @@ class AuthCubit extends Cubit<AuthState> {
       return null;
     }
   }
-
+  
   Future<void> checkAuthStatus() async {
+    final token = await TokenStorage().getAccessToken();
+    
+    if (token != null && token.isNotEmpty) {
+      emit(AuthSuccess());
+      return;
+    }
+    
     final user = FirebaseAuth.instance.currentUser;
     
-    if (user != null) {
-      if (user.isAnonymous) {
-        emit(AuthGuest());
-      } else {
-        emit(AuthSuccess());
-      }
-      } else {
-        emit(AuthInitial());
-      }
+    if (user != null && user.isAnonymous) {
+      emit(AuthGuest());
+      return;
     }
+    
+    emit(AuthInitial());
+  }
     
     Future<void> continueAsGuest() async {
       emit(AuthLoading());
@@ -127,16 +131,33 @@ class AuthCubit extends Cubit<AuthState> {
     
     try {
       await _authRepository.logout();
-      await TokenStorage().clearAllTokens();
-      await FirebaseAuth.instance.signOut();
-      
-      emit(AuthGuest());
-      } catch (e) {
-        await TokenStorage().clearAllTokens();
-        await FirebaseAuth.instance.signOut();
-        emit(AuthGuest());
+      } catch (_) {
+        // Ignore backend logout failure
       }
-    }
+
+  await TokenStorage().clearAllTokens();
+  await FirebaseAuth.instance.signOut();
+
+  emit(AuthInitial());
+}
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    }) async {
+      emit(AuthLoading());
+      
+      try {
+        await _authRepository.changePassword(
+          currentPassword: currentPassword,
+          newPassword: newPassword,
+        );
+        
+        emit(AuthSuccess());
+        } catch (e) {
+          emit(AuthFailure(_mapErrorMessage(e)));
+        }
+      }
 
   String _mapErrorMessage(Object error) {
     final errorText = error.toString();

@@ -6,19 +6,22 @@ import 'package:loven/core/storage/token_storage.dart';
 
 class FavoritesRepository {
   final TokenStorage _tokenStorage = TokenStorage();
-
+  
   Future<Map<String, dynamic>> listFavorites() async {
     final token = await _tokenStorage.getAccessToken();
-
+    
     final response = await http.get(
       Uri.parse(ApiConstants.favorites),
       headers: {'Authorization': 'Bearer $token'},
     );
-
+    
+    print('LIST FAVORITES STATUS: ${response.statusCode}');
+    print('LIST FAVORITES BODY: ${response.body}');
+    
     final data = jsonDecode(response.body);
-
+    
     if (response.statusCode == 200) return data;
-
+    
     throw Exception(data['error'] ?? 'Failed to load favorites');
   }
 
@@ -50,7 +53,12 @@ class FavoritesRepository {
     if (response.statusCode == 200 || response.statusCode == 201) return;
 
     final data = jsonDecode(response.body);
+    print('ADD FAVORITE URL: ${ApiConstants.favorites}$artworkId');
+    print('ADD FAVORITE TOKEN: $token');
+    print('ADD FAVORITE STATUS: ${response.statusCode}');
+    print('ADD FAVORITE BODY: ${response.body}');
     throw Exception(data['error'] ?? 'Failed to add favorite');
+    
   }
 
   Future<void> removeFavorite(String artworkId) async {
@@ -64,6 +72,9 @@ class FavoritesRepository {
     if (response.statusCode == 200 || response.statusCode == 204) return;
 
     final data = jsonDecode(response.body);
+    print('REMOVE FAVORITE URL: ${ApiConstants.favorites}$artworkId');
+    print('REMOVE FAVORITE STATUS: ${response.statusCode}');
+    print('REMOVE FAVORITE BODY: ${response.body}');
     throw Exception(data['error'] ?? 'Failed to remove favorite');
   }
 }

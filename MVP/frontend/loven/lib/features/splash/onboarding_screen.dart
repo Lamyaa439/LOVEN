@@ -89,7 +89,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
-                onPressed: () => context.go('/auth'),
+                onPressed: () {
+                  context.go('/', extra: {'isGuest': true});
+                },
                 child: const Text("Skip"),
               ),
             ),

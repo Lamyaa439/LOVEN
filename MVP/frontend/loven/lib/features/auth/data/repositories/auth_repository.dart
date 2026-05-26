@@ -83,4 +83,31 @@ class AuthRepository {
 
     await _tokenStorage.clearAccessToken();
   }
+
+  Future<void> changePassword({
+  required String currentPassword,
+  required String newPassword,
+  }) async {
+    final token = await _tokenStorage.getAccessToken();
+    
+    final response = await http.patch(
+      Uri.parse(ApiConstants.changePassword),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
+    
+    final data = jsonDecode(response.body);
+    
+    if (response.statusCode == 200) return;
+    
+    throw Exception(
+      data['error'] ?? data['msg'] ?? 'Failed to change password',
+    );
+  }
 }
