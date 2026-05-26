@@ -170,6 +170,31 @@ class Artwork(BaseModel):
 
         return fee_decimal
 
+    # ----------------- validate for artwork_image_url -----------------
+    @validates("artwork_image_url")
+    def validate_artwork_image_url(self, key, value):
+        """
+        Optional field. When provided, must be an HTTP(S) URL to prevent
+        XSS payloads (javascript:, data:, etc.) from being stored.
+        """
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValueError("Image URL must be text.")
+
+        clean_url = value.strip()
+        if clean_url == "":
+            return None
+
+        if not clean_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Image URL must start with http:// or https://.")
+
+        if len(clean_url) > 2048:
+            raise ValueError("Image URL must be 2048 characters or fewer.")
+
+        return clean_url
+
     # ----------------- validate for status -----------------
     @validates("status")
     def validate_status(self, key, value):

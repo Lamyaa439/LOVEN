@@ -123,5 +123,30 @@ class ArtistProfile(BaseModel):
 
         return clean_bio
 
+    # ----------------- validate for profile_image_url -----------------
+    @validates("profile_image_url")
+    def validate_profile_image_url(self, key, value):
+        """
+        Optional field. When provided, must be an HTTP(S) URL to prevent
+        XSS payloads (javascript:, data:, etc.) from being stored.
+        """
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValueError("Profile image URL must be text.")
+
+        clean_url = value.strip()
+        if clean_url == "":
+            return None
+
+        if not clean_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Profile image URL must start with http:// or https://.")
+
+        if len(clean_url) > 2048:
+            raise ValueError("Profile image URL must be 2048 characters or fewer.")
+
+        return clean_url
+
     def __repr__(self):
         return f"<ArtistProfile(display_name={self.display_name}, user_id={self.user_id})>"
