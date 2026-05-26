@@ -1,6 +1,7 @@
 from app.extensions import db
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import validates
 import uuid
 
 # =========================================================
@@ -103,6 +104,21 @@ class Order(db.Model):
         default="pending",
         nullable=True
     )
+
+    # ----------------------- validate for STATUSES ---------------------
+
+    ALLOWED_STATUSES = ("pending", "paid", "shipped", "delivered", "cancelled")
+
+    @validates("status")
+    def validate_status(self, key, value):
+        if value is None:
+            return "pending"
+        if value not in self.ALLOWED_STATUSES:
+            raise ValueError(
+                f"Invalid order status '{value}'. "
+                f"Allowed values: {', '.join(self.ALLOWED_STATUSES)}"
+            )
+        return value
 
     # =====================================================
     # Shipment Information
