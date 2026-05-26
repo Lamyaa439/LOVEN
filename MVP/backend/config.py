@@ -10,10 +10,16 @@ load_dotenv() # This line loads the .env file.
 
 
 class Config:
+    
     # security settings (important for JWT and sessions)
-    # read it from .env, if not found, we use a fallback for development only.
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
-    JWT_SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
+    # read it from .env, if not found, the app will fail-fast and crash to protect the system.
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError("CRITICAL ERROR: SECRET_KEY is missing from environment variables!")
+    
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    if not JWT_SECRET_KEY:
+        raise ValueError("CRITICAL ERROR: JWT_SECRET_KEY is missing from environment variables!")
 
 
     # connect the app to PostgreSQL
