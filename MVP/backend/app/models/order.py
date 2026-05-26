@@ -79,19 +79,7 @@ class Order(db.Model):
         db.Numeric(10, 2),
         nullable=True
     )
-
-    # Final order total
-    subtotal = db.Column(
-        db.Numeric(10, 2),
-        nullable=True
-    )
-
-    # Shipping cost charged to customer
-    shipping_fee = db.Column(
-        db.Numeric(10, 2),
-        nullable=True
-    )
-
+    
     # Final order total
     total_amount = db.Column(
         db.Numeric(10, 2),
