@@ -56,3 +56,13 @@ class Config:
     # ---- flask-jwt-extended settings ------
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7)))
+
+    # ---- CORS settings ------
+    # Comma-separated list of allowed origins (e.g. "https://loven.app,https://admin.loven.app")
+    _raw_origins = os.getenv("CORS_ORIGINS", "")
+    CORS_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    if not CORS_ORIGINS:
+        raise ValueError(
+            "CRITICAL ERROR: CORS_ORIGINS is missing from environment variables! "
+            "Set it to a comma-separated list of allowed frontend origins."
+        )
