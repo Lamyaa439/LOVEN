@@ -1,6 +1,6 @@
 from app.models.artist_profile import ArtistProfile
 from app.persistence.repositories.verification_request_repo import (
-    VerificationRequestRepository,
+    verification_request_repo,
 )
 
 
@@ -27,7 +27,7 @@ class VerificationRequestService:
             raise ValueError("Artist profile not found")
 
         existing_pending_request = (
-            VerificationRequestRepository.get_pending_request_for_profile(
+            verification_request_repo.get_pending_request_for_profile(
                 artist_profile.id,
             )
         )
@@ -44,17 +44,15 @@ class VerificationRequestService:
             "document_number": data.get("document_number"),
         }
 
-        return VerificationRequestRepository.create(request_data)
+        return verification_request_repo.create_request(request_data)
 
     @staticmethod
     def get_all_requests():
-        return VerificationRequestRepository.get_all()
+        return verification_request_repo.list_all()
 
     @staticmethod
     def get_request_by_id(request_id):
-        verification_request = VerificationRequestRepository.get_by_id(
-            request_id,
-        )
+        verification_request = verification_request_repo.get(request_id)
 
         if not verification_request:
             raise ValueError("Verification request not found")
@@ -71,14 +69,12 @@ class VerificationRequestService:
                 "status must be one of: pending, approved, rejected"
             )
 
-        verification_request = VerificationRequestRepository.get_by_id(
-            request_id,
-        )
+        verification_request = verification_request_repo.get(request_id)
 
         if not verification_request:
             raise ValueError("Verification request not found")
 
-        return VerificationRequestRepository.update_status(
+        return verification_request_repo.update_status(
             verification_request,
             status,
         )
