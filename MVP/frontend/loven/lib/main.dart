@@ -18,7 +18,7 @@ import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
 import 'features/cart/data/repositories/cart_repository.dart';
 import 'features/cart/controller/cubit/cart_cubit.dart';
-import 'features/artist_profile/model/artist_repository.dart';
+import 'package:loven/features/artist_profile/model/artist_repository.dart';
 import 'features/artist_profile/controller/artist_profile_cubit.dart';
 import 'features/artwork/data/repositories/artwork_repository.dart';
 import 'features/artwork/controller/cubit/artwork_cubit.dart';
@@ -71,6 +71,8 @@ class _LovenAppState extends State<LovenApp> {
   late final ArtworkRepository _artworkRepository;
   /// Order checkout and listing — shares the app-wide [ApiClient].
   late final OrderRepository _orderRepository;
+  /// Artist profile and profile-scoped artwork access.
+  late final ArtistRepository _artistRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
 
@@ -86,8 +88,12 @@ class _LovenAppState extends State<LovenApp> {
     // Single repository instance wired to the shared ApiClient.
     _artworkRepository = ArtworkRepository(apiClient: _apiClient);
     _orderRepository = OrderRepository(apiClient: _apiClient);
+    _artistRepository = ArtistRepository(apiClient: _apiClient);
     _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
-    _appRouter = AppRouter(_authCubit);
+    _appRouter = AppRouter(
+      _authCubit,
+      artistRepository: _artistRepository,
+    );
   }
 
   // تنظيف الذاكرة إذا أغلق التطبيق

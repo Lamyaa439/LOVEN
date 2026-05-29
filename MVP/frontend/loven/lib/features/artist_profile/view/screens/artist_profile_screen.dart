@@ -19,17 +19,20 @@ import '../widgets/artist_header_widget.dart';
 class ArtistProfileScreen extends StatelessWidget {
   const ArtistProfileScreen({
     super.key,
+    required this.repository,
     this.artistProfileId,
   });
 
+  final ArtistRepository repository;
   final String? artistProfileId;
 
   bool get _isPublicView => artistProfileId != null;
 
   @override
   Widget build(BuildContext context) {
+    // Screen-scoped cubit uses the shared repository from app startup routing.
     final cubit = ArtistProfileCubit(
-      repository: ArtistRepository(),
+      repository: repository,
     );
 
     if (_isPublicView) {

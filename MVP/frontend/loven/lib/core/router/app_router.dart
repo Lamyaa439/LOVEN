@@ -38,7 +38,13 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 class AppRouter {
   final AuthCubit authCubit;
-  AppRouter(this.authCubit);
+  /// Shared profile repository — injected from [LovenApp] startup.
+  final ArtistRepository artistRepository;
+
+  AppRouter(
+    this.authCubit, {
+    required this.artistRepository,
+  });
   
   late final GoRouter router = GoRouter(
     initialLocation: '/splash_screen',
@@ -89,8 +95,10 @@ class AppRouter {
       GoRoute(
         path: '/my-profile',
         builder: (context, state) => BlocProvider(
-          create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
-          child: const ArtistProfileScreen(),
+          create: (context) => ArtistProfileCubit(
+            repository: artistRepository,
+          ),
+          child: ArtistProfileScreen(repository: artistRepository),
           ),
       ),
       GoRoute(
@@ -98,8 +106,13 @@ class AppRouter {
         builder: (context, state) {
           final artistId = state.pathParameters['artistId']!;
           return BlocProvider(
-            create: (context) => ArtistProfileCubit(repository: ArtistRepository()),
-            child: ArtistProfileScreen(artistProfileId: artistId),
+            create: (context) => ArtistProfileCubit(
+              repository: artistRepository,
+            ),
+            child: ArtistProfileScreen(
+              artistProfileId: artistId,
+              repository: artistRepository,
+            ),
           );
         },
       ),
@@ -118,7 +131,7 @@ class AppRouter {
           
           return BlocProvider(
             create: (_) => ArtistProfileCubit(
-              repository: ArtistRepository(),
+              repository: artistRepository,
             ),
             child: EditArtistProfileScreen(artist: artist),
           );
@@ -144,8 +157,9 @@ class AppRouter {
               ? extra
               : ArtworkModel.fromJson(extra as Map<String, dynamic>);
             return ArtDetailsScreen(
-            artItem: artItem,
-          );
+              artItem: artItem,
+              artistRepository: artistRepository,
+            );
           } catch (e) {
             return const Scaffold(
               body: Center(child: Text('Failed to load artwork details')));

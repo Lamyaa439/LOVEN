@@ -12,10 +12,12 @@ import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
+  final ArtistRepository artistRepository;
 
   const ArtDetailsScreen({
     super.key,
     required this.artItem,
+    required this.artistRepository,
   });
 
   @override
@@ -35,7 +37,8 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
 
   Future<void> _checkIfOwnArtwork() async {
     try {
-      final artist = await ArtistRepository().getMyProfile();
+      // Uses injected repository rather than constructing one locally.
+      final artist = await widget.artistRepository.getMyProfile();
 
       if (!mounted) return;
 
