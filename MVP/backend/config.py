@@ -57,6 +57,11 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7)))
 
+    # ---- Moyasar payment gateway ------
+    MOYASAR_SECRET_KEY = os.environ.get("MOYASAR_SECRET_KEY")
+    if not MOYASAR_SECRET_KEY:
+        raise ValueError("CRITICAL ERROR: MOYASAR_SECRET_KEY is missing from environment variables!")
+
     # ---- CORS settings ------
     # Comma-separated list of allowed origins (e.g. "https://loven.app,https://admin.loven.app")
     _raw_origins = os.getenv("CORS_ORIGINS", "")
