@@ -25,11 +25,11 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _checkout(CartModel cart) async {
+    // Only artwork_id + quantity are sent; the backend prices each line.
     final items = cart.items.map((item) {
       return {
         'artwork_id': item.artworkId,
         'quantity': item.quantity,
-        'price_at_purchase': item.price,
       };
     }).toList();
 

@@ -69,6 +69,8 @@ class _LovenAppState extends State<LovenApp> {
   /// Shared artwork data layer — injected into [HomeBloc] and [ArtworkCubit]
   /// so both features use one [ApiClient] instance.
   late final ArtworkRepository _artworkRepository;
+  /// Order checkout and listing — shares the app-wide [ApiClient].
+  late final OrderRepository _orderRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
 
@@ -83,6 +85,7 @@ class _LovenAppState extends State<LovenApp> {
     );
     // Single repository instance wired to the shared ApiClient.
     _artworkRepository = ArtworkRepository(apiClient: _apiClient);
+    _orderRepository = OrderRepository(apiClient: _apiClient);
     _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
     _appRouter = AppRouter(_authCubit);
   }
@@ -120,7 +123,9 @@ class _LovenAppState extends State<LovenApp> {
         BlocProvider(
           create: (context) => ArtworkCubit(_artworkRepository),
         ),
-        BlocProvider(create: (context) => OrderCubit(OrderRepository())),
+        BlocProvider(
+          create: (context) => OrderCubit(_orderRepository),
+        ),
         BlocProvider(create: (context) => FeedbackCubit(FeedbackRepository())),
         BlocProvider(create: (context) => ReportCubit(ReportRepository())),
         BlocProvider(
