@@ -12,6 +12,8 @@ Responsibilities:
 Inherits generic CRUD functionality from SQLAlchemyRepository.
 """
 
+from app.extensions import db
+from app.models.artwork import Artwork
 from app.persistence.repository import SQLAlchemyRepository
 from app.models.favorites import Favorite
 
@@ -52,5 +54,25 @@ class FavoriteRepository(SQLAlchemyRepository):
             self.model.query
             .filter(self.model.user_id == user_id)
             .order_by(self.model.created_at.desc())
+            .all()
+        )
+
+    def list_user_favorite_artworks(self, user_id):
+        """
+        Return active artworks favorited by the user in a single query.
+
+        Joins favorites to artworks and excludes soft-deleted rows from both
+        tables. Results are ordered by favorite creation time (newest first).
+        """
+        if not user_id:
+            return []
+
+        return (
+            db.session.query(Artwork)
+            .join(Favorite, Favorite.artwork_id == Artwork.id)
+            .filter(Favorite.user_id == user_id)
+            .filter(Favorite.deleted_at.is_(None))
+            .filter(Artwork.deleted_at.is_(None))
+            .order_by(Favorite.created_at.desc())
             .all()
         )

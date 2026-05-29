@@ -17,7 +17,6 @@ Architecture:
 import uuid
 from sqlalchemy.exc import IntegrityError
 
-from app.models.artwork import Artwork
 from app.models.favorites import Favorite
 
 from app.persistence.repositories.artwork_repo import ArtworkRepository
@@ -194,19 +193,13 @@ def list_my_favorites(user_id):
     List all favorited artworks for user.
     """
 
-    favorites = favorite_repo.list_user_favorites(
+    artworks = favorite_repo.list_user_favorite_artworks(
         _as_uuid(user_id),
     )
 
-    favorite_artworks = []
-
-    for favorite in favorites:
-        artwork = artwork_repo.get(favorite.artwork_id)
-
-        if artwork and artwork.deleted_at is None:
-            favorite_artworks.append(
-                _artwork_to_dict(artwork)
-            )
+    favorite_artworks = [
+        _artwork_to_dict(artwork) for artwork in artworks
+    ]
 
     return {
         "favorites": favorite_artworks,
