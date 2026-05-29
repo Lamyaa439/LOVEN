@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.services.facade.auth_facade import AuthFacade
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
+from app.core.auth_utils import get_authenticated_user_id
+
 
 # Blueprint for authentication-related routes (register, login, logout)
 # No url_prefix here — routes are /api/v1/register, /api/v1/login (matches Flutter ApiConstants).
@@ -86,10 +88,10 @@ def logout():
     Handle user logout.
     Clears the FCM token from the database to prevent cross-account notifications.
     """
-    # Extract the identity dictionary from the token.
-    current_user_identity = get_jwt_identity()
+    user_id = get_authenticated_user_id()
+    if not user_id:
+        return jsonify({"error": "Invalid user identity"}), 401
 
-    # Delegate business logic to Facade
-    result, status_code = AuthFacade.logout(current_user_identity)
+    result, status_code = AuthFacade.logout(user_id)
 
     return jsonify(result), status_code

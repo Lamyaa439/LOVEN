@@ -6,6 +6,7 @@ without cluttering the core service logic.
 """
 
 from app.external_services.firebase_service import send_welcome_notification
+from app.core.uuid_utils import as_uuid
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.auth_service import login_user, register_user
 import logging
@@ -56,18 +57,28 @@ class AuthFacade:
         return result, status_code
 
     @staticmethod
-    def logout(user_id: str):
+    def logout(user_id):
         """
         Manages the logout process.
         Clears the FCM token to prevent push notifications to a logged-out device.
         Args:
-            user_id (str): The ID of the user logging out.
+            user_id: Normalized user UUID string from JWT (via auth_utils).
 
         Returns:
             tuple: (response data, HTTP status code)
         """
         try:
-            user_repo.update_fcm_token(user_id, None)
+            uid = as_uuid(user_id)
+        except (TypeError, ValueError):
+            return {"error": "Invalid user identity"}, 401
+
+        if not uid:
+            return {"error": "Invalid user identity"}, 401
+
+        try:
+            updated = user_repo.update_fcm_token(uid, None)
+            if not updated:
+                return {"error": "User not found"}, 404
 
             return {
                 "message": "Logged out successfully and notifications disabled for this device."
