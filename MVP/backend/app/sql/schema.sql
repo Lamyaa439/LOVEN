@@ -75,7 +75,8 @@ CREATE TABLE IF NOT EXISTS "carts" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "user_id" UUID NOT NULL UNIQUE,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -88,7 +89,9 @@ CREATE TABLE IF NOT EXISTS "cart_items" (
     "cart_id" UUID NOT NULL,
     "artwork_id" UUID NOT NULL,
     "quantity" INTEGER DEFAULT 1 CHECK (quantity > 0),
-    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
