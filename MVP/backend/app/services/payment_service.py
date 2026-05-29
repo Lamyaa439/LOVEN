@@ -23,7 +23,7 @@ from app.extensions import db
 from app.external_services.moyasar_service import MoyasarClient, MoyasarError
 from app.models.order import Order
 from app.models.payment import Payment
-from app.persistence.repositories.order_repo import update_order_status
+from app.persistence.repositories.order_repo import order_repo
 from app.persistence.repositories.payment_repo import PaymentRepository
 from config import Config
 
@@ -272,7 +272,7 @@ def verify_payment(order_id, moyasar_payment_id, buyer_id):
         return {"error": str(exc)}, 400
 
     # Mark the parent order as paid once gateway verification succeeds.
-    update_order_status(order.id, status="paid")
+    order_repo.update_order_status(order.id, status="paid")
 
     return {
         "message": "Payment verified successfully",

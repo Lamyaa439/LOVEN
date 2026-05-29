@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
-from app.persistence.repositories.order_repo import get_incoming_orders_by_artist
+from app.persistence.repositories.order_repo import order_repo
 from app.services.facade.order_facade import OrderFacade
 
 artist_profile_repo = ArtistProfileRepository()
@@ -70,8 +70,8 @@ def _artist_can_update_order(user_id, order_id):
     if not profile:
         return False
 
-    artist_orders = get_incoming_orders_by_artist(profile.id)
-    order_ids = {str(order[0]) for order in artist_orders}
+    artist_orders = order_repo.get_incoming_orders_by_artist(profile.id)
+    order_ids = {str(order.id) for order in artist_orders}
     return str(order_id) in order_ids
 
 
