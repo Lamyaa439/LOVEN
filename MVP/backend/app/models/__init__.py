@@ -9,3 +9,4 @@ from .order_item import OrderItem
 from .feedback import Feedback
 from .report import Report
 from .favorites import Favorite
+from .payment import Payment
