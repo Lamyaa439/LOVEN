@@ -1,6 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import HTTPException
+import logging
+
 from app.extensions import db
 from config import Config
 
@@ -20,10 +23,51 @@ from flask_migrate import Migrate
 # Global JWT instance
 jwt = JWTManager()
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging(app):
+    """Configure application-wide logging when no handlers exist yet."""
+    if logging.getLogger().handlers:
+        return
+
+    level = logging.DEBUG if app.debug else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
+
+def _register_error_handlers(app):
+    """Return JSON error responses for API clients."""
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Not found"}), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        logger.exception("Internal server error")
+        return jsonify({"error": "Internal server error"}), 500
+
+    @app.errorhandler(Exception)
+    def unhandled_exception(error):
+        if isinstance(error, HTTPException):
+            return jsonify(
+                {"error": error.description or error.name}
+            ), error.code
+
+        logger.exception("Unhandled exception")
+        return jsonify({"error": "Internal server error"}), 500
+
+
 def create_app():
     app = Flask(__name__)
     # Load application configuration
     app.config.from_object(Config)
+
+    _configure_logging(app)
+    _register_error_handlers(app)
 
     CORS(
         app,
@@ -82,7 +126,6 @@ def create_app():
     # Payment routes
     app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
 
-    # Print all registered routes
-    print(app.url_map)
+    logger.debug("Registered routes: %s", app.url_map)
 
     return app

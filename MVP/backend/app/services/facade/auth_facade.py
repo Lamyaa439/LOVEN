@@ -9,8 +9,10 @@ from app.external_services.firebase_service import send_welcome_notification
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.auth_service import login_user, register_user
 from app.services.facade.artists_profile_facade import ArtistsProfileFacade
+import logging
 
 user_repo = UserRepository()
+logger = logging.getLogger(__name__)
 
 
 class AuthFacade:
@@ -45,8 +47,10 @@ class AuthFacade:
             # Step 3: profile failed — roll back the user row.
             try:
                 user_repo.delete(user_id)
-            except Exception as cleanup_error:
-                print(f"Failed to roll back user after profile error: {cleanup_error}")
+            except Exception:
+                logger.exception(
+                    "Failed to roll back user after profile error"
+                )
 
             return {
                 "error": profile_result.get(
@@ -63,7 +67,9 @@ class AuthFacade:
             try:
                 send_welcome_notification(fcm_token, user_name)
             except Exception as e:
-                print(f"Failed to send welcome notification: {e}")
+                logger.warning(
+                    "Failed to send welcome notification: %s", e
+                )
 
         return result, status_code
 
@@ -97,6 +103,6 @@ class AuthFacade:
             return {
                 "message": "Logged out successfully and notifications disabled for this device."
             }, 200
-        except Exception as e:
-            print(f"Error during logout: {e}")
+        except Exception:
+            logger.exception("Error during logout")
             return {"error": "An internal error occurred during logout"}, 500

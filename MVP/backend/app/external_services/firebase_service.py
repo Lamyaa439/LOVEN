@@ -6,7 +6,10 @@ for media management.
 
 import firebase_admin
 from firebase_admin import credentials, messaging, storage
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 
 # Configuration: Use environment variables for security with local fallbacks
@@ -39,7 +42,7 @@ def initialize_firebase():
                 'storageBucket': STORAGE_BUCKET_NAME
             })
             # Log successful initialization for server monitoring
-            print("Firebase SDK: Successfully initialized (FCM + Storage).")
+            logger.info("Firebase SDK initialized (FCM + Storage).")
         except Exception as e: 
             # Catch and log any initialization errors gracefully
             raise RuntimeError(f"CRITICAL ERROR: Firebase initialization failed: {e}")
@@ -65,7 +68,7 @@ def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
 
     # Exit early if no token is provided
     if not fcm_token:
-        print("No token provided. Skipping welcome notification.")
+        logger.warning("No token provided. Skipping welcome notification.")
         return False
     
     # Construct the message payload
@@ -84,10 +87,10 @@ def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
     # attempt to send the message
     try:
         message_id = messaging.send(message)
-        print(f"Welcome notification sent. ID: {message_id}")
+        logger.info("Welcome notification sent. ID: %s", message_id)
         return True
     except Exception as e:
-        print(f"FCM Error: Dispatch failed: {e}")
+        logger.error("FCM welcome notification failed: %s", e)
         return False
     
 def send_order_status_notification(
@@ -111,7 +114,7 @@ def send_order_status_notification(
 
     # Exit early if no token is available
     if not fcm_token:
-        print("No token provided. Skipping order notification.")
+        logger.warning("No token provided. Skipping order notification.")
         return False
 
     # Build the Firebase Cloud Messaging payload
@@ -132,12 +135,12 @@ def send_order_status_notification(
     # Attempt to send the notification
     try:
         message_id = messaging.send(message)
-        print(f"Order notification sent. ID: {message_id}")
+        logger.info("Order notification sent. ID: %s", message_id)
         return True
 
     # Handle Firebase sending errors gracefully
     except Exception as e:
-        print(f"FCM Error: Order notification failed: {e}")
+        logger.error("FCM order notification failed: %s", e)
         return False
     
 # ==========================================
@@ -159,10 +162,10 @@ def delete_cloud_file(file_path: str) -> bool:
         
         if blob.exists():
             blob.delete()
-            print(f"FCS Success: Deleted {file_path}")
+            logger.info("Deleted cloud file: %s", file_path)
             return True
         return False
     except Exception as e:
-        print(f"FCS Error: Deletion failed: {e}")
+        logger.error("Cloud file deletion failed for %s: %s", file_path, e)
         return False
     
