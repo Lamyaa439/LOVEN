@@ -1,19 +1,12 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import get_authenticated_user_id
 
 from app.services.facade.favorite_facade import FavoriteFacade
 
 
 favorites_bp = Blueprint("favorites", __name__)
-
-
-def get_authenticated_user_id():
-    current_user_identity = get_jwt_identity()
-
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
 
 
 @favorites_bp.get("/")

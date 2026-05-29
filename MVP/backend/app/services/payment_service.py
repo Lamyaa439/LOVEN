@@ -13,12 +13,12 @@ Architecture:
 """
 
 import logging
-import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
 
+from app.core.uuid_utils import as_uuid
 from app.extensions import db
 from app.external_services.moyasar_service import MoyasarClient, MoyasarError
 from app.models.order import Order
@@ -42,15 +42,6 @@ _MOYASAR_PAID_STATUSES = frozenset({"paid", "captured"})
 # =========================================================
 # Private helpers
 # =========================================================
-
-def _as_uuid(value):
-    """Normalize IDs into uuid.UUID objects."""
-    if value is None:
-        return None
-    if isinstance(value, uuid.UUID):
-        return value
-    return uuid.UUID(str(value))
-
 
 def _amount_to_halalah(amount) -> int:
     """Convert a major-unit decimal amount (e.g. 170.00 SAR) to halalah."""
@@ -85,8 +76,8 @@ def _get_order_for_buyer(order_id, buyer_id):
         when validation fails, otherwise None.
     """
     try:
-        order_uuid = _as_uuid(order_id)
-        buyer_uuid = _as_uuid(buyer_id)
+        order_uuid = as_uuid(order_id)
+        buyer_uuid = as_uuid(buyer_id)
     except (TypeError, ValueError):
         return None, ({"error": "Invalid order or buyer ID format"}, 400)
 

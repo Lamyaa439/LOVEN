@@ -1,5 +1,10 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import (
+    get_authenticated_user_id,
+    get_authenticated_user_role,
+)
 
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 from app.persistence.repositories.order_repo import order_repo
@@ -13,29 +18,6 @@ artist_profile_repo = ArtistProfileRepository()
 # The actual order logic stays in the facade, service, and repository layers.
 
 order_bp = Blueprint("orders", __name__)
-
-
-def get_authenticated_user_id():
-    """
-    Extract the current user's ID from the JWT token.
-
-    Supports both JWT formats used in the project:
-    - sub as a direct UUID string
-    - sub as a dictionary containing user_id
-    """
-
-    current_user_identity = get_jwt_identity()
-
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
-
-
-def get_authenticated_user_role():
-    """Extract role from JWT claims."""
-    claims = get_jwt()
-    return claims.get("role") or claims.get("system_role")
 
 
 def _is_admin(role):

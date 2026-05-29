@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import (
-    jwt_required,
-    get_jwt_identity,
-)
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import get_authenticated_user_id
 
 from app.services.facade.feedback_facade import (
     FeedbackFacade,
@@ -10,18 +9,6 @@ from app.services.facade.feedback_facade import (
 
 
 feedback_bp = Blueprint("feedback", __name__)
-
-
-def get_authenticated_user_id():
-
-    current_user_identity = get_jwt_identity()
-
-    # The project currently supports multiple JWT identity
-    # structures, so both formats are handled safely.
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
 
 
 @feedback_bp.post("/")

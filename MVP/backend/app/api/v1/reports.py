@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import (
-    jwt_required,
-    get_jwt_identity,
-)
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import get_authenticated_user_id
 
 from app.services.facade.report_facade import (
     ReportFacade,
@@ -10,18 +9,6 @@ from app.services.facade.report_facade import (
 
 
 report_bp = Blueprint("reports", __name__)
-
-
-def get_authenticated_user_id():
-
-    current_user_identity = get_jwt_identity()
-
-    # Supports both JWT identity formats currently used
-    # across the LOVEN backend.
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
 
 
 @report_bp.post("/")

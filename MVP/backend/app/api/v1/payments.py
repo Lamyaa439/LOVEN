@@ -1,20 +1,12 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import get_authenticated_user_id
 
 from app.services.facade.payment_facade import PaymentFacade
 
 
 payments_bp = Blueprint("payments", __name__)
-
-
-def get_authenticated_user_id():
-    """Extract the current user's ID from the JWT token."""
-    current_user_identity = get_jwt_identity()
-
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
 
 
 @payments_bp.post("/orders/<order_id>/initiate")

@@ -16,10 +16,11 @@ API HTTP Status Codes Reference:
 
 """
 
-import uuid
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
+
+from app.core.uuid_utils import as_uuid
 
 from app.persistence.repositories.user_repo import UserRepository
 from app.models.artwork import Artwork
@@ -49,23 +50,6 @@ _ARTIST_WRITABLE_FIELDS = frozenset(
 )
 
 # ---------------------- Private Helpers ----------------------
-
-def _as_uuid(value):
-    """
-    Normalize JWT / string IDs to uuid.UUID for DB comparisons.
-
-     Args:
-        value (str or uuid.UUID): The ID to normalize. Can be a string 
-        or a UUID object.
-
-      Returns: 
-        uuid.UUID or None: A valid UUID object, or None if the input was None.
-    """
-    if value is None:
-        return None
-    if isinstance(value, uuid.UUID):
-        return value
-    return uuid.UUID(str(value))
 
 # take an object of Artwork and make it dict(JSON)
 def _artwork_to_dict(artwork):
@@ -160,7 +144,7 @@ def _profile_for_user(user_id):
     Fetches the active artist profile for the given user ID. 
     Returns None if the user is not an artist or the profile is deleted.
     """
-    return artist_profile_repo.get_active_by_user_id(_as_uuid(user_id))
+    return artist_profile_repo.get_active_by_user_id(as_uuid(user_id))
 
 
 def _artwork_owned_by_user(artwork, user_id):
@@ -185,7 +169,7 @@ def create_artwork(user_id, data):
     """
 
     # نتأكد إن المستخدم فنان
-    user = user_repo.get_user_by_id(_as_uuid(user_id))
+    user = user_repo.get_user_by_id(as_uuid(user_id))
 
     if not user:
         return {"error": "User not found"}, 404
@@ -241,7 +225,7 @@ def get_artwork(artwork_id):
     
     Returns the serialized artwork data (200 OK) or an error (404 Not Found).
     """
-    aid = _as_uuid(artwork_id)
+    aid = as_uuid(artwork_id)
     artwork = artwork_repo.get(aid)
     if not artwork:
         return {"error": "Artwork not found"}, 404
@@ -338,7 +322,7 @@ def list_artworks_for_profile(artist_profile_id, limit=20, offset=0, status="ava
     it returns all non-deleted artworks. Results are always sorted from newest to oldest.
     """
     # نتأكد إن الفنان موجود
-    pid = _as_uuid(artist_profile_id)
+    pid = as_uuid(artist_profile_id)
     profile = artist_profile_repo.get(pid)
     if not profile:
         return {"error": "Artist profile not found"}, 404
@@ -383,7 +367,7 @@ def update_artwork(user_id, artwork_id, data):
     The incoming data is sanitized to allow only permitted fields to be updated.
     Returns the updated artwork on success, or appropriate error codes otherwise.
     """
-    artwork = artwork_repo.get(_as_uuid(artwork_id))
+    artwork = artwork_repo.get(as_uuid(artwork_id))
     if not artwork:
         return {"error": "Artwork not found"}, 404
     if not _artwork_owned_by_user(artwork, user_id):
@@ -414,7 +398,7 @@ def soft_delete_artwork(user_id, artwork_id):
     Security checks ensure that the artwork exists and the caller is the actual owner.
     """
 
-    artwork = artwork_repo.get(_as_uuid(artwork_id))
+    artwork = artwork_repo.get(as_uuid(artwork_id))
     if not artwork:
         return {"error": "Artwork not found"}, 404
     # نتأكد إن الفنان هو المالك لهذا العمل
@@ -429,7 +413,7 @@ def soft_delete_artwork(user_id, artwork_id):
 # عدد الاعمال الفنية للفنان
 def count_artworks_for_profile(artist_profile_id):
     """Public count of non-deleted artworks for an artist profile."""
-    pid = _as_uuid(artist_profile_id)
+    pid = as_uuid(artist_profile_id)
     
     # نتحقق إن بروفايل الفنان موجود
     profile = artist_profile_repo.get(pid)

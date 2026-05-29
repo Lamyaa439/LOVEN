@@ -3,8 +3,9 @@ from flask import Blueprint, request, jsonify
 # JWT authentication utilities
 from flask_jwt_extended import (
     jwt_required,
-    get_jwt_identity,
 )
+
+from app.core.auth_utils import get_authenticated_user_id
 
 # Facade layer responsible for orchestration
 from app.services.facade.artwork_facade import ArtworkFacade
@@ -59,44 +60,6 @@ from app.services.facade.artwork_facade import ArtworkFacade
 # =========================================================
 
 artwork_bp = Blueprint("artworks", __name__)
-
-
-# =========================================================
-# Helper: Extract Authenticated User ID
-# =========================================================
-# Description:
-# Extracts the authenticated user's identity
-# from the JWT access token.
-#
-# JWT Identity Structure:
-# {
-#     "user_id": "...",
-#     "role": "artist"
-# }
-#
-# IMPORTANT:
-# user_id should NEVER be manually passed through
-# request headers.
-#
-# It must come from JWT authentication.
-# =========================================================
-def get_authenticated_user_id():
-    """
-    Extract authenticated user ID from JWT identity.
-
-    Supports:
-    - dictionary identities
-    - string identities
-    """
-
-    current_user_identity = get_jwt_identity()
-
-    # If JWT identity is a dictionary
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    # If JWT identity is directly stored as string UUID
-    return current_user_identity
 
 
 # =========================================================
