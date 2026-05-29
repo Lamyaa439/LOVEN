@@ -5,9 +5,6 @@ from app.external_services.firebase_service import (
     send_order_status_notification,
 )
 
-from app.extensions import db
-from app.models.artwork import Artwork
-
 # =========================================================
 # Service: Order Service
 # =========================================================
@@ -36,18 +33,9 @@ def create_user_order(data):
     if not items:
         return {"error": "Order must contain at least one item"}, 400
 
-    order = order_repo.create_order(
-        buyer_id=buyer_id,
-        subtotal=subtotal,
-        shipping_fee=shipping_fee,
-        total_amount=total_amount,
-        status="pending",
-    )
-
-    created_items = []
+    normalized_items = []
 
     for item in items:
-
         artwork_id = item.get("artwork_id")
         quantity = item.get("quantity")
         price_at_purchase = item.get("price_at_purchase")
@@ -65,28 +53,30 @@ def create_user_order(data):
                 )
             }, 400
 
-        order_item = order_repo.create_order_item(
-            order_id=order.id,
-            artwork_id=artwork_id,
-            quantity=quantity,
-            price_at_purchase=price_at_purchase,
+        normalized_items.append(
+            {
+                "artwork_id": artwork_id,
+                "quantity": quantity,
+                "price_at_purchase": price_at_purchase,
+            }
         )
 
-        artwork = db.session.get(Artwork, artwork_id)
-
-        if artwork:
-            artwork.quantity_available -= quantity
-
-            if artwork.quantity_available <= 0:
-                artwork.quantity_available = 0
-                artwork.status = "sold_out"
-
-            db.session.commit()
-
-        created_items.append(order_item.to_dict())
+    try:
+        order, created_items = order_repo.create_order_with_items(
+            buyer_id=buyer_id,
+            subtotal=subtotal,
+            shipping_fee=shipping_fee,
+            total_amount=total_amount,
+            items=normalized_items,
+            status="pending",
+        )
+    except ValueError as exc:
+        return {"error": str(exc)}, 400
 
     order_payload = order.to_dict()
-    order_payload["items"] = created_items
+    order_payload["items"] = [
+        order_item.to_dict() for order_item in created_items
+    ]
 
     return {
         "message": "Order created successfully",

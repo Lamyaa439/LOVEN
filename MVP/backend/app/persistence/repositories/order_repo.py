@@ -48,13 +48,72 @@ class OrderRepository(SQLAlchemyRepository):
             quantity=quantity,
             price_at_purchase=price_at_purchase,
         )
+        return self.save(order_item)
+
+    def create_order_with_items(
+        self,
+        buyer_id,
+        subtotal,
+        shipping_fee,
+        total_amount,
+        items,
+        status="pending",
+    ):
+        """
+        Create an order, its line items, and inventory updates atomically.
+
+        Either all rows are persisted or none are. Raises ValueError when an
+        artwork is missing or does not have enough available quantity.
+        """
+        order = Order(
+            buyer_id=buyer_id,
+            subtotal=subtotal,
+            shipping_fee=shipping_fee,
+            total_amount=total_amount,
+            status=status,
+        )
+        created_items = []
+
         try:
-            db.session.add(order_item)
+            db.session.add(order)
+            db.session.flush()
+
+            for item in items:
+                artwork_id = item["artwork_id"]
+                quantity = item["quantity"]
+                price_at_purchase = item["price_at_purchase"]
+
+                artwork = db.session.get(Artwork, artwork_id)
+                if not artwork:
+                    raise ValueError(
+                        f"Artwork not found: {artwork_id}"
+                    )
+
+                if artwork.quantity_available < quantity:
+                    raise ValueError(
+                        "Insufficient quantity for artwork "
+                        f"{artwork_id}"
+                    )
+
+                order_item = OrderItem(
+                    order_id=order.id,
+                    artwork_id=artwork_id,
+                    quantity=quantity,
+                    price_at_purchase=price_at_purchase,
+                )
+                db.session.add(order_item)
+                created_items.append(order_item)
+
+                artwork.quantity_available -= quantity
+                if artwork.quantity_available <= 0:
+                    artwork.quantity_available = 0
+                    artwork.status = "sold_out"
+
             db.session.commit()
-            return order_item
-        except Exception as exc:
+            return order, created_items
+        except Exception:
             db.session.rollback()
-            raise exc
+            raise
 
     def get_orders_by_buyer(self, buyer_id):
         """Return all orders for a buyer, newest first."""
