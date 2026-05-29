@@ -20,10 +20,30 @@ import 'package:loven/core/storage/token_storage.dart';
 /// ========================================================================
 
 
-/// Holds only the URI paths. The BaseUrl is automatically prepended by Dio.
+/// Holds URI paths passed to [ApiClient] (Dio). Every path is **relative to**
+/// [ApiClient]'s `baseUrl`, which must be the API root (e.g. `http://host/api/v1`
+/// from `.env` `BASE_URL`).
+///
+/// ## Path conventions
+///
+/// **Root-mounted routes** — blueprint registered at `/api/v1` only:
+/// - Auth: `/register`, `/login`, `/refresh`, `/logout`
+/// - Artist profiles: `/artist-profiles`, `/artist-profiles/me`, …
+/// - Verification: `/verification-requests`
+///
+/// **Feature-prefixed routes** — blueprint adds a segment under `/api/v1`:
+/// - Carts: `/carts/`, `/carts/items`
+/// - Orders: `/orders/`, `/orders/mine`
+/// - Artworks: `/artworks/`, `/artworks/search`, `/artworks/mine`
+/// - Feedback: `/feedback/`
+/// - Reports: `/reports/`
+/// - Favorites: `/favorites/`
+/// - Payments: `/payments/orders/{id}/…`
+///
+/// Dio resolves `baseUrl + path` (e.g. `…/api/v1` + `/carts/` → `…/api/v1/carts/`).
 class ApiConstants {
   // =====================================================
-  // Authentication
+  // Authentication (root-mounted on /api/v1)
   // =====================================================
 
   static const String register = '/register';
@@ -32,62 +52,110 @@ class ApiConstants {
   static const String logout = '/logout';
 
   // =====================================================
-  // Artist Profiles
-  // Current backend routes are mounted directly on /api/v1
+  // Artist profiles (root-mounted: /api/v1/artist-profiles/…)
   // =====================================================
 
-  static const String createArtistProfile = '/';
-  static const String myArtistProfile = '/me';
-  static const String artistProfiles = '/';
-  static const String artistProfileByName = '/by-name';
+  /// POST — create or restore profile (`POST /artist-profiles`).
+  static const String createArtistProfile = '/artist-profiles';
+
+  /// GET/PATCH/DELETE — authenticated user's profile.
+  static const String myArtistProfile = '/artist-profiles/me';
+
+  /// GET — list profiles; append `/{profileId}` for single profile.
+  static const String artistProfiles = '/artist-profiles';
+
+  /// GET — append `/{display_name}` for public lookup by handle.
+  static const String artistProfileByName = '/artist-profiles/by-name';
+
+  /// GET — `{artistProfiles}/{profileId}/artworks`.
+  static String artistProfileArtworks(String profileId) =>
+      '$artistProfiles/$profileId/artworks';
+
+  /// GET — `{artistProfiles}/{profileId}`.
+  static String artistProfileById(String profileId) =>
+      '$artistProfiles/$profileId';
 
   // =====================================================
-  // Cart
+  // Cart (feature prefix: /api/v1/carts/…)
   // =====================================================
 
   static const String cart = '/carts/';
   static const String cartItems = '/carts/items';
 
+  /// PATCH/DELETE — `{cartItems}/{itemId}`.
+  static String cartItemById(String itemId) => '$cartItems/$itemId';
+
   // =====================================================
-  // Orders
+  // Orders (feature prefix: /api/v1/orders/…)
   // =====================================================
 
   static const String orders = '/orders/';
   static const String myOrders = '/orders/mine';
 
+  /// GET — `{orders}buyer/{buyerId}`.
+  static String ordersByBuyer(String buyerId) => '${orders}buyer/$buyerId';
+
+  /// GET — `{orders}artist/{artistProfileId}`.
+  static String ordersByArtist(String artistProfileId) =>
+      '${orders}artist/$artistProfileId';
+
+  /// PATCH — update shipment status (artist dashboard).
+  static String orderStatus(String orderId) => '${orders}$orderId/status';
+
   // =====================================================
-  // Artworks
+  // Artworks (feature prefix: /api/v1/artworks/…)
   // =====================================================
 
   static const String artworks = '/artworks/';
   static const String artworkSearch = '/artworks/search';
-
   static const String myArtworks = '/artworks/mine';
 
+  /// GET/PATCH/DELETE — `{artworks}{artworkId}`.
+  static String artworkById(String artworkId) => '$artworks$artworkId';
+
   // =====================================================
-  // Feedback
+  // Feedback (feature prefix: /api/v1/feedback/…)
   // =====================================================
 
   static const String feedback = '/feedback/';
 
   // =====================================================
-  // Reports
+  // Reports (feature prefix: /api/v1/reports/…)
   // =====================================================
 
   static const String reports = '/reports/';
 
-// =====================================================
-// Favorites
-// =====================================================
+  // =====================================================
+  // Favorites (feature prefix: /api/v1/favorites/…)
+  // =====================================================
 
   static const String favorites = '/favorites/';
   static const String favoriteCheck = '/favorites/check';
 
-// =====================================================
-// Verification Requests
-// =====================================================
+  /// POST/DELETE — `{favorites}{artworkId}`.
+  static String favoriteByArtworkId(String artworkId) =>
+      '$favorites$artworkId';
+
+  // =====================================================
+  // Verification requests (root-mounted on /api/v1)
+  // =====================================================
 
   static const String verificationRequests = '/verification-requests';
+
+  // =====================================================
+  // Payments (feature prefix: /api/v1/payments/…)
+  // =====================================================
+
+  /// POST — create or return pending payment before Moyasar checkout.
+  static String paymentsInitiate(String orderId) =>
+      '/payments/orders/$orderId/initiate';
+
+  /// POST — verify Moyasar payment after SDK capture.
+  static String paymentsVerify(String orderId) =>
+      '/payments/orders/$orderId/verify';
+
+  /// GET — payment record for an order.
+  static String paymentsGet(String orderId) => '/payments/orders/$orderId';
 }
 
 /// Centralized Dio client for handling all network requests safely.
