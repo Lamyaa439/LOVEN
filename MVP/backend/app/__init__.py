@@ -14,6 +14,7 @@ from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
+from app.api.v1.payments import payments_bp
 from flask_migrate import Migrate
 
 # Global JWT instance
@@ -77,6 +78,9 @@ def create_app():
 
     # Favorites routes
     app.register_blueprint(favorites_bp, url_prefix="/api/v1/favorites")
+
+    # Payment routes
+    app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
 
     # Print all registered routes
     print(app.url_map)
