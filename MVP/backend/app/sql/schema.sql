@@ -153,7 +153,8 @@ CREATE TABLE IF NOT EXISTS "reports" (
     "details" TEXT,
     "status" VARCHAR(50) DEFAULT 'open',
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -166,7 +167,9 @@ CREATE TABLE IF NOT EXISTS "feedback" (
     "user_id" UUID NOT NULL,
     "subject" VARCHAR(255),
     "message" TEXT NOT NULL,
-    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -181,8 +184,9 @@ CREATE TABLE IF NOT EXISTS "verification_requests" (
     "institution_name" VARCHAR(255),
     "document_number" VARCHAR(100),
     "status" VARCHAR(50) DEFAULT 'pending',
-    "submitted_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
