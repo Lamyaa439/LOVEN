@@ -8,7 +8,6 @@ without cluttering the core service logic.
 from app.external_services.firebase_service import send_welcome_notification
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.auth_service import login_user, register_user
-from app.services.facade.artists_profile_facade import ArtistsProfileFacade
 import logging
 
 user_repo = UserRepository()
@@ -22,44 +21,14 @@ class AuthFacade:
         """
         Manages the new user registration process.
 
-        Orchestration:
-        1. Create User (auth_service.register_user)
-        2. Create linked ArtistProfile (ArtistsProfileFacade.create_for_registration)
-        3. If step 2 fails, remove the user so the DB stays consistent
-        4. Optional Firebase welcome notification
+        User and artist profile are created atomically in register_user.
+        Welcome notification is sent only after a successful commit.
         """
         result, status_code = register_user(data)
 
         if status_code != 201:
             return result, status_code
 
-        user_id = result.get("user_id")
-        if not user_id:
-            return {"error": "Registration succeeded but user_id is missing"}, 500
-
-        # Step 2: empty artist profile so GET /artist-profiles/me does not 404.
-        profile_result, profile_status = ArtistsProfileFacade.create_for_registration(
-            user_id,
-            data,
-        )
-
-        if profile_status not in (200, 201):
-            # Step 3: profile failed — roll back the user row.
-            try:
-                user_repo.delete(user_id)
-            except Exception:
-                logger.exception(
-                    "Failed to roll back user after profile error"
-                )
-
-            return {
-                "error": profile_result.get(
-                    "error",
-                    "User was created but artist profile setup failed",
-                ),
-            }, profile_status if profile_status >= 400 else 500
-
-        # Step 4: welcome push (non-blocking).
         user_name = data.get("name", "Dear artist")
         fcm_token = data.get("fcm_token")
 

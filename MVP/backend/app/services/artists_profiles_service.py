@@ -162,20 +162,17 @@ def _validate_shipping_policy(value):
 
 # ----------------------------- Public Functions ---------------------------------
 
-def bootstrap_artist_profile(user_id, data):
+def prepare_registration_profile(user_id, data):
     """
-    Create an empty artist profile right after registration.
+    Build an ArtistProfile instance for signup without persisting.
 
-    Skips the artist-role check used by create_artist_profile so every new
-    account can call GET /artist-profiles/me. Idempotent if a profile exists.
+    Used by atomic registration so user + profile share one transaction.
+
+    Raises ValueError when display name cannot be resolved.
     """
     uid = _resolve_user_id(user_id)
     if not uid:
-        return {"error": "Invalid user id"}, 400
-
-    existing = artist_profile_repo.get_active_by_user_id(uid)
-    if existing:
-        return {"message": "Artist profile already exists", "profile": _profile_to_dict(existing)}, 200
+        raise ValueError("Invalid user id")
 
     email = (data or {}).get("email") or ""
     raw_name = (
@@ -196,11 +193,29 @@ def bootstrap_artist_profile(user_id, data):
         display_name = f"{base[:240]}_{suffix}"
         suffix += 1
 
+    return ArtistProfile(
+        user_id=uid,
+        display_name=display_name,
+    )
+
+
+def bootstrap_artist_profile(user_id, data):
+    """
+    Create an empty artist profile right after registration.
+
+    Skips the artist-role check used by create_artist_profile so every new
+    account can call GET /artist-profiles/me. Idempotent if a profile exists.
+    """
+    uid = _resolve_user_id(user_id)
+    if not uid:
+        return {"error": "Invalid user id"}, 400
+
+    existing = artist_profile_repo.get_active_by_user_id(uid)
+    if existing:
+        return {"message": "Artist profile already exists", "profile": _profile_to_dict(existing)}, 200
+
     try:
-        profile = ArtistProfile(
-            user_id=uid,
-            display_name=display_name,
-        )
+        profile = prepare_registration_profile(user_id, data)
         artist_profile_repo.add(profile)
         return {
             "message": "Artist profile created",
