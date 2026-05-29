@@ -66,6 +66,9 @@ class _LovenAppState extends State<LovenApp> {
   final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
+  /// Shared artwork data layer — injected into [HomeBloc] and [ArtworkCubit]
+  /// so both features use one [ApiClient] instance.
+  late final ArtworkRepository _artworkRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
 
@@ -78,6 +81,8 @@ class _LovenAppState extends State<LovenApp> {
       apiClient: _apiClient,
       tokenStorage: _tokenStorage,
     );
+    // Single repository instance wired to the shared ApiClient.
+    _artworkRepository = ArtworkRepository(apiClient: _apiClient);
     _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
     _appRouter = AppRouter(_authCubit);
   }
@@ -97,7 +102,12 @@ class _LovenAppState extends State<LovenApp> {
         // Provide the already initialized AuthCubit using BlocProvider.value
         BlocProvider.value(value: _authCubit),
         BlocProvider(create: (context) => NavigationBarCubit()),
-        BlocProvider(create: (context) => HomeBloc()..add(FetchHomeData())),
+        // HomeBloc receives the shared repository for marketplace data.
+        BlocProvider(
+          create: (context) => HomeBloc(
+            artworkRepository: _artworkRepository,
+          )..add(FetchHomeData()),
+        ),
         BlocProvider(create: (context) => ThemeBloc()),
         // Note: ArtistProfileCubit and VerificationRequestCubit were removed 
         // from global providers. They are now scoped directly in app_router.dart.
@@ -106,7 +116,10 @@ class _LovenAppState extends State<LovenApp> {
             CartRepository(apiClient: _apiClient),
           ),
         ),
-        BlocProvider(create: (context) => ArtworkCubit(ArtworkRepository())),
+        // Same repository instance keeps artwork CRUD and home feed in sync.
+        BlocProvider(
+          create: (context) => ArtworkCubit(_artworkRepository),
+        ),
         BlocProvider(create: (context) => OrderCubit(OrderRepository())),
         BlocProvider(create: (context) => FeedbackCubit(FeedbackRepository())),
         BlocProvider(create: (context) => ReportCubit(ReportRepository())),

@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
-import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
+import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
@@ -331,7 +331,10 @@ class _SuccessContent extends StatelessWidget {
                     isGuest: context.read<AuthCubit>().state is AuthGuest,
                     canManage: !isPublicView,
                     onDelete: (artwork) async {
-                      await ArtworkRepository().deleteArtwork(
+                      // Route through the globally provided ArtworkCubit so
+                      // delete uses the shared ApiClient-backed repository
+                      // instead of constructing ArtworkRepository() locally.
+                      await context.read<ArtworkCubit>().deleteArtwork(
                         artworkId: artwork.id,
                       );
 
