@@ -220,13 +220,13 @@ def create_artwork(user_id, data):
 # (المشتري)لعرض تفاصيل العمل الفني للمستخدم
 def get_artwork(artwork_id):
     """
-    Fetches the details of a single artwork by its ID.
-    Soft-deleted artworks are automatically ignored.
-    
-    Returns the serialized artwork data (200 OK) or an error (404 Not Found).
+    Fetches public marketplace details for a single artwork by ID.
+
+    Only non-deleted listings with status "available" are returned, matching
+    list/search behavior. Hidden or sold_out artworks yield 404.
     """
     aid = as_uuid(artwork_id)
-    artwork = artwork_repo.get(aid)
+    artwork = artwork_repo.get_public(aid, status="available")
     if not artwork:
         return {"error": "Artwork not found"}, 404
     return {"artwork": _artwork_to_dict(artwork)}, 200
