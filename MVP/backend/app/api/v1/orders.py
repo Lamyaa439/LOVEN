@@ -52,9 +52,7 @@ def _artist_can_update_order(user_id, order_id):
     if not profile:
         return False
 
-    artist_orders = order_repo.get_incoming_orders_by_artist(profile.id)
-    order_ids = {str(order.id) for order in artist_orders}
-    return str(order_id) in order_ids
+    return order_repo.artist_has_order(profile.id, order_id)
 
 
 @order_bp.post("/")

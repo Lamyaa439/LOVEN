@@ -218,6 +218,26 @@ class OrderRepository(SQLAlchemyRepository):
             .all()
         )
 
+    def artist_has_order(self, artist_profile_id, order_id):
+        """
+        Return True when the order includes at least one artwork
+        owned by the given artist profile.
+        """
+        if not artist_profile_id or not order_id:
+            return False
+
+        return (
+            db.session.query(Order.id)
+            .join(OrderItem, OrderItem.order_id == Order.id)
+            .join(Artwork, OrderItem.artwork_id == Artwork.id)
+            .filter(
+                Order.id == order_id,
+                Artwork.artist_profile_id == artist_profile_id,
+            )
+            .first()
+            is not None
+        )
+
     def update_order_status(
         self,
         order_id,
