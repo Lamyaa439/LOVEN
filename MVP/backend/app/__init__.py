@@ -23,6 +23,41 @@ from flask_migrate import Migrate
 # Global JWT instance
 jwt = JWTManager()
 
+
+@jwt.unauthorized_loader
+def jwt_unauthorized(_error):
+    return jsonify({"error": "Authorization token required"}), 401
+
+
+@jwt.invalid_token_loader
+def jwt_invalid(_error):
+    return jsonify({"error": "Invalid token"}), 422
+
+
+@jwt.expired_token_loader
+def jwt_expired(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Token has expired"}), 401
+
+
+@jwt.revoked_token_loader
+def jwt_revoked(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Token has been revoked"}), 401
+
+
+@jwt.needs_fresh_token_loader
+def jwt_needs_fresh(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Fresh token required"}), 401
+
+
+@jwt.token_verification_failed_loader
+def jwt_verification_failed(_jwt_header, _jwt_data):
+    return jsonify({"error": "Token verification failed"}), 401
+
+
+@jwt.user_lookup_error_loader
+def jwt_user_lookup_failed(_jwt_header, _jwt_data):
+    return jsonify({"error": "User not found"}), 401
+
 logger = logging.getLogger(__name__)
 
 
