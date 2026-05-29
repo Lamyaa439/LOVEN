@@ -23,7 +23,6 @@ from app.extensions import db
 from app.external_services.moyasar_service import MoyasarClient, MoyasarError
 from app.models.order import Order
 from app.models.payment import Payment
-from app.persistence.repositories.order_repo import order_repo
 from app.persistence.repositories.payment_repo import PaymentRepository
 from config import Config
 
@@ -242,8 +241,9 @@ def verify_payment(order_id, moyasar_payment_id, buyer_id):
     paid_at = _parse_moyasar_timestamp(gateway_payment.get("paid_at") or gateway_payment.get("created_at"))
 
     try:
-        updated_payment = payment_repo.mark_paid(
+        updated_payment = payment_repo.fulfill_paid_order(
             payment.id,
+            order.id,
             moyasar_payment_id=moyasar_payment_id,
             amount=verified_amount,
             currency=gateway_currency,
@@ -262,12 +262,12 @@ def verify_payment(order_id, moyasar_payment_id, buyer_id):
         db.session.rollback()
         return {"error": str(exc)}, 400
 
-    # Mark the parent order as paid once gateway verification succeeds.
-    order_repo.update_order_status(order.id, status="paid")
+    if not updated_payment:
+        return {"error": "Could not fulfill payment for order"}, 500
 
     return {
         "message": "Payment verified successfully",
-        "payment": updated_payment.to_dict() if updated_payment else payment.to_dict(),
+        "payment": updated_payment.to_dict(),
         "order_id": str(order.id),
     }, 200
 

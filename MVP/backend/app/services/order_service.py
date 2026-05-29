@@ -38,37 +38,41 @@ def create_user_order(data):
     for item in items:
         artwork_id = item.get("artwork_id")
         quantity = item.get("quantity")
-        price_at_purchase = item.get("price_at_purchase")
 
-        if (
-            not artwork_id
-            or not quantity
-            or price_at_purchase is None
-        ):
+        if not artwork_id or quantity is None:
             return {
                 "error": (
-                    "Each item must include "
-                    "artwork_id, quantity, "
-                    "price_at_purchase"
+                    "Each item must include artwork_id and quantity"
                 )
+            }, 400
+
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            return {
+                "error": "Each item quantity must be a whole number",
+            }, 400
+
+        if quantity < 1:
+            return {
+                "error": "Each item quantity must be at least 1",
             }, 400
 
         normalized_items.append(
             {
                 "artwork_id": artwork_id,
                 "quantity": quantity,
-                "price_at_purchase": price_at_purchase,
             }
         )
 
     try:
         order, created_items = order_repo.create_order_with_items(
             buyer_id=buyer_id,
-            subtotal=subtotal,
-            shipping_fee=shipping_fee,
-            total_amount=total_amount,
             items=normalized_items,
             status="pending",
+            expected_subtotal=subtotal,
+            expected_shipping_fee=shipping_fee,
+            expected_total_amount=total_amount,
         )
     except ValueError as exc:
         return {"error": str(exc)}, 400

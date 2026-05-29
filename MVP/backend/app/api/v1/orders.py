@@ -75,11 +75,13 @@ def create_order():
         "items": [
             {
                 "artwork_id": "...",
-                "quantity": 1,
-                "price_at_purchase": 150.00
+                "quantity": 1
             }
         ]
     }
+
+    Totals are validated against server-computed artwork prices; tampered
+    amounts are rejected. Line prices are always taken from the database.
     """
 
     data = request.get_json() or {}

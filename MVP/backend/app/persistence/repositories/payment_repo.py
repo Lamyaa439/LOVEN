@@ -14,6 +14,8 @@ Typical flow:
 
 from datetime import datetime, timezone
 
+from app.extensions import db
+from app.models.order import Order
 from app.models.payment import Payment
 from app.persistence.repository import SQLAlchemyRepository
 
@@ -85,7 +87,43 @@ class PaymentRepository(SQLAlchemyRepository):
         payment.paid_at = paid_at or datetime.now(timezone.utc)
 
         return self.save(payment)
-    
+
+    def fulfill_paid_order(
+        self,
+        payment_id,
+        order_id,
+        *,
+        moyasar_payment_id,
+        amount,
+        currency="SAR",
+        paid_at=None,
+    ):
+        """
+        Mark payment as paid and order as paid in a single transaction.
+
+        Returns the updated Payment, or None if payment/order was not found.
+        """
+        try:
+            payment = db.session.get(Payment, payment_id)
+            order = db.session.get(Order, order_id)
+
+            if not payment or not order:
+                return None
+
+            payment.moyasar_payment_id = moyasar_payment_id
+            payment.amount = amount
+            payment.currency = currency
+            payment.status = "paid"
+            payment.paid_at = paid_at or datetime.now(timezone.utc)
+
+            order.status = "paid"
+
+            db.session.commit()
+            return payment
+        except Exception:
+            db.session.rollback()
+            raise
+
     # تغيير حالة الفاتورة :فشل الدفع
     def mark_failed(self, payment_id, *, moyasar_payment_id=None):
         """Mark a payment as failed after verification or gateway rejection."""
