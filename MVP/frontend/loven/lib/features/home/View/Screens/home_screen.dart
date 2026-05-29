@@ -42,16 +42,9 @@ Future<void> _addArtworkToCart({
   int currentCartQuantity = 0;
 
   if (cartState is CartLoaded) {
-    final items = cartState.cart['items'] as List? ?? [];
-
-    for (final item in items) {
-      final itemArtworkId =
-          item['artwork_id']?.toString() ??
-          item['artwork']?['id']?.toString() ??
-          '';
-
-      if (itemArtworkId == artworkId) {
-        currentCartQuantity = ((item['quantity'] as num?)?.toInt() ?? 0);
+    for (final item in cartState.cart.items) {
+      if (item.artworkId == artworkId) {
+        currentCartQuantity = item.quantity;
         break;
       }
     }

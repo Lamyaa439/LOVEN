@@ -27,10 +27,9 @@ class NavigationWidget extends StatelessWidget {
                   int itemCount = 0;
 
                   if (cartState is CartLoaded) {
-                    final items = cartState.cart['items'] as List? ?? [];
-                    itemCount = items.fold<int>(
+                    itemCount = cartState.cart.items.fold<int>(
                       0,
-                      (sum, item) => sum + ((item['quantity'] as num?)?.toInt() ?? 0),
+                      (sum, item) => sum + item.quantity,
                     );
                   }
 

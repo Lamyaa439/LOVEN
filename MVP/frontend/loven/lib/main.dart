@@ -101,7 +101,11 @@ class _LovenAppState extends State<LovenApp> {
         BlocProvider(create: (context) => ThemeBloc()),
         // Note: ArtistProfileCubit and VerificationRequestCubit were removed 
         // from global providers. They are now scoped directly in app_router.dart.
-        BlocProvider(create: (context) => CartCubit(CartRepository())),
+        BlocProvider(
+          create: (context) => CartCubit(
+            CartRepository(apiClient: _apiClient),
+          ),
+        ),
         BlocProvider(create: (context) => ArtworkCubit(ArtworkRepository())),
         BlocProvider(create: (context) => OrderCubit(OrderRepository())),
         BlocProvider(create: (context) => FeedbackCubit(FeedbackRepository())),

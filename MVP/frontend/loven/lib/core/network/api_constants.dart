@@ -235,6 +235,35 @@ class ApiClient {
     }
   }
 
+  /// Sends a PATCH request to [path] (relative to [BaseOptions.baseUrl]).
+  ///
+  /// [data] is serialized to JSON by Dio. Used by repositories for partial
+  /// updates (e.g. cart item quantity). Returns the raw [Response] on
+  /// success; non-2xx status codes are converted to [Exception] via
+  /// [_handleError] so callers can surface backend messages in the UI.
+  Future<Response> patch(String path, {Map<String, dynamic>? data}) async {
+    try {
+      final response = await _dio.patch(path, data: data);
+      return response;
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  /// Sends a DELETE request to [path] (relative to [BaseOptions.baseUrl]).
+  ///
+  /// Used for resource removal (e.g. cart items, clearing a cart).
+  /// Returns the raw [Response] on success; failures throw [Exception]
+  /// with a message extracted from the backend response body.
+  Future<Response> delete(String path) async {
+    try {
+      final response = await _dio.delete(path);
+      return response;
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   // =======================================================================
   // Error Handler
   // =======================================================================

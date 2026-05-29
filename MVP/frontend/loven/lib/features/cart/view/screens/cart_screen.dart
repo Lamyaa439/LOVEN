@@ -91,7 +91,7 @@ class _CartScreenState extends State<CartScreen> {
           }
 
           if (state is CartLoaded) {
-            final cart = CartModel.fromJson(state.cart);
+            final cart = state.cart;
 
             if (cart.items.isEmpty) {
               return const Center(
