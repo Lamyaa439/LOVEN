@@ -1,7 +1,10 @@
 """
 Firebase Integration Service.
-Handles Cloud Messaging (FCM) for notifications and Cloud Storage (FCS) 
+Handles Cloud Messaging (FCM) for notifications and Cloud Storage (FCS)
 for media management.
+
+Firebase is initialized lazily on first use so the API can start even when
+credentials are missing (e.g. local dev without firebaseKey.json).
 """
 
 import firebase_admin
@@ -16,39 +19,42 @@ logger = logging.getLogger(__name__)
 SERVICE_ACCOUNT_KEY = os.getenv("FIREBASE_CREDENTIALS_PATH", "/app/firebaseKey.json")
 STORAGE_BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", "loven-88b0a.appspot.com")
 
-def initialize_firebase():
-    """
-    Initializes the Firebase Admin SDK singleton.
-    
-    Ensures that the Firebase application is initialized only once. 
-    This prevents 'ValueError: The default Firebase app already exists' 
-    crashes during server hot-reloads or multiple module imports.
-    """
 
-    # Check if Firebase has already been initialized
-    if not firebase_admin._apps:
-        if not os.path.exists(SERVICE_ACCOUNT_KEY):
-            raise FileNotFoundError(
-                f"CRITICAL: Firebase key missing at {SERVICE_ACCOUNT_KEY}"
-                f"Ensure the file is properly mounted via Docker volumes."
-            )
-        
-        try:
-            # Load the service account credentials
-            cred = credentials.Certificate(SERVICE_ACCOUNT_KEY)
-            
-            # Initialize the Firebase application with the credentials
-            firebase_admin.initialize_app(cred, {
-                'storageBucket': STORAGE_BUCKET_NAME
-            })
-            # Log successful initialization for server monitoring
-            logger.info("Firebase SDK initialized (FCM + Storage).")
-        except Exception as e: 
-            # Catch and log any initialization errors gracefully
-            raise RuntimeError(f"CRITICAL ERROR: Firebase initialization failed: {e}")
+def initialize_firebase() -> bool:
+    """
+    Initialize the Firebase Admin SDK singleton when credentials are available.
 
-# Auto-initialize Firebase when this module is imported
-initialize_firebase()
+    Returns True when Firebase is ready, False when credentials are missing
+    or initialization fails. Safe to call repeatedly.
+    """
+    if firebase_admin._apps:
+        return True
+
+    if not os.path.exists(SERVICE_ACCOUNT_KEY):
+        logger.warning(
+            "Firebase credentials not found at %s. "
+            "FCM and Storage features are disabled.",
+            SERVICE_ACCOUNT_KEY,
+        )
+        return False
+
+    try:
+        cred = credentials.Certificate(SERVICE_ACCOUNT_KEY)
+        firebase_admin.initialize_app(
+            cred,
+            {"storageBucket": STORAGE_BUCKET_NAME},
+        )
+        logger.info("Firebase SDK initialized (FCM + Storage).")
+        return True
+    except Exception as exc:
+        logger.error("Firebase initialization failed: %s", exc)
+        return False
+
+
+def _ensure_firebase() -> bool:
+    """Return True when Firebase is initialized and ready for use."""
+    return initialize_firebase()
+
 
 # ==========================================
 # 1. Cloud Messaging (Notifications)
@@ -65,39 +71,40 @@ def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
     Returns:
         bool: True if the notification was sent successfully, False otherwise.
     """
-
-    # Exit early if no token is provided
     if not fcm_token:
         logger.warning("No token provided. Skipping welcome notification.")
         return False
-    
-    # Construct the message payload
+
+    if not _ensure_firebase():
+        logger.warning("Firebase unavailable. Skipping welcome notification.")
+        return False
+
     message = messaging.Message(
         notification=messaging.Notification(
             title="Welcome to LOVEN! 🎨 ",
-            body= f"Hi {user_name}, we're happy you're here!!",
+            body=f"Hi {user_name}, we're happy you're here!!",
         ),
         data={
-            "type":"welcome_alert",
-            "action": "open_home_screen"
+            "type": "welcome_alert",
+            "action": "open_home_screen",
         },
-        token = fcm_token,
+        token=fcm_token,
     )
 
-    # attempt to send the message
     try:
         message_id = messaging.send(message)
         logger.info("Welcome notification sent. ID: %s", message_id)
         return True
-    except Exception as e:
-        logger.error("FCM welcome notification failed: %s", e)
+    except Exception as exc:
+        logger.error("FCM welcome notification failed: %s", exc)
         return False
-    
+
+
 def send_order_status_notification(
     fcm_token: str,
     user_name: str,
     order_id: str,
-    status: str
+    status: str,
 ) -> bool:
     """
     Sends an order status update push notification to the user.
@@ -111,13 +118,14 @@ def send_order_status_notification(
     Returns:
         bool: True if sent successfully, False otherwise.
     """
-
-    # Exit early if no token is available
     if not fcm_token:
         logger.warning("No token provided. Skipping order notification.")
         return False
 
-    # Build the Firebase Cloud Messaging payload
+    if not _ensure_firebase():
+        logger.warning("Firebase unavailable. Skipping order notification.")
+        return False
+
     message = messaging.Message(
         notification=messaging.Notification(
             title="Order Update from LOVEN 🎨",
@@ -132,40 +140,45 @@ def send_order_status_notification(
         token=fcm_token,
     )
 
-    # Attempt to send the notification
     try:
         message_id = messaging.send(message)
         logger.info("Order notification sent. ID: %s", message_id)
         return True
-
-    # Handle Firebase sending errors gracefully
-    except Exception as e:
-        logger.error("FCM order notification failed: %s", e)
+    except Exception as exc:
+        logger.error("FCM order notification failed: %s", exc)
         return False
-    
+
+
 # ==========================================
 # 2. Cloud Storage (Media Management)
 # ==========================================
+
 def delete_cloud_file(file_path: str) -> bool:
     """
     Removes a physical file from the cloud bucket to prevent orphaned storage.
-    
+
     Args:
         file_path: The specific path/name of the file in the bucket.
     """
     if not file_path:
         return False
 
+    if not _ensure_firebase():
+        logger.warning(
+            "Firebase unavailable. Skipping cloud file deletion for %s.",
+            file_path,
+        )
+        return False
+
     try:
         bucket = storage.bucket()
         blob = bucket.blob(file_path)
-        
+
         if blob.exists():
             blob.delete()
             logger.info("Deleted cloud file: %s", file_path)
             return True
         return False
-    except Exception as e:
-        logger.error("Cloud file deletion failed for %s: %s", file_path, e)
+    except Exception as exc:
+        logger.error("Cloud file deletion failed for %s: %s", file_path, exc)
         return False
-    
