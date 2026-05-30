@@ -1,41 +1,41 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
-
 import '../../../core/network/api_constants.dart';
 import '../../../core/storage/token_storage.dart';
 import 'artist_model.dart';
 
 class ArtistRepository {
-  final http.Client _client;
+  final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
 
   ArtistRepository({
-    http.Client? client,
-    TokenStorage? tokenStorage,
-  })  : _client = client ?? http.Client(),
-        _tokenStorage = tokenStorage ?? TokenStorage();
+    required ApiClient apiClient,
+    required TokenStorage tokenStorage,
+  })  : _apiClient = apiClient,
+        _tokenStorage = tokenStorage;
 
-  Future<ArtistModel> getArtistById(String profileId) async {
-    final uri = Uri.parse('${ApiConstants.artistProfiles}/$profileId');
-
-    final response = await _client.get(
-      uri,
-      headers: const {'Content-Type': 'application/json'},
+  Future<ArtistModel> getArtistById(
+    String profileId,
+  ) async {
+    final response = await _apiClient.get(
+      '${ApiConstants.artistProfiles}/$profileId',
     );
 
-    return _parseArtistOrThrow(response, context: 'getArtistById');
+    return ArtistModel.fromJson(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
+    );
   }
 
   Future<ArtistModel> getMyProfile() async {
-    final token = await _requireToken();
-
-    final response = await _client.get(
-      Uri.parse(ApiConstants.myArtistProfile),
-      headers: _authHeaders(token),
+    final response = await _apiClient.get(
+      ApiConstants.myArtistProfile,
     );
 
-    return _parseArtistOrThrow(response, context: 'getMyProfile');
+    return ArtistModel.fromJson(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
+    );
   }
 
   Future<ArtistModel> updateMyProfile({
@@ -45,81 +45,101 @@ class ArtistRepository {
     String? shippingPolicy,
     String? profileImageUrl,
   }) async {
-    final token = await _requireToken();
-
     final Map<String, dynamic> body = {};
-    if (displayName != null) body['display_name'] = displayName;
-    if (bio != null) body['bio'] = bio;
-    if (city != null) body['city'] = city;
-    if (shippingPolicy != null) body['shipping_policy'] = shippingPolicy;
-    if (profileImageUrl != null) body['profile_image_url'] = profileImageUrl;
 
-    if (body.isEmpty) {
-      throw Exception('updateMyProfile: no fields provided.');
+    if (displayName != null) {
+      body['display_name'] = displayName;
     }
 
-    final response = await _client.patch(
-      Uri.parse(ApiConstants.myArtistProfile),
-      headers: _authHeaders(token),
-      body: jsonEncode(body),
+    if (bio != null) {
+      body['bio'] = bio;
+    }
+
+    if (city != null) {
+      body['city'] = city;
+    }
+
+    if (shippingPolicy != null) {
+      body['shipping_policy'] =
+          shippingPolicy;
+    }
+
+    if (profileImageUrl != null) {
+      body['profile_image_url'] =
+          profileImageUrl;
+    }
+
+    if (body.isEmpty) {
+      throw Exception(
+        'No fields provided.',
+      );
+    }
+
+    final response = await _apiClient.patch(
+      ApiConstants.myArtistProfile,
+      data: body,
     );
 
-    return _parseArtistOrThrow(response, context: 'updateMyProfile');
+    return ArtistModel.fromJson(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
+    );
   }
 
-  Future<List<ArtworkModel>> listArtworksForProfile(
+  Future<List<ArtworkModel>>
+      listArtworksForProfile(
     String profileId, {
     int limit = 20,
     int offset = 0,
     String? status,
   }) async {
-    final query = <String, String>{
-      'limit': '$limit',
-      'offset': '$offset',
-      if (status != null) 'status': status,
-    };
+    final path =
+        '${ApiConstants.artistProfiles}/$profileId/artworks'
+        '?limit=$limit'
+        '&offset=$offset'
+        '${status != null ? '&status=$status' : ''}';
 
-    final uri = Uri.parse('${ApiConstants.artistProfiles}/$profileId/artworks')
-        .replace(queryParameters: query);
+    final response =
+        await _apiClient.get(path);
 
-    final response = await _client.get(
-      uri,
-      headers: const {'Content-Type': 'application/json'},
+    return ArtistModel.parseArtworkList(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
     );
-
-    return _parseArtworkListOrThrow(response, context: 'listArtworksForProfile');
   }
 
-  Future<List<ArtworkModel>> listMyArtworks({
+  Future<List<ArtworkModel>>
+      listMyArtworks({
     int limit = 20,
     int offset = 0,
   }) async {
-    final token = await _requireToken();
-
-    final uri = Uri.parse(ApiConstants.myArtworks).replace(
-      queryParameters: {
-        'limit': '$limit',
-        'offset': '$offset',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.myArtworks}'
+      '?limit=$limit'
+      '&offset=$offset',
     );
 
-    final response = await _client.get(
-      uri,
-      headers: _authHeaders(token),
+    return ArtistModel.parseArtworkList(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
     );
-
-    return _parseArtworkListOrThrow(response, context: 'listMyArtworks');
   }
 
-  Future<ArtworkModel> getArtworkById(String artworkId) async {
-    final uri = Uri.parse('${ApiConstants.artworks}$artworkId');
-
-    final response = await _client.get(
-      uri,
-      headers: const {'Content-Type': 'application/json'},
+  Future<ArtworkModel> getArtworkById(
+    String artworkId,
+  ) async {
+    final response = await _apiClient.get(
+      '${ApiConstants.artworks}$artworkId',
     );
 
-    return _parseArtworkOrThrow(response, context: 'getArtworkById');
+    return ArtworkModel.fromJson(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
+    );
   }
 
   Future<ArtworkModel> updateArtwork(
@@ -132,93 +152,47 @@ class ArtistRepository {
     String? artworkImageUrl,
     String? status,
   }) async {
-    final token = await _requireToken();
-
     final Map<String, dynamic> body = {};
+
     if (title != null) body['title'] = title;
-    if (description != null) body['description'] = description;
-    if (price != null) body['price'] = price;
-    if (quantityAvailable != null) {
-      body['quantity_available'] = quantityAvailable;
+    if (description != null) {
+      body['description'] = description;
     }
-    if (shippingFee != null) body['shipping_fee'] = shippingFee;
-    if (artworkImageUrl != null) body['artwork_image_url'] = artworkImageUrl;
-    if (status != null) body['status'] = status;
+    if (price != null) body['price'] = price;
+
+    if (quantityAvailable != null) {
+      body['quantity_available'] =
+          quantityAvailable;
+    }
+
+    if (shippingFee != null) {
+      body['shipping_fee'] = shippingFee;
+    }
+
+    if (artworkImageUrl != null) {
+      body['artwork_image_url'] =
+          artworkImageUrl;
+    }
+
+    if (status != null) {
+      body['status'] = status;
+    }
 
     if (body.isEmpty) {
-      throw Exception('updateArtwork: no fields provided.');
+      throw Exception(
+        'No fields provided.',
+      );
     }
 
-    final response = await _client.patch(
-      Uri.parse('${ApiConstants.artworks}$artworkId'),
-      headers: _authHeaders(token),
-      body: jsonEncode(body),
+    final response = await _apiClient.patch(
+      '${ApiConstants.artworks}$artworkId',
+      data: body,
     );
 
-    return _parseArtworkOrThrow(response, context: 'updateArtwork');
-  }
-
-  Future<String> _requireToken() async {
-    final token = await _tokenStorage.getAccessToken();
-
-    if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized: No token found. Please log in.');
-    }
-
-    return token;
-  }
-
-  Map<String, String> _authHeaders(String token) => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
-
-  ArtistModel _parseArtistOrThrow(
-    http.Response response, {
-    required String context,
-  }) {
-    if (response.statusCode == 200) {
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      return ArtistModel.fromJson(body);
-    }
-
-    throw Exception(_extractError(response, context));
-  }
-
-  ArtworkModel _parseArtworkOrThrow(
-    http.Response response, {
-    required String context,
-  }) {
-    if (response.statusCode == 200) {
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      return ArtworkModel.fromJson(body);
-    }
-
-    throw Exception(_extractError(response, context));
-  }
-
-  List<ArtworkModel> _parseArtworkListOrThrow(
-    http.Response response, {
-    required String context,
-  }) {
-    if (response.statusCode == 200) {
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      return ArtistModel.parseArtworkList(body);
-    }
-
-    throw Exception(_extractError(response, context));
-  }
-
-  String _extractError(http.Response response, String context) {
-    try {
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      final msg = body['error'] as String?;
-
-      if (msg != null && msg.isNotEmpty) {
-        return '$context failed (${response.statusCode}): $msg';
-      }
-    } catch (_) {}
-
-    return '$context failed with HTTP ${response.statusCode}.';
+    return ArtworkModel.fromJson(
+      Map<String, dynamic>.from(
+        response.data,
+      ),
+    );
   }
 }

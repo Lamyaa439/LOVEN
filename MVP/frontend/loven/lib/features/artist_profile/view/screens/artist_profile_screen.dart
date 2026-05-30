@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
@@ -40,9 +41,7 @@ class _ArtistProfileScreenState
   void initState() {
     super.initState();
 
-    cubit = ArtistProfileCubit(
-      repository: ArtistRepository(),
-    );
+    cubit = context.read<ArtistProfileCubit>();
 
     WidgetsBinding.instance
         .addPostFrameCallback((_) {
@@ -58,7 +57,6 @@ class _ArtistProfileScreenState
 
   @override
   void dispose() {
-    cubit.close();
     super.dispose();
   }
 
@@ -278,7 +276,7 @@ class _SuccessContent extends StatelessWidget {
               if (!showArtistFeatures)
                 const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: EdgeInsets.all(14),
                     child: Center(
                       child: Text(
                         'Customer accounts do not have artist galleries.',
@@ -307,118 +305,48 @@ class _SuccessContent extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                child:
-                                    OutlinedButton.icon(
-                                  onPressed:
-                                      () async {
-                                    final updated =
-                                        await context
-                                            .push(
+                                child: _ProfileActionButton(
+                                  icon: Icons.edit_outlined,
+                                  label: 'Edit Profile',
+                                  isPrimary: false,
+                                  onPressed: () async {
+                                    final updated = await context.push(
                                       '/artist-profile/edit',
-                                      extra:
-                                          artist,
+                                      extra: artist,
                                     );
-
-                                    if (updated ==
-                                            true &&
-                                        context
-                                            .mounted) {
+                                    
+                                    if (updated == true && context.mounted) {
                                       context
-                                          .read<
-                                              ArtistProfileCubit>()
-                                          .fetchMyProfileData();
+                                      .read<ArtistProfileCubit>()
+                                      .fetchMyProfileData();
                                     }
                                   },
-                                  icon: const Icon(
-                                    Icons
-                                        .edit_outlined,
-                                  ),
-                                  label: const Text(
-                                    'Edit Profile',
-                                  ),
                                 ),
                               ),
 
-                              const SizedBox(
-                                width: 12,
-                              ),
-
+                              const SizedBox(width: 12),
+                              
                               Expanded(
-                                child:
-                                    ElevatedButton.icon(
-                                  onPressed:
-                                      () async {
-                                    final created =
-                                        await context
-                                            .push(
+                                child: _ProfileActionButton(
+                                  icon: Icons.add_rounded,
+                                  label: 'Upload',
+                                  isPrimary: true,
+                                  onPressed: () async {
+                                    final created = await context.push(
                                       '/artworks/create',
                                     );
-
-                                    if (created ==
-                                            true &&
-                                        context
-                                            .mounted) {
+                                    
+                                    if (created == true && context.mounted) {
                                       context
-                                          .read<
-                                              ArtistProfileCubit>()
-                                          .fetchMyProfileData();
+                                      .read<ArtistProfileCubit>()
+                                      .fetchMyProfileData();
                                     }
                                   },
-                                  icon:
-                                      const Icon(
-                                    Icons.add,
-                                  ),
-                                  label:
-                                      const Text(
-                                    'Upload',
-                                  ),
                                 ),
                               ),
                             ],
                           ),
-
-                          if (!artist
-                              .isVerified) ...[
-                            const SizedBox(
-                              height: 12,
-                            ),
-
-                            SizedBox(
-                              width:
-                                  double.infinity,
-                              child:
-                                  OutlinedButton.icon(
-                                onPressed:
-                                    () async {
-                                  final submitted =
-                                      await context
-                                          .push(
-                                    '/verification-request',
-                                  );
-
-                                  if (submitted ==
-                                          true &&
-                                      context
-                                          .mounted) {
-                                    context
-                                        .read<
-                                            ArtistProfileCubit>()
-                                        .fetchMyProfileData();
-                                  }
-                                },
-                                icon:
-                                    const Icon(
-                                  Icons
-                                      .verified_outlined,
-                                ),
-                                label:
-                                    const Text(
-                                  'Request Verification',
-                                ),
-                              ),
-                            ),
-                          ],
-
+                          
                           const SizedBox(
                             height: 28,
                           ),
@@ -449,29 +377,18 @@ class _SuccessContent extends StatelessWidget {
                         is AuthGuest,
                     canManage:
                         !isPublicView,
-                    onDelete:
-                        (artwork) async {
-                      await ArtworkRepository()
-                          .deleteArtwork(
-                        artworkId:
-                            artwork.id,
+                    onDelete: (artwork) async {
+                      await context.read<ArtworkCubit>().deleteArtwork(
+                        artworkId: artwork.id,
                       );
-
+                      
                       if (context.mounted) {
-                        ScaffoldMessenger.of(
-                                context)
-                            .showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Artwork deleted',
-                            ),
+                            content: Text('Artwork deleted'),
                           ),
                         );
-
-                        context
-                            .read<
-                                ArtistProfileCubit>()
-                            .fetchMyProfileData();
+                        context.read<ArtistProfileCubit>().fetchMyProfileData();
                       }
                     },
                   ),
@@ -484,6 +401,68 @@ class _SuccessContent extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ProfileActionButton extends StatelessWidget {
+  const _ProfileActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    required this.isPrimary,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool isPrimary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (isPrimary) {
+      return ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(
+            vertical: 11,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primaryBlue,
+        padding: const EdgeInsets.symmetric(
+          vertical: 11,
+        ),
+        side: BorderSide(
+          color: AppColors.primaryBlue.withValues(alpha: 0.35),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        textStyle: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

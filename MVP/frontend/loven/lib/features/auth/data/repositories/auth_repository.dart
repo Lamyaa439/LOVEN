@@ -16,6 +16,7 @@
 
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/auth/data/models/user_model.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
@@ -94,6 +95,30 @@ Future<void> changePassword({
   );
 }
 
+Future<UserModel> getCurrentUser() async {
+  final response = await _apiClient.get(ApiConstants.currentUser);
+
+  return UserModel.fromJson(response.data);
+}
+
+Future<UserModel> updateProfile({
+  required String name,
+  required String email,
+  String? profileImageUrl,
+}) async {
+  final response = await _apiClient.patch(
+    ApiConstants.currentUser,
+    data: {
+      'name': name,
+      'email': email,
+      if (profileImageUrl != null)
+        'profile_image_url': profileImageUrl,
+    },
+  );
+
+  return UserModel.fromJson(response.data);
+}
+
 /// Invalidates the current session on the backend and clears local tokens.
 ///
 /// The Authorization header is injected automatically by the [ApiClient]'s
@@ -128,4 +153,5 @@ Future<bool> isLoggedIn() async {
 
   return token != null && token.isNotEmpty;
   }
+
 }

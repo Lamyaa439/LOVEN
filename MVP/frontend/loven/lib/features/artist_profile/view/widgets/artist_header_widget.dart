@@ -19,45 +19,100 @@ class ArtistHeaderWidget extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final hasImage =
-        artist.profileImageUrl != null && artist.profileImageUrl!.isNotEmpty;
-    final hasCity = artist.city != null && artist.city!.trim().isNotEmpty;
-    final hasBio = artist.bio != null && artist.bio!.trim().isNotEmpty;
+        artist.profileImageUrl != null &&
+        artist.profileImageUrl!.isNotEmpty;
+
+    final hasCity =
+        artist.city != null &&
+        artist.city!.trim().isNotEmpty;
+
+    final hasBio =
+        artist.bio != null &&
+        artist.bio!.trim().isNotEmpty;
+
     final hasShipping =
-        artist.shippingPolicy != null && artist.shippingPolicy!.trim().isNotEmpty;
+        artist.shippingPolicy != null &&
+        artist.shippingPolicy!.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 58,
-            backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.30),
-            backgroundImage: hasImage ? NetworkImage(artist.profileImageUrl!) : null,
-            child: hasImage
-                ? null
-                : Text(
-                    artist.displayName.isNotEmpty
-                        ? artist.displayName[0].toUpperCase()
-                        : '?',
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      color: AppColors.primaryBlue,
-                      fontWeight: FontWeight.bold,
-                    ),
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                height: 90,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryPurple.withValues(alpha: 0.85),
+                      AppColors.primaryBlue.withValues(alpha: 0.82),
+                    ],
                   ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -24,
+                      top: -18,
+                      child: Icon(
+                        Icons.palette_outlined,
+                        size: 120,
+                        color: Colors.white.withValues(alpha: 0.10),
+                      ),
+                    ),
+                    Positioned(
+                      left: -18,
+                      bottom: -26,
+                      child: Icon(
+                        Icons.brush_outlined,
+                        size: 110,
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                top: 72,
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.scaffoldBackgroundColor,
+                  ),
+                  child: CircleAvatar(
+                    radius: 44,
+                    backgroundColor:
+                        AppColors.primaryPurple.withValues(alpha: 0.22),
+                    backgroundImage: hasImage
+                        ? NetworkImage(artist.profileImageUrl!)
+                        : null,
+                    child: hasImage
+                        ? null
+                        : Text(
+                            artist.displayName.isNotEmpty
+                                ? artist.displayName[0].toUpperCase()
+                                : '?',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              color: AppColors.primaryBlue,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 10),
-
-          Text(
-            'Artist',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.55),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 8),
+          const SizedBox(height: 72),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -68,8 +123,9 @@ class ArtistHeaderWidget extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800,)
+                  .copyWith(
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
@@ -77,12 +133,14 @@ class ArtistHeaderWidget extends StatelessWidget {
                 const SizedBox(width: 6),
                 Icon(
                   Icons.verified_rounded,
-                  size: 22,
-                  color: colorScheme.primary,
+                  size: 18,
+                  color: AppColors.primaryBlue,
                 ),
               ],
             ],
           ),
+
+          const SizedBox(height: 10),
 
           if (hasCity) ...[
             const SizedBox(height: 8),
@@ -95,14 +153,10 @@ class ArtistHeaderWidget extends StatelessWidget {
                   color: colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
                 const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    artist.city!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
+                Text(
+                  artist.city!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.62),
                   ),
                 ),
               ],
@@ -111,64 +165,81 @@ class ArtistHeaderWidget extends StatelessWidget {
 
           const SizedBox(height: 22),
 
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'About',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.07),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.035),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'About',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  hasBio
+                      ? artist.bio!
+                      : 'This artist has not added a bio yet.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: hasBio
+                        ? colorScheme.onSurface.withValues(alpha: 0.68)
+                        : colorScheme.onSurface.withValues(alpha: 0.45),
+                    height: 1.5,
+                    fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 8),
-
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              hasBio ? artist.bio! : 'No bio provided.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: hasBio
-                    ? colorScheme.onSurface.withValues(alpha: 0.65)
-                    : colorScheme.onSurface.withValues(alpha: 0.45),
-                height: 1.45,
-                fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
 
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 16,
+              horizontal: 16,
+              vertical: 12,
             ),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(22),
+              color: AppColors.primaryPurple.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: colorScheme.onSurface.withValues(alpha: 0.08),
+                color: AppColors.primaryPurple.withValues(alpha: 0.12),
               ),
             ),
             child: Row(
               children: [
-                _ProfileStat(
+                _SoftStat(
                   icon: Icons.image_outlined,
                   value: '$artworkCount',
                   label: 'Artworks',
                 ),
                 const _VerticalDivider(),
-                _ProfileStat(
+                _SoftStat(
                   icon: Icons.verified_outlined,
-                  value: artist.isVerified ? 'Yes' : 'No',
-                  label: 'Verified',
+                  value: artist.isVerified ? 'Verified' : 'Pending',
+                  label: 'Status',
                 ),
                 const _VerticalDivider(),
-                _ProfileStat(
+                _SoftStat(
                   icon: Icons.local_shipping_outlined,
-                  value: hasShipping ? 'Yes' : '—',
+                  value: hasShipping ? 'Available' : '—',
                   label: 'Shipping',
                 ),
               ],
@@ -180,8 +251,8 @@ class ArtistHeaderWidget extends StatelessWidget {
   }
 }
 
-class _ProfileStat extends StatelessWidget {
-  const _ProfileStat({
+class _SoftStat extends StatelessWidget {
+  const _SoftStat({
     required this.icon,
     required this.value,
     required this.label,
@@ -194,7 +265,6 @@ class _ProfileStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Expanded(
       child: Column(
@@ -202,20 +272,22 @@ class _ProfileStat extends StatelessWidget {
           Icon(
             icon,
             size: 20,
-            color: colorScheme.primary,
+            color: AppColors.primaryBlue,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
           Text(
             value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.55),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.52),
             ),
           ),
         ],
@@ -232,7 +304,10 @@ class _VerticalDivider extends StatelessWidget {
     return Container(
       height: 42,
       width: 1,
-      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+      color: Theme.of(context)
+          .colorScheme
+          .onSurface
+          .withValues(alpha: 0.08),
     );
   }
 }

@@ -211,7 +211,9 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              context.push('/notifications');
+            },
             icon: Icon(
               Icons.notifications_none_rounded,
               color: theme.colorScheme.onSurface,

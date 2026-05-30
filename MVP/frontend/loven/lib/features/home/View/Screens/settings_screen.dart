@@ -4,6 +4,8 @@ import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -28,15 +30,53 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.person_outline,
             title: 'Edit Profile',
             onTap: () {
-              context.push('/artist-profile/edit');
+              context.push('/profile/edit');
             },
           ),
+
+          BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
+            builder: (context, state) {
+              final artist = state.artist;
+              
+              if (artist == null) {
+                return const SizedBox.shrink();
+              }
+              
+              return Column(
+                children: [
+                  _buildSettingsTile(
+                    context: context,
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Incoming Orders',
+                    onTap: () {
+                      context.push(
+                        '/orders/incoming',
+                      extra: artist.id,
+                    );
+                  },
+                ),
+                
+                if (!artist.isVerified)
+                _buildSettingsTile(
+                  context: context,
+                  icon: Icons.verified_outlined,
+                  title: 'Request Verification',
+                  onTap: () {
+                    context.push('/verification-request');
+                  },
+                ),
+              ],
+            );
+          },
+        ),
           
           _buildSettingsTile(
             context: context,
             icon: Icons.location_on_outlined,
             title: 'Saved Addresses',
-            onTap: () {},
+            onTap: () {
+              context.push('/location');
+            },
           ),
           
           _buildSettingsTile(
@@ -57,7 +97,9 @@ class SettingsScreen extends StatelessWidget {
             context: context,
             icon: Icons.lock_outline,
             title: 'Change Password',
-            onTap: () {},
+            onTap: () {
+              context.push('/change-password');
+            },
           ),
           
           const SizedBox(height: 20),
@@ -75,15 +117,28 @@ class SettingsScreen extends StatelessWidget {
               .navigateTo(1);
             },
           ),
-          
+
           _buildSettingsTile(
             context: context,
             icon: Icons.shopping_bag_outlined,
             title: 'Order History',
-            onTap: () {},
+            onTap: () {
+              context.push('/orders/history');
+            },
           ),
           
           const SizedBox(height: 20),
+          
+          _buildSectionHeader(theme, 'Support'),
+          
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.feedback_outlined,
+            title: 'Send Feedback',
+            onTap: () {
+              context.push('/feedback');
+            },
+          ),
           
           _buildSettingsTile(
             context: context,

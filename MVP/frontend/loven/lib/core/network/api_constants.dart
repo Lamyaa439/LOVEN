@@ -30,7 +30,9 @@ class ApiConstants {
   static const String login = '/login';
   static const String refresh = '/refresh';
   static const String logout = '/logout';
-
+  static const String changePassword = '/change-password';
+  static const String currentUser = '/account/me';
+  
   // =====================================================
   // Artist Profiles
   // Current backend routes are mounted directly on /api/v1
@@ -190,6 +192,17 @@ class ApiClient {
     }
   }
 
+  /// Generic DELETE request method with centralized error handling
+  Future<Response> delete(
+    String path, {
+      Map<String, dynamic>? data,
+    }) async {
+      try {
+        return await _dio.delete(path, data: data);
+        } on DioException catch (e) {
+          throw Exception(_handleError(e));
+        }
+      }
   // =======================================================================
   // Error Handler
   // =======================================================================

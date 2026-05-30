@@ -1,12 +1,15 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
-
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 
 class OrderRepository {
-  final TokenStorage _tokenStorage = TokenStorage();
+  final ApiClient _apiClient;
+  final TokenStorage _tokenStorage;
+
+  OrderRepository({
+    required ApiClient apiClient,
+    required TokenStorage tokenStorage,
+  })  : _apiClient = apiClient,
+        _tokenStorage = tokenStorage;
 
   Future<Map<String, dynamic>> createOrder({
     required double subtotal,
@@ -14,85 +17,72 @@ class OrderRepository {
     required double totalAmount,
     required List<Map<String, dynamic>> items,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.post(
-      Uri.parse(ApiConstants.orders),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await _apiClient.post(
+      ApiConstants.orders,
+      data: {
         'subtotal': subtotal,
         'shipping_fee': shippingFee,
         'total_amount': totalAmount,
         'items': items,
-      }),
-    );
-
-    return jsonDecode(response.body);
-  }
-
-  Future<Map<String, dynamic>> getMyOrders() async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse(ApiConstants.myOrders),
-      headers: {
-        'Authorization': 'Bearer $token',
       },
     );
 
-    return jsonDecode(response.body);
+    return Map<String, dynamic>.from(
+      response.data,
+    );
+  }
+
+  Future<Map<String, dynamic>> getMyOrders() async {
+    final response = await _apiClient.get(
+      ApiConstants.myOrders,
+    );
+
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> getBuyerOrders({
     required String buyerId,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('${ApiConstants.orders}buyer/$buyerId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.orders}buyer/$buyerId',
     );
 
-    return jsonDecode(response.body);
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> getArtistOrders({
     required String artistProfileId,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('${ApiConstants.orders}artist/$artistProfileId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.orders}artist/$artistProfileId',
     );
 
-    return jsonDecode(response.body);
-  }
-
-  Future<Map<String, dynamic>> updateOrderStatus({
-    required String orderId,
-    required String status,
-  }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.patch(
-      Uri.parse('${ApiConstants.orders}$orderId/status'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'status': status,
-      }),
+    return Map<String, dynamic>.from(
+      response.data,
     );
-
-    return jsonDecode(response.body);
   }
+
+Future<Map<String, dynamic>> updateOrderStatus({
+  required String orderId,
+  required String status,
+  String? shippingCompany,
+  String? trackingNumber,
+}) async {
+  final response = await _apiClient.patch(
+    '${ApiConstants.orders}$orderId/status',
+    data: {
+      'status': status,
+      if (shippingCompany != null)
+        'shipping_company': shippingCompany,
+      if (trackingNumber != null)
+        'tracking_number': trackingNumber,
+    },
+  );
+
+  return Map<String, dynamic>.from(response.data);
+}
 }

@@ -73,22 +73,25 @@ class OrderCubit extends Cubit<OrderState> {
       emit(OrderError(e.toString()));
     }
   }
-
+  
   Future<void> updateOrderStatus({
     required String orderId,
     required String status,
-  }) async {
-    emit(OrderLoading());
-
-    try {
-      final order = await _repository.updateOrderStatus(
-        orderId: orderId,
-        status: status,
-      );
-
-      emit(OrderLoaded(order));
-    } catch (e) {
-      emit(OrderError(e.toString()));
+    String? shippingCompany,
+    String? trackingNumber,
+    }) async {
+      emit(OrderLoading());
+      try {
+        final order = await _repository.updateOrderStatus(
+          orderId: orderId,
+          status: status,
+          shippingCompany: shippingCompany,
+          trackingNumber: trackingNumber,
+        );
+        
+        emit(OrderLoaded(order));
+        } catch (e) {
+          emit(OrderError(e.toString()));
+        }
+      }
     }
-  }
-}

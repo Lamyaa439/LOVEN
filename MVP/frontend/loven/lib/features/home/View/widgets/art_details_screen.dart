@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/features/artist_profile/model/artist_model.dart';
-import 'package:loven/features/artist_profile/model/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
@@ -36,31 +35,10 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
   }
 
   Future<void> _checkIfOwnArtwork() async {
-    if (widget.isGuest) {
-      setState(() {
-        _isOwnArtwork = false;
-        _checkingOwner = false;
-      });
-      return;
-    }
-
-    try {
-      final artist = await ArtistRepository().getMyProfile();
-
-      if (!mounted) return;
-
-      setState(() {
-        _isOwnArtwork = artist.id == widget.artItem.artistProfileId;
-        _checkingOwner = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _isOwnArtwork = false;
-        _checkingOwner = false;
-      });
-    }
+    setState(() {
+      _isOwnArtwork = false;
+      _checkingOwner = false;
+    });
   }
 
   Future<void> _addToCart() async {
@@ -118,11 +96,9 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please log in or sign up to add items to cart.'),
+          content: Text('Could not add item to cart.'),
         ),
       );
-
-      context.push('/auth');
     } finally {
       if (mounted) {
         setState(() {
@@ -206,7 +182,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
           width: 52,
           height: 5,
           decoration: BoxDecoration(
-            color: theme.dividerColor.withOpacity(0.8),
+            color: theme.dividerColor.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(999),
           ),
         ),
@@ -311,7 +287,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
     return Text(
       widget.artItem.description ?? 'No description provided.',
       style: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.colorScheme.onSurface.withOpacity(0.55),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
         height: 1.45,
       ),
     );

@@ -15,6 +15,9 @@ import 'features/home/controller/bloc/home_bloc.dart';
 import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
+import 'features/artist_profile/controller/artist_profile_cubit.dart';
+import 'features/artist_profile/model/artist_repository.dart';
+
 import 'features/cart/data/repositories/cart_repository.dart';
 import 'features/cart/controller/cubit/cart_cubit.dart';
 
@@ -92,7 +95,11 @@ class _LovenAppState extends State<LovenApp> {
       authRepository: _authRepository,
       )..checkAuthStatus();
       
-      _appRouter = AppRouter(_authCubit);
+      _appRouter = AppRouter(
+        authCubit: _authCubit,
+        apiClient: _apiClient,
+        tokenStorage: _tokenStorage,
+      );
     }
 
   @override
@@ -112,53 +119,86 @@ class _LovenAppState extends State<LovenApp> {
         ),
 
         BlocProvider(
-          create: (context) => HomeBloc()
-            ..add(FetchHomeData()),
+          create: (context) => HomeBloc(
+            artworkRepository: ArtworkRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
+          )..add(FetchHomeData()),
         ),
-
         BlocProvider(
           create: (context) => ThemeBloc(),
         ),
 
         BlocProvider(
-          create: (context) => CartCubit(
-            CartRepository(),
+          create: (context) => ArtistProfileCubit(
+            repository: ArtistRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
-
+        
+        BlocProvider(
+          create: (context) => CartCubit(
+            CartRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
+          ),
+        ),
+        
         BlocProvider(
           create: (context) => ArtworkCubit(
-            ArtworkRepository(),
+            ArtworkRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
-
+        
         BlocProvider(
           create: (context) => OrderCubit(
-            OrderRepository(),
+            OrderRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
-
+        
         BlocProvider(
           create: (context) => FeedbackCubit(
-            FeedbackRepository(),
+            FeedbackRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
-
+        
         BlocProvider(
           create: (context) => ReportCubit(
-            ReportRepository(),
+            ReportRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
-
+        
         BlocProvider(
           create: (_) => FavoritesCubit(
-            FavoritesRepository(),
-          ),
+            FavoritesRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
+          )..loadFavorites(),
         ),
-
+        
         BlocProvider(
           create: (_) => VerificationRequestCubit(
-            VerificationRequestRepository(),
+            VerificationRequestRepository(
+              apiClient: _apiClient,
+              tokenStorage: _tokenStorage,
+            ),
           ),
         ),
       ],

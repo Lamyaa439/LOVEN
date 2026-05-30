@@ -177,6 +177,48 @@ class AuthCubit extends Cubit<AuthState> {
       );
     }
   }
+  
+  Future<void> loadCurrentUser() async {
+  emit(AuthLoading());
+
+  try {
+    final user =
+        await _authRepository.getCurrentUser();
+
+    emit(AuthSuccess(user: user));
+  } catch (e) {
+    emit(
+      AuthFailure(
+        _extractMessage(e),
+      ),
+    );
+  }
+}
+
+  Future<void> updateProfile({
+    required String name,
+    required String email,
+    String? profileImageUrl,
+  }) async {
+    emit(AuthLoading());
+    
+    try {
+      final user =
+      await _authRepository.updateProfile(
+        name: name,
+        email: email,
+        profileImageUrl: profileImageUrl,
+      );
+      
+      emit(AuthSuccess(user: user));
+      } catch (e) {
+        emit(
+          AuthFailure(
+            _extractMessage(e),
+          ),
+        );
+      }
+    }
 
   // =====================================================================
   // Async Email Validation (used by signup page debounce)

@@ -1,59 +1,42 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
-
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 
 class ArtworkRepository {
-  final TokenStorage _tokenStorage = TokenStorage();
+  final ApiClient _apiClient;
+  final TokenStorage _tokenStorage;
+
+  ArtworkRepository({
+    required ApiClient apiClient,
+    required TokenStorage tokenStorage,
+  })  : _apiClient = apiClient,
+        _tokenStorage = tokenStorage;
 
   Future<List<dynamic>> getArtworks() async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse(ApiConstants.artworks),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      ApiConstants.artworks,
     );
 
-    final data = jsonDecode(response.body);
+    final data = response.data;
 
-    if (response.statusCode == 200) {
-      if (data is List) return data;
+    if (data is List) return data;
 
-      if (data['artworks'] is List) {
-        return data['artworks'];
-      }
-
-      return [];
+    if (data['artworks'] is List) {
+      return data['artworks'];
     }
 
-    throw Exception(data['error'] ?? 'Failed to load artworks');
+    return [];
   }
 
   Future<Map<String, dynamic>> getArtworkById(
     String artworkId,
   ) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('${ApiConstants.artworks}$artworkId'),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.artworks}$artworkId',
     );
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to load artwork');
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> listPublicArtworks({
@@ -73,54 +56,34 @@ class ArtworkRepository {
     int limit = 20,
     int offset = 0,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse(
-        '${ApiConstants.artworkSearch}?q=$query&limit=$limit&offset=$offset',
-      ),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.artworkSearch}?q=$query&limit=$limit&offset=$offset',
     );
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to search artworks');
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> listMyArtworks({
     int limit = 20,
     int offset = 0,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('${ApiConstants.myArtworks}?limit=$limit&offset=$offset'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+    final response = await _apiClient.get(
+      '${ApiConstants.myArtworks}?limit=$limit&offset=$offset',
     );
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to load my artworks');
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> getArtwork({
     required String artworkId,
   }) async {
-    return await getArtworkById(artworkId);
+    return await getArtworkById(
+      artworkId,
+    );
   }
 
   Future<Map<String, dynamic>> createArtwork({
@@ -131,34 +94,21 @@ class ArtworkRepository {
     required double shippingFee,
     String? artworkImageUrl,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.post(
-      Uri.parse(ApiConstants.artworks),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await _apiClient.post(
+      ApiConstants.artworks,
+      data: {
         'title': title,
         'description': description,
         'price': price,
         'quantity_available': quantityAvailable,
         'shipping_fee': shippingFee,
         'artwork_image_url': artworkImageUrl,
-      }),
+      },
     );
 
-    print('CREATE ARTWORK STATUS: ${response.statusCode}');
-    print('CREATE ARTWORK BODY: ${response.body}');
-    
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to create artwork');
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<Map<String, dynamic>> updateArtwork({
@@ -171,57 +121,45 @@ class ArtworkRepository {
     String? artworkImageUrl,
     String? status,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
     final body = <String, dynamic>{};
 
     if (title != null) body['title'] = title;
     if (description != null) body['description'] = description;
     if (price != null) body['price'] = price;
-    if (quantityAvailable != null) {
-      body['quantity_available'] = quantityAvailable;
-    }
-    if (shippingFee != null) body['shipping_fee'] = shippingFee;
-    if (artworkImageUrl != null) {
-      body['artwork_image_url'] = artworkImageUrl;
-    }
-    if (status != null) body['status'] = status;
 
-    final response = await http.patch(
-      Uri.parse('${ApiConstants.artworks}$artworkId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(body),
+    if (quantityAvailable != null) {
+      body['quantity_available'] =
+          quantityAvailable;
+    }
+
+    if (shippingFee != null) {
+      body['shipping_fee'] = shippingFee;
+    }
+
+    if (artworkImageUrl != null) {
+      body['artwork_image_url'] =
+          artworkImageUrl;
+    }
+
+    if (status != null) {
+      body['status'] = status;
+    }
+
+    final response = await _apiClient.patch(
+      '${ApiConstants.artworks}$artworkId',
+      data: body,
     );
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to update artwork');
+    return Map<String, dynamic>.from(
+      response.data,
+    );
   }
 
   Future<void> deleteArtwork({
     required String artworkId,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.delete(
-      Uri.parse('${ApiConstants.artworks}$artworkId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
+    await _apiClient.delete(
+      '${ApiConstants.artworks}$artworkId',
     );
-
-    if (response.statusCode == 200 || response.statusCode == 204) {
-      return;
-    }
-
-    final data = jsonDecode(response.body);
-    throw Exception(data['error'] ?? 'Failed to delete artwork');
   }
 }
