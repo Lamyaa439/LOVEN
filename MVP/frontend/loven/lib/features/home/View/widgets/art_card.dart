@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
@@ -24,37 +24,44 @@ class ArtCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.push(
-          '/art-details',
-          extra: artwork,
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) {
+            return FractionallySizedBox(
+              heightFactor: 0.92,
+              child: ArtDetailsScreen(
+                artItem: artwork,
+                isGuest: isGuest,
+              ),
+            );
+          },
         );
       },
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        width: 280,
+        width: 220,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
               children: [
                 Hero(
                   tag: artwork.id,
                   child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(18),
                     ),
                     child: Image.network(
-                      artwork.artworkImageUrl ??
-                          '',
+                      artwork.artworkImageUrl ?? '',
                       fit: BoxFit.cover,
-                      height: 200,
+                      height: 155,
                       width: double.infinity,
                       errorBuilder: (
                         context,
@@ -62,11 +69,11 @@ class ArtCard extends StatelessWidget {
                         stackTrace,
                       ) {
                         return Container(
-                          height: 200,
+                          height: 155,
                           color: Colors.grey[300],
                           child: const Icon(
                             Icons.broken_image,
-                            size: 50,
+                            size: 38,
                           ),
                         );
                       },
@@ -82,53 +89,56 @@ class ArtCard extends StatelessWidget {
                       BlocBuilder<FavoritesCubit, FavoritesState>(
                         builder: (context, state) {
                           final favoriteIds =
-                          state is FavoritesLoaded
-                          ? state.favoriteArtworkIds
-                          : <String>{};
-                          
+                              state is FavoritesLoaded
+                                  ? state.favoriteArtworkIds
+                                  : <String>{};
+
                           final isFavorited =
-                          favoriteIds.contains(artwork.id);
-                          
+                              favoriteIds.contains(artwork.id);
+
                           return CircleAvatar(
-                            backgroundColor: Colors.white70,
+                            radius: 18,
+                            backgroundColor: Colors.white.withOpacity(0.9),
                             child: IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              iconSize: 20,
                               icon: Icon(
                                 isFavorited
-                                ? Icons.favorite
-                                : Icons.favorite_border,
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
                                 color: Colors.red,
                               ),
                               onPressed: () {
                                 if (isGuest) {
                                   context.push('/auth');
-                                  } else {
-                                    context
-                                    .read<FavoritesCubit>()
-                                    .toggleFavorite(artwork.id);
-                                  }
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                        
-                        const SizedBox(height: 8),
+                                } else {
+                                  context
+                                      .read<FavoritesCubit>()
+                                      .toggleFavorite(artwork.id);
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 8),
 
                       CircleAvatar(
-                        backgroundColor:
-                            Colors.white70,
+                        radius: 18,
+                        backgroundColor: Colors.white.withOpacity(0.9),
                         child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 20,
                           icon: const Icon(
-                            Icons
-                                .add_shopping_cart,
-                            color: AppColors
-                                .primaryBlue,
+                            Icons.add_shopping_cart,
+                            color: AppColors.primaryBlue,
                           ),
                           onPressed: () {
                             if (isGuest) {
-                              context.push(
-                                '/auth',
-                              );
+                              context.push('/auth');
                             } else {
                               onActionPressed();
                             }
@@ -142,17 +152,15 @@ class ArtCard extends StatelessWidget {
             ),
 
             Padding(
-              padding:
-                  const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     artwork.title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
 
                   const SizedBox(height: 8),
@@ -161,8 +169,7 @@ class ArtCard extends StatelessWidget {
                     '${artwork.price ?? 0} SAR',
                     style: const TextStyle(
                       color: Colors.grey,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],

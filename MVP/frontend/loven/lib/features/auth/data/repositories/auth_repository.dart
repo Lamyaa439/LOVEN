@@ -16,6 +16,7 @@
 
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/auth/data/models/user_model.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
@@ -156,4 +157,65 @@ class AuthRepository {
     // Placeholder until the backend exposes a lightweight email-check route.
     return false;
   }
+}
+
+Future<UserModel> getCurrentUser() async {
+  final response = await _apiClient.get(ApiConstants.currentUser);
+
+  return UserModel.fromJson(response.data);
+}
+
+Future<UserModel> updateProfile({
+  required String name,
+  required String email,
+  String? profileImageUrl,
+}) async {
+  final response = await _apiClient.patch(
+    ApiConstants.currentUser,
+    data: {
+      'name': name,
+      'email': email,
+      if (profileImageUrl != null)
+        'profile_image_url': profileImageUrl,
+    },
+  );
+
+  return UserModel.fromJson(response.data);
+}
+
+/// Invalidates the current session on the backend and clears local tokens.
+///
+/// The Authorization header is injected automatically by the [ApiClient]'s
+/// auth interceptor — no manual token handling needed here.
+///
+/// Swallows network errors intentionally — the user should always end up
+/// logged out locally even if the server call fails (e.g. expired token).
+Future<void> logout() async {
+  try {
+    await _apiClient.post(
+      ApiConstants.logout,
+      data: {},
+    );
+  } catch (_) {
+    // Best-effort server call; local cleanup always proceeds.
+  }
+
+  await _tokenStorage.clearAllTokens();
+}
+
+/// Checks whether the given [email] is already registered.
+Future<bool> checkEmailDuplication(
+  String email,
+) async {
+  return false;
+}
+
+/// Checks whether a valid local auth token exists.
+Future<bool> isLoggedIn() async {
+  final token =
+      await _tokenStorage.getAccessToken();
+
+  return token != null && token.isNotEmpty;
+  }
+
 }

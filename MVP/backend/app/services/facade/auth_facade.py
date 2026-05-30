@@ -55,6 +55,10 @@ class AuthFacade:
         """
         result, status_code = login_user(data)
         return result, status_code
+    
+    @staticmethod
+    def change_password(user_id: str, data: dict):
+        return change_password(user_id, data)
 
     @staticmethod
     def logout(user_id):

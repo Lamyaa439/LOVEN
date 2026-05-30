@@ -1,24 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../core/res/theme/app_colors.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
-/// Displays the initial animated splash screen with the LOVEN logo.
-/// 
-/// This screen utilizes the centralized [AppColors.primaryPurple] from the 
-/// application's design system to maintain architectural consistency across platforms.
-
-
-// إنشاء شاشة متغيرة 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  State<SplashScreen> createState() =>
+      _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState
+    extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -26,31 +29,49 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
-      );
+      duration: const Duration(milliseconds: 1200),
+    );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end:1.0).animate(
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(
       CurvedAnimation(
         parent: _animationController,
-        curve: Curves.easeInOut,
-        ),
+        curve: Curves.easeOutBack,
+      ),
     );
-    
+
     _executeSplashSequence();
   }
 
-  void _executeSplashSequence() async {
+  Future<void> _executeSplashSequence() async {
     await _animationController.forward();
 
-    // إبقاء الشعار ظاهر لمدة نصف ثانية
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
 
-    await _animationController.reverse();
+    if (!mounted) return;
 
-    if (mounted) {
+    await context.read<AuthCubit>().checkAuthStatus();
+
+    if (!mounted) return;
+
+    final authState = context.read<AuthCubit>().state;
+
+    if (authState is AuthSuccess || authState is AuthGuest) {
+      context.go('/');
+    } else {
       context.go('/onboarding');
     }
   }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -64,9 +85,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Image.asset(
-          'assets/images/loven-logo.png',
-          width: 180, 
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Image.asset(
+              'assets/images/loven-logo.png',
+              width: 180,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

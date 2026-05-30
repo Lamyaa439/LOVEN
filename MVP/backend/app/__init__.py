@@ -18,6 +18,7 @@ from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
 from app.api.v1.payments import payments_bp
+from app.api.v1.account import account_bp
 from flask_migrate import Migrate
 
 # Global JWT instance
@@ -98,6 +99,7 @@ def _register_error_handlers(app):
 
 def create_app():
     app = Flask(__name__)
+    
     # Load application configuration
     app.config.from_object(Config)
 
@@ -157,6 +159,9 @@ def create_app():
 
     # Favorites routes
     app.register_blueprint(favorites_bp, url_prefix="/api/v1/favorites")
+    
+    # Account routes
+    app.register_blueprint(account_bp, url_prefix="/api/v1")
 
     # Payment routes
     app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")

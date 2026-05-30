@@ -50,7 +50,9 @@ class ApiConstants {
   static const String login = '/login';
   static const String refresh = '/refresh';
   static const String logout = '/logout';
-
+  static const String changePassword = '/change-password';
+  static const String currentUser = '/account/me';
+  
   // =====================================================
   // Artist profiles (root-mounted: /api/v1/artist-profiles/…)
   // =====================================================
@@ -313,5 +315,5 @@ class ApiClient {
       }
     }
     return "Network error occurred. Please try again later.";
-  }
+    }
 }

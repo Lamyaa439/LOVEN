@@ -140,3 +140,33 @@ def login_user(data: dict):
         "access_token": access_token,
         "refresh_token": refresh_token
     }, 200
+
+def change_password(user_id: str, data: dict):
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    if not current_password or not new_password:
+        return {"error": "current_password and new_password are required"}, 400
+
+    user = user_repo.get_user_by_id(user_id)
+
+    if not user:
+        return {"error": "User not found"}, 404
+
+    if not user.check_password(current_password):
+        return {"error": "Current password is incorrect"}, 401
+
+    try:
+        user.password = new_password
+        db.session.commit()
+
+        return {"message": "Password changed successfully"}, 200
+
+    except ValueError as e:
+        db.session.rollback()
+        return {"error": str(e)}, 400
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Change password error: {e}")
+        return {"error": "Failed to change password"}, 500

@@ -95,3 +95,16 @@ def logout():
     result, status_code = AuthFacade.logout(user_id)
 
     return jsonify(result), status_code
+
+@auth_bp.patch("/change-password")
+@jwt_required()
+def change_password_route():
+    current_user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+
+    result, status_code = AuthFacade.change_password(
+        current_user_id,
+        data,
+    )
+
+    return jsonify(result), status_code

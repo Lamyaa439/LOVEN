@@ -158,14 +158,6 @@ class ArtworkRepository {
     if (title != null) body['title'] = title;
     if (description != null) body['description'] = description;
     if (price != null) body['price'] = price;
-    if (quantityAvailable != null) {
-      body['quantity_available'] = quantityAvailable;
-    }
-    if (shippingFee != null) body['shipping_fee'] = shippingFee;
-    if (artworkImageUrl != null) {
-      body['artwork_image_url'] = artworkImageUrl;
-    }
-    if (status != null) body['status'] = status;
 
     final response = await _apiClient.patch(
       ApiConstants.artworkById(artworkId),

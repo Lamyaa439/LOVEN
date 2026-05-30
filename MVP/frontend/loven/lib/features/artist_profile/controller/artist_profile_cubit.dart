@@ -99,7 +99,6 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
     String? bio,
     String? city,
     String? shippingPolicy,
-    String? profileImageUrl,
   }) async {
     emit(
       state.copyWith(
@@ -114,7 +113,6 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         bio: bio,
         city: city,
         shippingPolicy: shippingPolicy,
-        profileImageUrl: profileImageUrl,
       );
 
       emit(

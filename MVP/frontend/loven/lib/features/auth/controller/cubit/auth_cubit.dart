@@ -52,6 +52,8 @@ class AuthCubit extends Cubit<AuthState> {
     } else {
       emit(AuthGuest());
     }
+
+    emit(AuthInitial());
   }
 
   /// Explicit guest entry (e.g. "Browse as guest").
@@ -61,12 +63,19 @@ class AuthCubit extends Cubit<AuthState> {
   /// on the absence of a JWT ([AuthGuest]).
   Future<void> continueAsGuest() async {
     emit(AuthLoading());
+
     try {
       await FirebaseAuth.instance.signInAnonymously();
+
       emit(AuthGuest());
     } catch (e) {
       debugPrint('Guest sign-in error: $e');
-      emit(AuthFailure('Could not enter guest mode.'));
+
+      emit(
+        AuthFailure(
+          'Could not enter guest mode.',
+        ),
+      );
     }
   }
 
@@ -83,17 +92,26 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
   }) async {
     emit(AuthLoading());
+
     try {
-      final fcmToken = await _getFcmTokenSafely();
+      final fcmToken =
+          await _getFcmTokenSafely();
+
       await _authRepository.login(
         email: email,
         password: password,
         fcmToken: fcmToken,
       );
+
       emit(AuthSuccess());
     } catch (e) {
       debugPrint('Login error: $e');
-      emit(AuthFailure(_extractMessage(e)));
+
+      emit(
+        AuthFailure(
+          _extractMessage(e),
+        ),
+      );
     }
   }
 
@@ -105,8 +123,11 @@ class AuthCubit extends Cubit<AuthState> {
     required String systemRole,
   }) async {
     emit(AuthLoading());
+
     try {
-      final fcmToken = await _getFcmTokenSafely();
+      final fcmToken =
+          await _getFcmTokenSafely();
+
       await _authRepository.register(
         name: name,
         email: email,
@@ -114,10 +135,16 @@ class AuthCubit extends Cubit<AuthState> {
         systemRole: systemRole,
         fcmToken: fcmToken,
       );
+
       emit(AuthSuccess());
     } catch (e) {
       debugPrint('Signup error: $e');
-      emit(AuthFailure(_extractMessage(e)));
+
+      emit(
+        AuthFailure(
+          _extractMessage(e),
+        ),
+      );
     }
   }
 
@@ -127,29 +154,98 @@ class AuthCubit extends Cubit<AuthState> {
   /// even when the network call fails.
   Future<void> logout() async {
     emit(AuthLoading());
+
     try {
       await _authRepository.logout();
+
       await FirebaseAuth.instance.signOut();
+
       emit(AuthGuest());
     } catch (_) {
       await FirebaseAuth.instance.signOut();
+
       emit(AuthGuest());
     }
   }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    emit(AuthLoading());
+
+    try {
+      await _authRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      emit(AuthSuccess());
+    } catch (e) {
+      emit(
+        AuthFailure(
+          _extractMessage(e),
+        ),
+      );
+    }
+  }
+  
+  Future<void> loadCurrentUser() async {
+  emit(AuthLoading());
+
+  try {
+    final user =
+        await _authRepository.getCurrentUser();
+
+    emit(AuthSuccess(user: user));
+  } catch (e) {
+    emit(
+      AuthFailure(
+        _extractMessage(e),
+      ),
+    );
+  }
+}
+
+  Future<void> updateProfile({
+    required String name,
+    required String email,
+    String? profileImageUrl,
+  }) async {
+    emit(AuthLoading());
+    
+    try {
+      final user =
+      await _authRepository.updateProfile(
+        name: name,
+        email: email,
+        profileImageUrl: profileImageUrl,
+      );
+      
+      emit(AuthSuccess(user: user));
+      } catch (e) {
+        emit(
+          AuthFailure(
+            _extractMessage(e),
+          ),
+        );
+      }
+    }
 
   // =====================================================================
   // Async Email Validation (used by signup page debounce)
   // =====================================================================
 
   /// Checks whether [email] is already registered on the backend.
-  ///
-  /// Returns `false` on network errors so the user is never blocked
-  /// by a transient failure during live validation.
-  Future<bool> checkEmailExists(String email) async {
+  Future<bool> checkEmailExists(
+    String email,
+  ) async {
     try {
-      return await _authRepository.checkEmailDuplication(email);
+      return await _authRepository
+          .checkEmailDuplication(email);
     } catch (e) {
       debugPrint('Email check error: $e');
+
       return false;
     }
   }
@@ -158,25 +254,33 @@ class AuthCubit extends Cubit<AuthState> {
   // Helpers
   // =====================================================================
 
-  /// Retrieves the FCM device token, requesting notification permissions
-  /// on iOS first. Returns `null` silently on any failure so auth flows
-  /// are never blocked by push-notification issues.
+  /// Retrieves the FCM device token safely.
   Future<String?> _getFcmTokenSafely() async {
     try {
-      await FirebaseMessaging.instance.requestPermission(
+      await FirebaseMessaging.instance
+          .requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
 
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        if (apnsToken == null) return null;
+      if (!kIsWeb &&
+          defaultTargetPlatform ==
+              TargetPlatform.iOS) {
+        final apnsToken =
+            await FirebaseMessaging.instance
+                .getAPNSToken();
+
+        if (apnsToken == null) {
+          return null;
+        }
       }
 
-      return await FirebaseMessaging.instance.getToken();
+      return await FirebaseMessaging.instance
+          .getToken();
     } catch (e) {
       debugPrint('FCM token error: $e');
+
       return null;
     }
   }
@@ -184,10 +288,13 @@ class AuthCubit extends Cubit<AuthState> {
   /// Unwraps the message from an [Exception] thrown by [ApiClient].
   String _extractMessage(Object error) {
     final raw = error.toString();
+
     const prefix = 'Exception: ';
+
     if (raw.startsWith(prefix)) {
       return raw.substring(prefix.length);
     }
+
     return raw;
   }
 }

@@ -56,14 +56,9 @@ class ArtistRepository {
     String? profileImageUrl,
   }) async {
     final Map<String, dynamic> body = {};
-    if (displayName != null) body['display_name'] = displayName;
-    if (bio != null) body['bio'] = bio;
-    if (city != null) body['city'] = city;
-    if (shippingPolicy != null) body['shipping_policy'] = shippingPolicy;
-    if (profileImageUrl != null) body['profile_image_url'] = profileImageUrl;
 
-    if (body.isEmpty) {
-      throw Exception('updateMyProfile: no fields provided.');
+    if (displayName != null) {
+      body['display_name'] = displayName;
     }
 
     final response = await _apiClient.patch(
@@ -130,18 +125,35 @@ class ArtistRepository {
     String? status,
   }) async {
     final Map<String, dynamic> body = {};
+
     if (title != null) body['title'] = title;
-    if (description != null) body['description'] = description;
-    if (price != null) body['price'] = price;
-    if (quantityAvailable != null) {
-      body['quantity_available'] = quantityAvailable;
+    if (description != null) {
+      body['description'] = description;
     }
-    if (shippingFee != null) body['shipping_fee'] = shippingFee;
-    if (artworkImageUrl != null) body['artwork_image_url'] = artworkImageUrl;
-    if (status != null) body['status'] = status;
+    if (price != null) body['price'] = price;
+
+    if (quantityAvailable != null) {
+      body['quantity_available'] =
+          quantityAvailable;
+    }
+
+    if (shippingFee != null) {
+      body['shipping_fee'] = shippingFee;
+    }
+
+    if (artworkImageUrl != null) {
+      body['artwork_image_url'] =
+          artworkImageUrl;
+    }
+
+    if (status != null) {
+      body['status'] = status;
+    }
 
     if (body.isEmpty) {
-      throw Exception('updateArtwork: no fields provided.');
+      throw Exception(
+        'No fields provided.',
+      );
     }
 
     final response = await _apiClient.patch(

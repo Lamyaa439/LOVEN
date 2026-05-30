@@ -28,6 +28,11 @@ class VerificationRequest(BaseModel):
         nullable=False
     )
 
+    artist_profile = db.relationship(
+        "ArtistProfile",
+        backref=db.backref("verification_requests", lazy=True),
+    )
+
     document_type = db.Column(
         db.String(50),
         nullable=True
@@ -52,6 +57,16 @@ class VerificationRequest(BaseModel):
     def to_dict(self):
 
         return {
+            "artist_display_name": (
+                self.artist_profile.display_name
+                if self.artist_profile
+                else None
+            ),
+            "artist_email": (
+                self.artist_profile.user.email
+                if self.artist_profile and self.artist_profile.user
+                else None
+            ),
             "id": str(self.id) if self.id else None,
             "artist_profile_id": (
                 str(self.artist_profile_id)
