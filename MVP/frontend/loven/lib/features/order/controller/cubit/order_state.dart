@@ -25,5 +25,12 @@ class OrderSuccess extends OrderState {
 class OrderError extends OrderState {
   final String message;
 
-  OrderError(this.message);
+  /// When true, cart totals are stale — the UI should refetch the cart
+  /// after showing [message] (server rejected client-computed pricing).
+  final bool shouldRefreshCart;
+
+  OrderError(
+    this.message, {
+    this.shouldRefreshCart = false,
+  });
 }
