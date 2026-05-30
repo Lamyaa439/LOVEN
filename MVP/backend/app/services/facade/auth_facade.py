@@ -9,6 +9,7 @@ from app.external_services.firebase_service import send_welcome_notification
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.auth_service import login_user, register_user
 from app.services.facade.artists_profile_facade import ArtistsProfileFacade
+from app.services.auth_service import login_user, register_user, change_password
 
 user_repo = UserRepository()
 
@@ -79,6 +80,10 @@ class AuthFacade:
         """
         result, status_code = login_user(data)
         return result, status_code
+    
+    @staticmethod
+    def change_password(user_id: str, data: dict):
+        return change_password(user_id, data)
 
     @staticmethod
     def logout(user_id: str):

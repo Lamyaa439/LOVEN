@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
+CMD ["gunicorn", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "-b", "0.0.0.0:5000", "run:app"]

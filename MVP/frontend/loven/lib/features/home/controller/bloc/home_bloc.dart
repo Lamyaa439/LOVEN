@@ -16,18 +16,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     'Photography',
     'Digital Art',
   ];
-
+  
   HomeBloc({
-    ArtworkRepository? artworkRepository,
-  })  : _artworkRepository =
-            artworkRepository ??
-                ArtworkRepository(),
-        super(HomeLoading()) {
-    on<FetchHomeData>((
-      event,
-      emit,
-    ) async {
-      emit(HomeLoading());
+    required ArtworkRepository artworkRepository,
+})  : _artworkRepository = artworkRepository,
+      super(HomeLoading()) {
+        on<FetchHomeData>((
+          event,
+          emit,
+          ) async {
+            emit(HomeLoading());
 
       try {
         final rawArtworks =

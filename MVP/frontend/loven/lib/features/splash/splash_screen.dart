@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/res/theme/app_colors.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({
-    super.key,
-  });
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() =>
@@ -14,291 +19,81 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState
     extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-
-  late Animation<double>
-      fadeAnimation;
-
-  late Animation<double>
-      scaleAnimation;
-
-  bool _showWelcome = false;
-
-  final Color primaryDeepPurple =
-      const Color(0xFF2E3192);
-
-  final Color secondaryPurple =
-      const Color(0xFF662D91);
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    controller = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(
-        milliseconds: 1400,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutBack,
       ),
     );
 
-    fadeAnimation = CurvedAnimation(
-      parent: controller,
-      curve: Curves.easeIn,
-    );
-
-    scaleAnimation =
-        Tween<double>(
-          begin: 0.85,
-          end: 1.0,
-        ).animate(
-          CurvedAnimation(
-            parent: controller,
-            curve:
-                Curves.easeOutBack,
-          ),
-        );
-
-    controller.forward();
-
-    _startWelcomePhase();
+    _executeSplashSequence();
   }
 
-  Future<void>
-      _startWelcomePhase() async {
+  Future<void> _executeSplashSequence() async {
+    await _animationController.forward();
+
     await Future.delayed(
-      const Duration(seconds: 2),
+      const Duration(milliseconds: 500),
     );
 
     if (!mounted) return;
 
-    setState(() {
-      _showWelcome = true;
-    });
+    await context.read<AuthCubit>().checkAuthStatus();
+
+    if (!mounted) return;
+
+    final authState = context.read<AuthCubit>().state;
+
+    if (authState is AuthSuccess || authState is AuthGuest) {
+      context.go('/');
+    } else {
+      context.go('/onboarding');
+    }
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SizedBox.expand(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .center,
-                children: [
-                  FadeTransition(
-                    opacity:
-                        fadeAnimation,
-                    child:
-                        ScaleTransition(
-                      scale:
-                          scaleAnimation,
-                      child:
-                          Image.asset(
-                        'assets/images/loven-logo.png',
-                        width: 180,
-                        fit: BoxFit
-                            .contain,
-                      ),
-                    ),
-                  ),
-
-                  AnimatedOpacity(
-                    duration:
-                        const Duration(
-                      milliseconds:
-                          800,
-                    ),
-                    opacity:
-                        _showWelcome
-                            ? 1.0
-                            : 0.0,
-                    child:
-                        _buildWelcomeActions(),
-                  ),
-
-                  const SizedBox(
-                    height: 100,
-                  ),
-                ],
-              ),
+      backgroundColor: AppColors.primaryPurple,
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Image.asset(
+              'assets/images/loven-logo.png',
+              width: 180,
+              fit: BoxFit.contain,
             ),
-
-            if (_showWelcome)
-              Positioned(
-                bottom: 40,
-                child:
-                    FadeTransition(
-                  opacity:
-                      fadeAnimation,
-                  child:
-                      TextButton(
-                    onPressed: () {
-                      context.go('/');
-                    },
-                    child: Text(
-                      "Browse as Guest",
-                      style:
-                          TextStyle(
-                        color:
-                            secondaryPurple
-                                .withOpacity(
-                          0.7,
-                        ),
-                        fontSize:
-                            16,
-                        decoration:
-                            TextDecoration
-                                .underline,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeActions() {
-    return Padding(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 40,
-      ),
-      child: Column(
-        mainAxisSize:
-            MainAxisSize.min,
-        children: [
-          const SizedBox(
-            height: 20,
-          ),
-
-          Text(
-            'A space for every creative soul',
-            textAlign:
-                TextAlign.center,
-            style: TextStyle(
-              fontSize: 17,
-              color:
-                  primaryDeepPurple,
-              fontWeight:
-                  FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(
-            height: 12,
-          ),
-
-          Text(
-            'Whatever your art, this is your space to sell, inspire, and be seen.',
-            textAlign:
-                TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.4,
-              color:
-                  secondaryPurple
-                      .withOpacity(
-                0.8,
-              ),
-            ),
-          ),
-
-          const SizedBox(
-            height: 35,
-          ),
-
-          ElevatedButton(
-            onPressed: () {
-              context.push(
-                '/login',
-              );
-            },
-            style:
-                ElevatedButton.styleFrom(
-              backgroundColor:
-                  primaryDeepPurple,
-              foregroundColor:
-                  Colors.white,
-              fixedSize:
-                  const Size(
-                260,
-                55,
-              ),
-              elevation: 0,
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  30,
-                ),
-              ),
-            ),
-            child: const Text(
-              "Login",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight:
-                    FontWeight.w600,
-              ),
-            ),
-          ),
-
-          const SizedBox(
-            height: 16,
-          ),
-
-          OutlinedButton(
-            onPressed: () {
-              context.push(
-                '/auth',
-              );
-            },
-            style:
-                OutlinedButton.styleFrom(
-              fixedSize:
-                  const Size(
-                260,
-                55,
-              ),
-              side: BorderSide(
-                color:
-                    primaryDeepPurple,
-                width: 1.5,
-              ),
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  30,
-                ),
-              ),
-            ),
-            child: Text(
-              "Sign Up",
-              style: TextStyle(
-                color:
-                    primaryDeepPurple,
-                fontSize: 16,
-                fontWeight:
-                    FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

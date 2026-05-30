@@ -71,25 +71,27 @@ def _as_uuid(value):
 def _artwork_to_dict(artwork):
     """
     Serializes an Artwork SQLAlchemy model into a JSON-compatible dictionary.
-    
-    Safely converts complex Python objects (UUIDs, Decimals, Datetimes) into 
-    standard strings to prevent JSON serialization errors and preserve 
-    financial precision (e.g., converting Decimal prices to strings).
-
-    Args:
-        artwork (Artwork or None): The artwork model instance to serialize.
-
-    Returns:
-        dict or None: A dictionary containing the artwork data, or None if input is None.
     """
     if artwork is None:
         return None
-    
+
     price = artwork.price
     fee = artwork.shipping_fee
+
+    artist = artwork.artist
+
     return {
         "id": str(artwork.id),
         "artist_profile_id": str(artwork.artist_profile_id),
+
+        "artist_display_name": artist.display_name if artist else None,
+        "artist_profile_image_url": (
+            artist.user.profile_image_url
+            if artist and artist.user
+            else None
+        ),
+        "artist_is_verified": artist.is_verified if artist else False,
+
         "title": artwork.title,
         "description": artwork.description,
         "price": str(price) if price is not None else None,
@@ -99,7 +101,7 @@ def _artwork_to_dict(artwork):
         "status": artwork.status,
         "created_at": artwork.created_at.isoformat() if artwork.created_at else None,
         "updated_at": artwork.updated_at.isoformat() if artwork.updated_at else None,
-    }
+}
 
 
 def _filter_writable_payload(data):

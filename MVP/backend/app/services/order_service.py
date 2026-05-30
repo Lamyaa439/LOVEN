@@ -5,6 +5,7 @@ from app.persistence.repositories.order_repo import (
     get_incoming_orders_by_artist,
     update_order_status,
     get_buyer_notification_info,
+    get_order_items,
 )
 
 from app.external_services.firebase_service import (
@@ -137,24 +138,42 @@ def get_user_orders(buyer_id):
 
     orders = get_orders_by_buyer(buyer_id)
 
-    return {
-        "orders": [
+    serialized_orders = []
+
+    for order in orders:
+        order_items = get_order_items(order[0])
+
+        items = [
             {
-                "id": str(order[0]),
-                "buyer_id": str(order[1]),
-                "subtotal": float(order[2]),
-                "shipping_fee": float(order[3]),
-                "total_amount": float(order[4]),
-                "status": order[5],
-                "created_at": (
-                    order[6].isoformat()
-                    if order[6]
-                    else None
-                ),
+                "id": str(item[0]),
+                "order_id": str(item[1]),
+                "artwork_id": str(item[2]),
+                "quantity": item[3],
+                "price_at_purchase": float(item[4]),
+                "artwork_title": item[5],
+                "artwork_image_url": item[6],
             }
-            for order in orders
+            for item in order_items
         ]
-    }, 200
+
+        serialized_orders.append({
+            "id": str(order[0]),
+            "buyer_id": str(order[1]),
+            "subtotal": float(order[2]),
+            "shipping_fee": float(order[3]),
+            "total_amount": float(order[4]),
+            "status": order[5],
+            "shipping_company": order[6],
+            "tracking_number": order[7],
+            "created_at": (
+                order[8].isoformat()
+                if order[8]
+                else None
+            ),
+            "items": items,
+        })
+
+    return {"orders": serialized_orders}, 200
 
 
 def get_artist_orders(artist_profile_id):
@@ -166,24 +185,42 @@ def get_artist_orders(artist_profile_id):
         artist_profile_id
     )
 
-    return {
-        "orders": [
+    serialized_orders = []
+
+    for order in orders:
+        order_items = get_order_items(order[0])
+
+        items = [
             {
-                "id": str(order[0]),
-                "buyer_id": str(order[1]),
-                "subtotal": float(order[2]),
-                "shipping_fee": float(order[3]),
-                "total_amount": float(order[4]),
-                "status": order[5],
-                "created_at": (
-                    order[6].isoformat()
-                    if order[6]
-                    else None
-                ),
+                "id": str(item[0]),
+                "order_id": str(item[1]),
+                "artwork_id": str(item[2]),
+                "quantity": item[3],
+                "price_at_purchase": float(item[4]),
+                "artwork_title": item[5],
+                "artwork_image_url": item[6],
             }
-            for order in orders
+            for item in order_items
         ]
-    }, 200
+
+        serialized_orders.append({
+            "id": str(order[0]),
+            "buyer_id": str(order[1]),
+            "subtotal": float(order[2]),
+            "shipping_fee": float(order[3]),
+            "total_amount": float(order[4]),
+            "status": order[5],
+            "shipping_company": order[6],
+            "tracking_number": order[7],
+            "created_at": (
+                order[8].isoformat()
+                if order[8]
+                else None
+            ),
+            "items": items,
+        })
+
+    return {"orders": serialized_orders}, 200
 
 
 def change_order_status(
@@ -225,35 +262,33 @@ def change_order_status(
     # =====================================================
 
     if status == "shipped":
-
         buyer_info = get_buyer_notification_info(
             buyer_id=order[1]
         )
 
         if buyer_info and buyer_info[1]:
-            
             send_order_status_notification(
                 fcm_token=buyer_info[1],
                 user_name=buyer_info[0] or "Customer",
                 order_id=str(order[0]),
                 status="shipped",
             )
-            
-            return {
-                "message": "Order status updated successfully",
-                "order": {
-                    "id": str(order[0]),
-                    "buyer_id": str(order[1]),
-                    "subtotal": float(order[2]),
-                    "shipping_fee": float(order[3]),
-                    "total_amount": float(order[4]),
-                    "status": order[5],
-                    "shipping_company": order[6],
-                    "tracking_number": order[7],
-                    "created_at": (
-                        order[8].isoformat()
-                        if order[8]
-                        else None
-                    ),
-                },
-            }, 200
+
+    return {
+        "message": "Order status updated successfully",
+        "order": {
+            "id": str(order[0]),
+            "buyer_id": str(order[1]),
+            "subtotal": float(order[2]),
+            "shipping_fee": float(order[3]),
+            "total_amount": float(order[4]),
+            "status": order[5],
+            "shipping_company": order[6],
+            "tracking_number": order[7],
+            "created_at": (
+                order[8].isoformat()
+                if order[8]
+                else None
+            ),
+        },
+    }, 200

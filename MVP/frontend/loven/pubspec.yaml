@@ -32,10 +32,13 @@ dependencies:
   firebase_core: ^4.9.0
   firebase_messaging: ^16.2.2
   firebase_storage: ^13.4.0
+  image_picker: ^1.1.2
 
   flutter_native_splash: ^2.4.7
   flutter_launcher_icons: ^0.13.1
   firebase_auth: ^6.5.1
+  dio: ^5.9.2
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -79,3 +82,4 @@ flutter:
     - assets/images/ #For art pieces and backgrounds
     - assets/icons/ # For LOVEN branding
     - assets/fonts/ # For custom SVGs (such as cart, heart, etc.)
+    - .env

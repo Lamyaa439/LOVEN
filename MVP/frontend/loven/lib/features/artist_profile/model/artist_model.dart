@@ -14,6 +14,9 @@
 class ArtworkModel {
   final String id;
   final String artistProfileId;
+  final String? artistDisplayName;
+  final String? artistProfileImageUrl;
+  final bool artistIsVerified;
   final String title;
   final String? description;
   final double? price;
@@ -27,6 +30,9 @@ class ArtworkModel {
   const ArtworkModel({
     required this.id,
     required this.artistProfileId,
+    this.artistDisplayName,
+    this.artistProfileImageUrl,
+    this.artistIsVerified = false,
     required this.title,
     this.description,
     this.price,
@@ -47,6 +53,9 @@ class ArtworkModel {
     return ArtworkModel(
       id: data['id']?.toString() ?? '',
       artistProfileId: data['artist_profile_id']?.toString() ?? '',
+      artistDisplayName: data['artist_display_name'] as String?,
+      artistProfileImageUrl: data['artist_profile_image_url'] as String?,
+      artistIsVerified: data['artist_is_verified'] as bool? ?? false,
       title: data['title'] as String? ?? '',
       description: data['description'] as String?,
       price: _parseDecimal(data['price']),

@@ -6,8 +6,12 @@ class FavoritesLoading extends FavoritesState {}
 
 class FavoritesLoaded extends FavoritesState {
   final Set<String> favoriteArtworkIds;
+  final List<dynamic> favorites;
 
-  FavoritesLoaded(this.favoriteArtworkIds);
+  FavoritesLoaded({
+    required this.favoriteArtworkIds,
+    required this.favorites,
+  });
 }
 
 class FavoritesError extends FavoritesState {

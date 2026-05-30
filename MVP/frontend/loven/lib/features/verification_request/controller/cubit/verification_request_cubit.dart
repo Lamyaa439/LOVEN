@@ -28,4 +28,42 @@ class VerificationRequestCubit extends Cubit<VerificationRequestState> {
       emit(VerificationRequestError(e.toString()));
     }
   }
+
+  Future<void> fetchAllRequests() async {
+    emit(VerificationRequestLoading());
+
+    try {
+      final requests = await _repository.fetchAllRequests();
+
+      emit(VerificationRequestsLoaded(requests));
+    } catch (e) {
+      emit(VerificationRequestError(e.toString()));
+    }
+  }
+
+  Future<void> approveRequest(String requestId) async {
+    try {
+      await _repository.updateRequestStatus(
+        requestId: requestId,
+        status: 'approved',
+      );
+
+      await fetchAllRequests();
+    } catch (e) {
+      emit(VerificationRequestError(e.toString()));
+    }
+  }
+
+  Future<void> rejectRequest(String requestId) async {
+    try {
+      await _repository.updateRequestStatus(
+        requestId: requestId,
+        status: 'rejected',
+      );
+
+      await fetchAllRequests();
+    } catch (e) {
+      emit(VerificationRequestError(e.toString()));
+    }
+  }
 }

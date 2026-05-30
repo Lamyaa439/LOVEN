@@ -18,8 +18,14 @@ class NavigationWidget extends StatelessWidget {
           },
           items: [
             const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
               label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.favorite_border),
+              activeIcon: Icon(Icons.favorite),
+              label: 'Favorites',
             ),
             BottomNavigationBarItem(
               icon: BlocBuilder<CartCubit, CartState>(
@@ -70,7 +76,8 @@ class NavigationWidget extends StatelessWidget {
               label: 'Cart',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.person),
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
               label: 'Profile',
             ),
           ],

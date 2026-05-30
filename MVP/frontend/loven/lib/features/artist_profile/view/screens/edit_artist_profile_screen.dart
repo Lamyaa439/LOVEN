@@ -24,7 +24,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   late final TextEditingController _displayNameController;
   late final TextEditingController _cityController;
   late final TextEditingController _bioController;
-  late final TextEditingController _profileImageUrlController;
   late final TextEditingController _shippingPolicyController;
 
   final List<String> _cities = [
@@ -52,10 +51,10 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
 
     _displayNameController =
         TextEditingController(text: widget.artist.displayName);
-    _cityController = TextEditingController(text: widget.artist.city ?? '');
-    _bioController = TextEditingController(text: widget.artist.bio ?? '');
-    _profileImageUrlController =
-        TextEditingController(text: widget.artist.profileImageUrl ?? '');
+    _cityController =
+        TextEditingController(text: widget.artist.city ?? '');
+    _bioController =
+        TextEditingController(text: widget.artist.bio ?? '');
     _shippingPolicyController =
         TextEditingController(text: widget.artist.shippingPolicy ?? '');
   }
@@ -65,7 +64,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     _displayNameController.dispose();
     _cityController.dispose();
     _bioController.dispose();
-    _profileImageUrlController.dispose();
     _shippingPolicyController.dispose();
     super.dispose();
   }
@@ -77,7 +75,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
           displayName: _displayNameController.text.trim(),
           city: _cityController.text.trim(),
           bio: _bioController.text.trim(),
-          profileImageUrl: _profileImageUrlController.text.trim(),
           shippingPolicy: _shippingPolicyController.text.trim(),
         );
 
@@ -92,8 +89,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return BlocListener<ArtistProfileCubit, ArtistProfileState>(
       listener: (context, state) {
         if (state.status == ArtistProfileStatus.error) {
@@ -106,7 +101,7 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Profile'),
+          title: const Text('Edit Artist Profile'),
           centerTitle: true,
         ),
         body: BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
@@ -119,27 +114,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 46,
-                      backgroundImage:
-                          _profileImageUrlController.text.trim().isNotEmpty
-                              ? NetworkImage(
-                                  _profileImageUrlController.text.trim(),
-                                )
-                              : null,
-                      child: _profileImageUrlController.text.trim().isEmpty
-                          ? Text(
-                              _displayNameController.text.trim().isNotEmpty
-                                  ? _displayNameController.text
-                                      .trim()[0]
-                                      .toUpperCase()
-                                  : '?',
-                              style: theme.textTheme.headlineMedium,
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 20),
-
                     TextFormField(
                       controller: _displayNameController,
                       decoration: const InputDecoration(
@@ -153,12 +127,13 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 12),
 
                     DropdownButtonFormField<String>(
                       initialValue: _cityController.text.isEmpty
-                      ? null
-                      : _cityController.text,
+                          ? null
+                          : _cityController.text,
                       decoration: const InputDecoration(
                         labelText: 'City',
                         prefixIcon: Icon(Icons.location_on_outlined),
@@ -173,6 +148,7 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                         _cityController.text = value ?? '';
                       },
                     ),
+
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -184,16 +160,7 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                         alignLabelWithHint: true,
                       ),
                     ),
-                    const SizedBox(height: 12),
 
-                    TextFormField(
-                      controller: _profileImageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Profile image URL',
-                        prefixIcon: Icon(Icons.image_outlined),
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -205,6 +172,7 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                         alignLabelWithHint: true,
                       ),
                     ),
+
                     const SizedBox(height: 24),
 
                     SizedBox(
