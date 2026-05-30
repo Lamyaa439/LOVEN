@@ -1,38 +1,46 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+/// ========================================================================
+/// Verification Request Repository
+///
+/// Data-access layer for artist identity verification submissions.
+///
+/// Architectural decisions:
+/// - Accepts [ApiClient] via constructor injection so auth headers, base URL,
+///   and error handling stay centralized and mockable.
+/// - Delegates HTTP to [ApiClient]; non-2xx responses throw [Exception]s
+///   with backend messages — this repository does not catch them.
+/// - Posts to the root-mounted `/verification-requests` route on `/api/v1`.
+/// ========================================================================
 
 import 'package:loven/core/network/api_constants.dart';
-import 'package:loven/core/storage/token_storage.dart';
 
 class VerificationRequestRepository {
-  final TokenStorage _tokenStorage = TokenStorage();
+  final ApiClient _apiClient;
 
+  /// Creates a repository backed by the shared [apiClient] instance.
+  VerificationRequestRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
+  Map<String, dynamic> _asMap(dynamic data) {
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  /// Submits a verification request for the authenticated artist.
+  ///
+  /// Returns the decoded JSON body (typically confirmation or request record).
   Future<Map<String, dynamic>> submitRequest({
     required String documentType,
     required String institutionName,
     required String documentNumber,
   }) async {
-    final token = await _tokenStorage.getAccessToken();
-
-    final response = await http.post(
-      Uri.parse(ApiConstants.verificationRequests),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await _apiClient.post(
+      ApiConstants.verificationRequests,
+      data: {
         'document_type': documentType,
         'institution_name': institutionName,
         'document_number': documentNumber,
-      }),
+      },
     );
 
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return data;
-    }
-
-    throw Exception(data['error'] ?? 'Failed to submit verification request');
+    return _asMap(response.data);
   }
 }

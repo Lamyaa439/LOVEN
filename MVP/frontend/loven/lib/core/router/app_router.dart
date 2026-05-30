@@ -40,10 +40,13 @@ class AppRouter {
   final AuthCubit authCubit;
   /// Shared profile repository — injected from [LovenApp] startup.
   final ArtistRepository artistRepository;
+  /// Verification submissions — injected from [LovenApp] startup.
+  final VerificationRequestRepository verificationRequestRepository;
 
   AppRouter(
     this.authCubit, {
     required this.artistRepository,
+    required this.verificationRequestRepository,
   });
   
   late final GoRouter router = GoRouter(
@@ -142,7 +145,7 @@ class AppRouter {
         builder: (context, state) {
           return BlocProvider(
             create: (_) => VerificationRequestCubit(
-              VerificationRequestRepository(),
+              verificationRequestRepository,
             ),
             child: const VerificationRequestScreen(),
           );

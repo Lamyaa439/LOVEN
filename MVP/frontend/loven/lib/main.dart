@@ -73,6 +73,8 @@ class _LovenAppState extends State<LovenApp> {
   late final OrderRepository _orderRepository;
   /// Artist profile and profile-scoped artwork access.
   late final ArtistRepository _artistRepository;
+  late final FavoritesRepository _favoritesRepository;
+  late final VerificationRequestRepository _verificationRequestRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
 
@@ -89,10 +91,15 @@ class _LovenAppState extends State<LovenApp> {
     _artworkRepository = ArtworkRepository(apiClient: _apiClient);
     _orderRepository = OrderRepository(apiClient: _apiClient);
     _artistRepository = ArtistRepository(apiClient: _apiClient);
+    _favoritesRepository = FavoritesRepository(apiClient: _apiClient);
+    _verificationRequestRepository = VerificationRequestRepository(
+      apiClient: _apiClient,
+    );
     _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
     _appRouter = AppRouter(
       _authCubit,
       artistRepository: _artistRepository,
+      verificationRequestRepository: _verificationRequestRepository,
     );
   }
 
@@ -132,16 +139,24 @@ class _LovenAppState extends State<LovenApp> {
         BlocProvider(
           create: (context) => OrderCubit(_orderRepository),
         ),
-        BlocProvider(create: (context) => FeedbackCubit(FeedbackRepository())),
-        BlocProvider(create: (context) => ReportCubit(ReportRepository())),
+        BlocProvider(
+          create: (context) => FeedbackCubit(
+            FeedbackRepository(apiClient: _apiClient),
+          ),
+        ),
+        BlocProvider(
+          create: (context) => ReportCubit(
+            ReportRepository(apiClient: _apiClient),
+          ),
+        ),
         BlocProvider(
           create: (_) => FavoritesCubit(
-            FavoritesRepository(),
-            )..loadFavorites(),
-          ),
+            _favoritesRepository,
+          )..loadFavorites(),
+        ),
         BlocProvider(
           create: (_) => VerificationRequestCubit(
-            VerificationRequestRepository(),
+            _verificationRequestRepository,
           ),
         ),
       ],
