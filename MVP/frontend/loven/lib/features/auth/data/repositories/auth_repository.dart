@@ -71,8 +71,8 @@ class AuthRepository {
 
   /// Registers a new user account and persists JWT session tokens.
   ///
-  /// The backend returns 201 on success with `access_token` in the body.
-  /// Any validation or duplication error (400/409) surfaces through
+  /// The backend returns 201 on success with `access_token` and
+  /// `refresh_token` in the body. Validation errors surface through
   /// the [ApiClient] error handler as a user-friendly message.
   Future<void> register({
     required String name,
@@ -112,6 +112,36 @@ class AuthRepository {
     }
 
     await _tokenStorage.clearAllTokens();
+  }
+
+  /// Exchanges the stored refresh JWT for a new access token.
+  ///
+  /// Calls `POST /refresh` with the refresh token as Bearer (not the
+  /// access token — see [ApiClient.postWithBearerToken]). On success,
+  /// only the access token is rotated; the refresh token is unchanged.
+  ///
+  /// Throws when no refresh token is stored or the server rejects renewal.
+  Future<void> refreshAccessToken() async {
+    final refreshToken = await _tokenStorage.getRefreshToken();
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('No refresh token available');
+    }
+
+    final response = await _apiClient.postWithBearerToken(
+      ApiConstants.refresh,
+      bearerToken: refreshToken,
+      data: {},
+    );
+
+    final data = Map<String, dynamic>.from(response.data as Map);
+    final accessToken = data['access_token'] as String?;
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception('Server did not return an access token');
+    }
+
+    await _tokenStorage.saveAccessToken(accessToken);
   }
 
   /// Checks whether the given [email] is already registered.

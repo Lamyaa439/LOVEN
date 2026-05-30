@@ -192,6 +192,14 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Callers that set Authorization explicitly (e.g. POST /refresh
+          // with the refresh JWT) must not be overwritten by the access token.
+          final existingAuth = options.headers['Authorization'];
+          if (existingAuth != null && existingAuth.toString().isNotEmpty) {
+            handler.next(options);
+            return;
+          }
+
           final token = await _tokenStorage.getAccessToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -219,6 +227,29 @@ class ApiClient {
   Future<Response> post(String path, {Map<String, dynamic>? data}) async {
     try {
       final response = await _dio.post(path, data: data);
+      return response;
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
+  /// POST with an explicit Bearer token, bypassing the access-token interceptor.
+  ///
+  /// Used for `POST /refresh`, which must authenticate with the refresh JWT
+  /// rather than the (possibly expired) access token.
+  Future<Response> postWithBearerToken(
+    String path, {
+    required String bearerToken,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final response = await _dio.post(
+        path,
+        data: data,
+        options: Options(
+          headers: {'Authorization': 'Bearer $bearerToken'},
+        ),
+      );
       return response;
     } on DioException catch (e) {
       throw Exception(_handleError(e));
