@@ -27,7 +27,26 @@ class AuthRepository {
   })  : _apiClient = apiClient,
         _tokenStorage = tokenStorage;
 
-  /// Authenticates an existing user and persists the JWT access token.
+  /// Persists access and refresh tokens returned by login/register.
+  ///
+  /// Both tokens are required for a complete session — access for API
+  /// calls (via [ApiClient]'s interceptor) and refresh for future renewal.
+  Future<void> _persistSessionTokens(Map<String, dynamic> data) async {
+    final accessToken = data['access_token'] as String?;
+    final refreshToken = data['refresh_token'] as String?;
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception('Server did not return an access token');
+    }
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('Server did not return a refresh token');
+    }
+
+    await _tokenStorage.saveAccessToken(accessToken);
+    await _tokenStorage.saveRefreshToken(refreshToken);
+  }
+
+  /// Authenticates an existing user and persists JWT session tokens.
   ///
   /// Throws an [Exception] propagated from [ApiClient] if the backend
   /// returns a non-2xx status (e.g. 401 invalid credentials).
@@ -45,13 +64,12 @@ class AuthRepository {
       },
     );
 
-    final token = response.data['access_token'] as String?;
-    if (token == null) throw Exception('Server did not return an access token');
-
-    await _tokenStorage.saveAccessToken(token);
+    await _persistSessionTokens(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
-  /// Registers a new user account and persists the JWT access token.
+  /// Registers a new user account and persists JWT session tokens.
   ///
   /// The backend returns 201 on success with `access_token` in the body.
   /// Any validation or duplication error (400/409) surfaces through
@@ -74,10 +92,9 @@ class AuthRepository {
       },
     );
 
-    final token = response.data['access_token'] as String?;
-    if (token == null) throw Exception('Server did not return an access token');
-
-    await _tokenStorage.saveAccessToken(token);
+    await _persistSessionTokens(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
   /// Invalidates the current session on the backend and clears local tokens.

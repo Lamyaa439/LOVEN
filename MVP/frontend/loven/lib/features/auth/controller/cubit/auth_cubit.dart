@@ -4,12 +4,14 @@
 /// Orchestrates authentication state transitions for the UI layer.
 ///
 /// Architectural decisions:
-/// - Accepts [AuthRepository] via constructor injection — never
-///   instantiates its own data-layer dependencies.
-/// - FCM token retrieval is kept here (platform concern, not data concern)
-///   and passed through to the repository as an optional field.
-/// - Firebase Auth anonymous sign-in is used solely for guest browsing;
-///   the real session is the JWT managed by [AuthRepository].
+/// - Accepts [AuthRepository] and [TokenStorage] via constructor injection.
+/// - **Session truth is the JWT** in [TokenStorage], not Firebase Auth state.
+///   [checkAuthStatus] reads `access_token` to decide [AuthSuccess] vs
+///   [AuthGuest]; route guards in [AppRouter] follow this cubit state.
+/// - Firebase anonymous sign-in is **opt-in** via [continueAsGuest] only
+///   (e.g. "Browse as guest") — used for Firebase Storage, not routing.
+/// - FCM token retrieval stays here (platform concern) and is passed to
+///   the repository as an optional field on login/register.
 /// - Error messages from [ApiClient] arrive as `Exception("...")`.
 ///   [_extractMessage] unwraps them into clean UI strings.
 /// ========================================================================
@@ -19,35 +21,44 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  final TokenStorage _tokenStorage;
 
-  AuthCubit({required AuthRepository authRepository})
-      : _authRepository = authRepository,
+  AuthCubit({
+    required AuthRepository authRepository,
+    required TokenStorage tokenStorage,
+  })  : _authRepository = authRepository,
+        _tokenStorage = tokenStorage,
         super(AuthInitial());
 
   // =====================================================================
   // Session Bootstrap
   // =====================================================================
 
-  /// Determines the initial auth state on app launch.
+  /// Restores session state on app launch from locally stored JWT.
   ///
-  /// Checks Firebase Auth for an existing anonymous or authenticated user.
-  /// Falls back to anonymous guest mode if no session is found.
+  /// Does **not** sign in anonymously — guests remain [AuthGuest] until
+  /// they explicitly choose [continueAsGuest] (Firebase Storage only).
   Future<void> checkAuthStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final token = await _tokenStorage.getAccessToken();
 
-    if (user != null) {
-      emit(user.isAnonymous ? AuthGuest() : AuthSuccess());
+    if (token != null && token.isNotEmpty) {
+      emit(AuthSuccess());
     } else {
-      await continueAsGuest();
+      emit(AuthGuest());
     }
   }
 
-  /// Signs in anonymously via Firebase to enable guest browsing.
+  /// Explicit guest entry (e.g. "Browse as guest").
+  ///
+  /// Firebase anonymous auth supports Firebase Storage uploads/downloads;
+  /// it is **not** the source of truth for API route guards — those rely
+  /// on the absence of a JWT ([AuthGuest]).
   Future<void> continueAsGuest() async {
     emit(AuthLoading());
     try {
@@ -64,6 +75,9 @@ class AuthCubit extends Cubit<AuthState> {
   // =====================================================================
 
   /// Authenticates via the backend API and transitions to [AuthSuccess].
+  ///
+  /// Tokens are persisted in [AuthRepository]; this cubit only reflects
+  /// the resulting authenticated state.
   Future<void> login({
     required String email,
     required String password,
@@ -107,11 +121,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Logs out from the backend, clears local tokens, and signs out of Firebase.
+  /// Logs out from the backend, clears local JWTs, and signs out of Firebase.
   ///
-  /// Always results in [AuthGuest] — even if the network call fails,
-  /// because [AuthRepository.logout] already swallows that error and
-  /// clears storage unconditionally.
+  /// Always ends in [AuthGuest] — [AuthRepository.logout] clears storage
+  /// even when the network call fails.
   Future<void> logout() async {
     emit(AuthLoading());
     try {
@@ -169,10 +182,6 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   /// Unwraps the message from an [Exception] thrown by [ApiClient].
-  ///
-  /// `Exception("Invalid email or password")` produces `.toString()` →
-  /// `"Exception: Invalid email or password"`. This strips the prefix
-  /// so the UI receives a clean human-readable string.
   String _extractMessage(Object error) {
     final raw = error.toString();
     const prefix = 'Exception: ';

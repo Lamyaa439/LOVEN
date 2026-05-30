@@ -95,7 +95,10 @@ class _LovenAppState extends State<LovenApp> {
     _verificationRequestRepository = VerificationRequestRepository(
       apiClient: _apiClient,
     );
-    _authCubit = AuthCubit(authRepository: _authRepository)..checkAuthStatus();
+    _authCubit = AuthCubit(
+      authRepository: _authRepository,
+      tokenStorage: _tokenStorage,
+    )..checkAuthStatus();
     _appRouter = AppRouter(
       _authCubit,
       artistRepository: _artistRepository,
