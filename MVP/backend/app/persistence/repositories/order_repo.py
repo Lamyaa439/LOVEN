@@ -182,6 +182,8 @@ def get_orders_by_buyer(buyer_id):
             shipping_fee,
             total_amount,
             status,
+            shipping_company,
+            tracking_number,
             created_at
         FROM orders
         WHERE buyer_id = :buyer_id
@@ -222,6 +224,8 @@ def get_incoming_orders_by_artist(artist_profile_id):
             o.shipping_fee,
             o.total_amount,
             o.status,
+            o.shipping_company,
+            o.tracking_number,
             o.created_at
         FROM orders o
         JOIN order_items oi
@@ -320,3 +324,29 @@ def get_buyer_notification_info(buyer_id):
     })
 
     return result.fetchone()
+
+# =========================================================
+# Get order items
+# =========================================================
+
+def get_order_items(order_id):
+    query = text("""
+        SELECT
+            oi.id,
+            oi.order_id,
+            oi.artwork_id,
+            oi.quantity,
+            oi.price_at_purchase,
+            a.title,
+            a.artwork_image_url
+        FROM order_items oi
+        JOIN artworks a
+            ON oi.artwork_id = a.id
+        WHERE oi.order_id = :order_id
+    """)
+
+    result = db.session.execute(query, {
+        "order_id": order_id,
+    })
+
+    return result.fetchall()

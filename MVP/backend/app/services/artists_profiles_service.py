@@ -28,7 +28,7 @@ user_repo = UserRepository()
 # The "_ARTIST_WRITABLE_FIELDS" variable is Private/Internal and Constant
 # that means we can NOT used it in another files
 _ARTIST_WRITABLE_FIELDS = frozenset(
-    {"display_name", "city", "bio", "profile_image_url", "shipping_policy"}
+    {"display_name", "city", "bio", "shipping_policy"}
 )
 
 # Private/Internal Constant 
@@ -91,7 +91,7 @@ def _profile_to_dict(profile):
         "display_name": profile.display_name,
         "city": profile.city,
         "bio": profile.bio,
-        "profile_image_url": profile.profile_image_url,
+        "profile_image_url": profile.user.profile_image_url if profile.user else None,
         "is_verified": profile.is_verified,
         "shipping_policy": profile.shipping_policy,
         "created_at": profile.created_at.isoformat() if profile.created_at else None,
@@ -296,7 +296,6 @@ def create_artist_profile(user_id, data):
             display_name=display_name,
             city=payload.get("city"),
             bio=payload.get("bio"),
-            profile_image_url=payload.get("profile_image_url"),
             shipping_policy=shipping,
         )
         artist_profile_repo.add(profile)

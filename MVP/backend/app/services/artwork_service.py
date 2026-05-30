@@ -85,7 +85,11 @@ def _artwork_to_dict(artwork):
         "artist_profile_id": str(artwork.artist_profile_id),
 
         "artist_display_name": artist.display_name if artist else None,
-        "artist_profile_image_url": artist.profile_image_url if artist else None,
+        "artist_profile_image_url": (
+            artist.user.profile_image_url
+            if artist and artist.user
+            else None
+        ),
         "artist_is_verified": artist.is_verified if artist else False,
 
         "title": artwork.title,
