@@ -54,8 +54,10 @@ The LOVEN MVP application is deployed on Amazon Web Services (AWS).
 
 
 ## Project Team
+This project was developed by:
 - Yara Alrasheed
 - Lamyaa Alghaihab
 - Thikera A. Ahmed
 - Alanoud Alanazi
 - Afnan Alkhaldi
+As part of the development and delivery of the LOVEN MVP project.
