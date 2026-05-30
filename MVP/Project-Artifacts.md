@@ -60,4 +60,5 @@ This project was developed by:
 - Thikera A. Ahmed
 - Alanoud Alanazi
 - Afnan Alkhaldi
+
 As part of the development and delivery of the LOVEN MVP project.
