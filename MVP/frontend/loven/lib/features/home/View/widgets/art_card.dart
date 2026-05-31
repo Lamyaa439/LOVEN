@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
@@ -34,6 +35,7 @@ class ArtCard extends StatelessWidget {
               child: ArtDetailsScreen(
                 artItem: artwork,
                 isGuest: isGuest,
+                artistRepository: context.read<ArtistRepository>(),
               ),
             );
           },
@@ -80,7 +82,6 @@ class ArtCard extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Positioned(
                   top: 10,
                   left: 10,
@@ -88,13 +89,11 @@ class ArtCard extends StatelessWidget {
                     children: [
                       BlocBuilder<FavoritesCubit, FavoritesState>(
                         builder: (context, state) {
-                          final favoriteIds =
-                              state is FavoritesLoaded
-                                  ? state.favoriteArtworkIds
-                                  : <String>{};
+                          final favoriteIds = state is FavoritesLoaded
+                              ? state.favoriteArtworkIds
+                              : <String>{};
 
-                          final isFavorited =
-                              favoriteIds.contains(artwork.id);
+                          final isFavorited = favoriteIds.contains(artwork.id);
 
                           return CircleAvatar(
                             radius: 18,
@@ -122,9 +121,7 @@ class ArtCard extends StatelessWidget {
                           );
                         },
                       ),
-
                       const SizedBox(height: 8),
-
                       CircleAvatar(
                         radius: 18,
                         backgroundColor: Colors.white.withOpacity(0.9),
@@ -150,7 +147,6 @@ class ArtCard extends StatelessWidget {
                 ),
               ],
             ),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               child: Column(
@@ -162,9 +158,7 @@ class ArtCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     '${artwork.price ?? 0} SAR',
                     style: const TextStyle(

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
@@ -11,11 +12,13 @@ import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
   final ArtistRepository artistRepository;
+  final bool isGuest;
 
   const ArtDetailsScreen({
     super.key,
     required this.artItem,
     required this.artistRepository,
+    this.isGuest = false,
   });
 
   @override
@@ -63,8 +66,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
         ),
       );
 
-      Navigator.pop(context);
-      context.push('/auth');
+      context.go('/auth');
       return;
     }
 
@@ -207,11 +209,29 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
   }
 
   Widget _buildImage(ThemeData theme) {
+    final imageUrl = widget.artItem.artworkImageUrl;
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        height: 320,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Icon(
+          Icons.image_not_supported_outlined,
+          size: 70,
+          color: theme.colorScheme.primary,
+        ),
+      );
+    }
+
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Image.network(
-          widget.artItem.artworkImageUrl ?? '',
+          imageUrl,
           height: 320,
           width: double.infinity,
           fit: BoxFit.cover,

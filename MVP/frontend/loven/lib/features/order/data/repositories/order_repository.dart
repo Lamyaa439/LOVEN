@@ -106,10 +106,16 @@ class OrderRepository {
   Future<Map<String, dynamic>> updateOrderStatus({
     required String orderId,
     required String status,
+    String? shippingCompany,
+    String? trackingNumber,
   }) async {
     final response = await _apiClient.patch(
       ApiConstants.orderStatus(orderId),
-      data: {'status': status},
+      data: {
+        'status': status,
+        'shipping_company': shippingCompany,
+        'tracking_number': trackingNumber,
+      },
     );
 
     return _asMap(response.data);

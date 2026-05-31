@@ -40,13 +40,11 @@ class HomeScreen extends StatelessWidget {
     int currentCartQuantity = 0;
 
     if (cartState is CartLoaded) {
-      final items = cartState.cart['items'] as List? ?? [];
-
-  if (cartState is CartLoaded) {
-    for (final item in cartState.cart.items) {
-      if (item.artworkId == artworkId) {
-        currentCartQuantity = item.quantity;
-        break;
+      for (final item in cartState.cart.items) {
+        if (item.artworkId == artworkId) {
+          currentCartQuantity = item.quantity;
+          break;
+        }
       }
     }
 
@@ -124,7 +122,6 @@ class HomeScreen extends StatelessWidget {
                       state.selectedCategory,
                     ),
                     const SizedBox(height: 26),
-
                     _buildSectionHeader(
                       context: context,
                       title: 'Featured Artworks',
@@ -132,16 +129,12 @@ class HomeScreen extends StatelessWidget {
                         context.push('/artworks-list/featured');
                       },
                     ),
-
                     const SizedBox(height: 12),
-
                     _buildArtworkList(
                       context: context,
                       artworks: featured,
                     ),
-
                     const SizedBox(height: 28),
-
                     _buildSectionHeader(
                       context: context,
                       title: 'New Arrivals',
@@ -149,19 +142,12 @@ class HomeScreen extends StatelessWidget {
                         context.push('/artworks-list/new-arrivals');
                       },
                     ),
-
                     const SizedBox(height: 12),
-
                     _buildArtworkList(
                       context: context,
-                      artworks:
-                          newArrivals.isEmpty
-                              ? featured
-                              : newArrivals,
+                      artworks: newArrivals.isEmpty ? featured : newArrivals,
                     ),
-
                     const SizedBox(height: 28),
-
                     _buildArtistPreviewSection(
                       context,
                       artworks,
@@ -241,54 +227,36 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Support Local Artists',
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 5),
-
                   Text(
                     'Discover original artworks from emerging creators.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(
-                      color: theme.colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                       height: 1.3,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   ElevatedButton(
                     onPressed: () {},
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          theme.colorScheme.primary,
-                      foregroundColor:
-                          theme.colorScheme.onPrimary,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       elevation: 0,
-                      padding:
-                          const EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                       ),
-                      minimumSize:
-                          const Size(0, 34),
-                      tapTargetSize:
-                          MaterialTapTargetSize
-                              .shrinkWrap,
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
+                      minimumSize: const Size(0, 34),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
                           999,
                         ),
                       ),
@@ -297,25 +265,20 @@ class HomeScreen extends StatelessWidget {
                       'Explore Now',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight:
-                            FontWeight.w600,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(width: 12),
-
             Container(
               width: 92,
               height: 104,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary
-                    .withOpacity(0.12),
-                borderRadius:
-                    BorderRadius.circular(18),
+                color: theme.colorScheme.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Icon(
                 Icons.palette_outlined,
@@ -337,15 +300,13 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 22),
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -371,8 +332,7 @@ class HomeScreen extends StatelessWidget {
   }) {
     if (artworks.isEmpty) {
       return const Padding(
-        padding:
-            EdgeInsets.symmetric(horizontal: 22),
+        padding: EdgeInsets.symmetric(horizontal: 22),
         child: Text('No artworks found.'),
       );
     }
@@ -415,8 +375,7 @@ class HomeScreen extends StatelessWidget {
     final artistItems = artworks
         .where(
           (art) =>
-              art.artistProfileId != null &&
-              art.artistProfileId!.isNotEmpty,
+              art.artistProfileId != null && art.artistProfileId!.isNotEmpty,
         )
         .toList();
 
@@ -425,8 +384,7 @@ class HomeScreen extends StatelessWidget {
     }
 
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(
           context: context,
@@ -436,25 +394,20 @@ class HomeScreen extends StatelessWidget {
           },
         ),
         const SizedBox(height: 8),
-
         SizedBox(
           height: 112,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding:
-                const EdgeInsets.only(left: 22),
+            padding: const EdgeInsets.only(left: 22),
             itemCount: artistItems.length,
             itemBuilder: (context, index) {
-              final artwork =
-                  artistItems[index];
+              final artwork = artistItems[index];
 
               return GestureDetector(
                 onTap: () {
-                  final artistId =
-                      artwork.artistProfileId;
+                  final artistId = artwork.artistProfileId;
 
-                  if (artistId == null ||
-                      artistId.isEmpty) {
+                  if (artistId == null || artistId.isEmpty) {
                     return;
                   }
 
@@ -464,93 +417,60 @@ class HomeScreen extends StatelessWidget {
                 },
                 child: Container(
                   width: 92,
-                  margin:
-                      const EdgeInsets.only(
+                  margin: const EdgeInsets.only(
                     right: 18,
                   ),
                   child: Column(
                     children: [
                       CircleAvatar(
                         radius: 34,
-                        backgroundImage:
-                            artwork.artistProfileImageUrl !=
-                                    null
-                                ? NetworkImage(
-                                    artwork
-                                        .artistProfileImageUrl!,
-                                  )
-                                : null,
-                        backgroundColor: theme
-                            .colorScheme.primary
-                            .withOpacity(0.12),
-                        child: artwork
-                                    .artistProfileImageUrl ==
-                                null
+                        backgroundImage: artwork.artistProfileImageUrl != null
+                            ? NetworkImage(
+                                artwork.artistProfileImageUrl!,
+                              )
+                            : null,
+                        backgroundColor:
+                            theme.colorScheme.primary.withOpacity(0.12),
+                        child: artwork.artistProfileImageUrl == null
                             ? Icon(
                                 Icons.person_rounded,
-                                color: theme
-                                    .colorScheme
-                                    .primary,
+                                color: theme.colorScheme.primary,
                                 size: 34,
                               )
                             : null,
                       ),
-
                       const SizedBox(
                         height: 8,
                       ),
-
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment
-                                .center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Flexible(
                             child: Text(
-                              artwork.artistDisplayName ??
-                                  'Artist',
+                              artwork.artistDisplayName ?? 'Artist',
                               maxLines: 1,
-                              overflow:
-                                  TextOverflow
-                                      .ellipsis,
-                              style: theme
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                fontWeight:
-                                    FontWeight
-                                        .w700,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-
-                          if (artwork
-                              .artistIsVerified) ...[
+                          if (artwork.artistIsVerified) ...[
                             const SizedBox(
                               width: 4,
                             ),
-
                             Icon(
-                              Icons
-                                  .verified_rounded,
+                              Icons.verified_rounded,
                               size: 16,
-                              color: theme
-                                  .colorScheme
-                                  .primary,
+                              color: theme.colorScheme.primary,
                             ),
                           ],
                         ],
                       ),
-
                       Text(
                         'Creator',
-                        style: theme
-                            .textTheme.bodySmall
-                            ?.copyWith(
-                          color: theme
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.55),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.55),
                         ),
                       ),
                     ],
@@ -569,19 +489,15 @@ class HomeScreen extends StatelessWidget {
     BuildContext context,
   ) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 22),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius:
-              BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: theme.shadowColor
-                  .withOpacity(0.04),
+              color: theme.shadowColor.withOpacity(0.04),
               blurRadius: 12,
               offset: const Offset(0, 5),
             ),
@@ -596,12 +512,9 @@ class HomeScreen extends StatelessWidget {
                 );
           },
           decoration: InputDecoration(
-            hintText:
-                'Search artworks, artists, styles...',
+            hintText: 'Search artworks, artists, styles...',
             hintStyle: TextStyle(
-              color: theme.colorScheme
-                  .onSurface
-                  .withOpacity(0.45),
+              color: theme.colorScheme.onSurface.withOpacity(0.45),
               fontSize: 14,
             ),
             border: InputBorder.none,
@@ -611,9 +524,7 @@ class HomeScreen extends StatelessWidget {
             ),
             suffixIcon: Icon(
               Icons.tune_rounded,
-              color: theme.colorScheme
-                  .onSurface
-                  .withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ),
@@ -630,20 +541,15 @@ class HomeScreen extends StatelessWidget {
       height: 42,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         itemCount: categories.length,
         itemBuilder: (context, index) {
-          final categoryName =
-              categories[index];
+          final categoryName = categories[index];
 
-          final isSelected =
-              categoryName ==
-                  selectedCategory;
+          final isSelected = categoryName == selectedCategory;
 
           return Padding(
-            padding:
-                const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 10),
             child: _buildCategoryCard(
               context,
               categoryName,
@@ -671,35 +577,28 @@ class HomeScreen extends StatelessWidget {
             );
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: 18,
         ),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary
               : theme.colorScheme.surface,
-          borderRadius:
-              BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
                 ? theme.colorScheme.primary
-                : theme.dividerColor
-                    .withOpacity(0.4),
+                : theme.dividerColor.withOpacity(0.4),
           ),
         ),
         child: Center(
           child: Text(
             title,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(
+            style: theme.textTheme.bodySmall?.copyWith(
               color: isSelected
                   ? theme.colorScheme.onPrimary
-                  : theme.colorScheme
-                      .onSurface
-                      .withOpacity(0.7),
-              fontWeight:
-                  FontWeight.w700,
+                  : theme.colorScheme.onSurface.withOpacity(0.7),
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

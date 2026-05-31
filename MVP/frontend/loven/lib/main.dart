@@ -16,12 +16,10 @@ import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
 import 'features/artist_profile/controller/artist_profile_cubit.dart';
-import 'features/artist_profile/model/artist_repository.dart';
+import 'features/artist_profile/data/artist_repository.dart';
 
 import 'features/cart/data/repositories/cart_repository.dart';
 import 'features/cart/controller/cubit/cart_cubit.dart';
-import 'package:loven/features/artist_profile/model/artist_repository.dart';
-import 'features/artist_profile/controller/artist_profile_cubit.dart';
 
 import 'features/artwork/data/repositories/artwork_repository.dart';
 import 'features/artwork/controller/cubit/artwork_cubit.dart';
@@ -46,9 +44,7 @@ class ThemeBloc extends Cubit<ThemeMode> {
 
   void toggleTheme() {
     emit(
-      state == ThemeMode.light
-          ? ThemeMode.dark
-          : ThemeMode.light,
+      state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
     );
   }
 }
@@ -74,29 +70,31 @@ class LovenApp extends StatefulWidget {
 }
 
 class _LovenAppState extends State<LovenApp> {
-
   // Shared singletons created once and injected down the dependency chain.
   final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
+
   /// Shared artwork data layer — injected into [HomeBloc] and [ArtworkCubit]
   /// so both features use one [ApiClient] instance.
   late final ArtworkRepository _artworkRepository;
+
   /// Order checkout and listing — shares the app-wide [ApiClient].
   late final OrderRepository _orderRepository;
+
   /// Artist profile and profile-scoped artwork access.
   late final ArtistRepository _artistRepository;
   late final FavoritesRepository _favoritesRepository;
   late final VerificationRequestRepository _verificationRequestRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _apiClient = ApiClient(tokenStorage: _tokenStorage);
-    
+
     _authRepository = AuthRepository(
       apiClient: _apiClient,
       tokenStorage: _tokenStorage,
@@ -131,7 +129,11 @@ class _LovenAppState extends State<LovenApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _authCubit),
+
         BlocProvider(create: (context) => NavigationBarCubit()),
+        RepositoryProvider<ArtistRepository>.value(
+          value: _artistRepository,
+        ),
         // HomeBloc receives the shared repository for marketplace data.
         BlocProvider(
           create: (context) => HomeBloc(
@@ -139,7 +141,7 @@ class _LovenAppState extends State<LovenApp> {
           )..add(FetchHomeData()),
         ),
         BlocProvider(create: (context) => ThemeBloc()),
-        // Note: ArtistProfileCubit and VerificationRequestCubit were removed 
+        // Note: ArtistProfileCubit and VerificationRequestCubit were removed
         // from global providers. They are now scoped directly in app_router.dart.
         BlocProvider(
           create: (context) => CartCubit(
