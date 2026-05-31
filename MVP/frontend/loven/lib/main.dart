@@ -127,47 +127,75 @@ class _LovenAppState extends State<LovenApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
+Widget build(BuildContext context) {
+  return MultiRepositoryProvider(
+    providers: [
+      RepositoryProvider<ArtistRepository>.value(
+        value: _artistRepository,
+      ),
+      RepositoryProvider<AuthRepository>.value(
+        value: _authRepository,
+      ),
+    ],
+    child: MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _authCubit),
-        BlocProvider(create: (context) => NavigationBarCubit()),
-        // HomeBloc receives the shared repository for marketplace data.
+
+        BlocProvider(
+          create: (context) => NavigationBarCubit(),
+        ),
+
         BlocProvider(
           create: (context) => HomeBloc(
             artworkRepository: _artworkRepository,
           )..add(FetchHomeData()),
         ),
-        BlocProvider(create: (context) => ThemeBloc()),
-        // Note: ArtistProfileCubit and VerificationRequestCubit were removed 
-        // from global providers. They are now scoped directly in app_router.dart.
+
+        BlocProvider(
+          create: (context) => ThemeBloc(),
+        ),
+
         BlocProvider(
           create: (context) => CartCubit(
             CartRepository(apiClient: _apiClient),
           ),
         ),
-        // Same repository instance keeps artwork CRUD and home feed in sync.
+
         BlocProvider(
-          create: (context) => ArtworkCubit(_artworkRepository),
+          create: (context) => ArtworkCubit(
+            _artworkRepository,
+          ),
         ),
+
         BlocProvider(
-          create: (context) => OrderCubit(_orderRepository),
+          create: (context) => OrderCubit(
+            _orderRepository,
+          ),
         ),
+
         BlocProvider(
           create: (context) => FeedbackCubit(
-            FeedbackRepository(apiClient: _apiClient),
+            FeedbackRepository(
+              apiClient: _apiClient,
+            ),
           ),
         ),
+
         BlocProvider(
           create: (context) => ReportCubit(
-            ReportRepository(apiClient: _apiClient),
+            ReportRepository(
+              apiClient: _apiClient,
+            ),
           ),
         ),
+
+        // FIXED: removed automatic loadFavorites()
         BlocProvider(
           create: (_) => FavoritesCubit(
             _favoritesRepository,
-          )..loadFavorites(),
+          ),
         ),
+
         BlocProvider(
           create: (_) => VerificationRequestCubit(
             _verificationRequestRepository,
@@ -195,6 +223,7 @@ class _LovenAppState extends State<LovenApp> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

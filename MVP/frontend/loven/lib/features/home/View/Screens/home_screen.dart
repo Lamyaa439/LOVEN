@@ -10,6 +10,8 @@ import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import '../widgets/art_card.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
 class HomeScreen extends StatelessWidget {
   final bool isGuest;
@@ -23,24 +25,35 @@ class HomeScreen extends StatelessWidget {
     context.push('/signup?fromGuest=true');
   }
 
-  Future<void> _addArtworkToCart({
-    required BuildContext context,
-    required ArtworkModel art,
-  }) async {
-    final artworkId = art.id;
+Future<void> _addArtworkToCart({
+  required BuildContext context,
+  required ArtworkModel art,
+}) async {
+  final artworkId = art.id;
 
-    if (artworkId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Artwork ID missing')),
-      );
-      return;
-    }
+  if (artworkId.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Artwork ID missing'),
+      ),
+    );
+    return;
+  }
 
-    final cartState = context.read<CartCubit>().state;
-    int currentCartQuantity = 0;
+  final stock = art.quantityAvailable ?? 0;
 
-    if (cartState is CartLoaded) {
-      final items = cartState.cart['items'] as List? ?? [];
+  if (stock <= 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('This artwork is out of stock.'),
+      ),
+    );
+    return;
+  }
+
+  int currentCartQuantity = 0;
+
+  final cartState = context.read<CartCubit>().state;
 
   if (cartState is CartLoaded) {
     for (final item in cartState.cart.items) {
@@ -49,40 +62,34 @@ class HomeScreen extends StatelessWidget {
         break;
       }
     }
-
-    final stock = art.quantityAvailable ?? 0;
-
-    if (stock <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This artwork is out of stock.')),
-      );
-      return;
-    }
-
-    if (currentCartQuantity >= stock) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            stock == 1
-                ? 'Only 1 item is available in stock.'
-                : 'Only $stock items are available in stock.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    await context.read<CartCubit>().addItem(
-          artworkId: artworkId,
-          quantity: 1,
-        );
-
-    await context.read<CartCubit>().getCart();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${art.title} added to cart')),
-    );
   }
+
+  if (currentCartQuantity >= stock) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          stock == 1
+              ? 'Only 1 item is available in stock.'
+              : 'Only $stock items are available in stock.',
+        ),
+      ),
+    );
+    return;
+  }
+
+  await context.read<CartCubit>().addItem(
+        artworkId: artworkId,
+        quantity: 1,
+      );
+
+  await context.read<CartCubit>().getCart();
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text('${art.title} added to cart'),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -390,16 +397,19 @@ class HomeScreen extends StatelessWidget {
             artwork: art,
             isGuest: isGuest,
             onActionPressed: () async {
-              if (isGuest) {
-                _goToSignup(context);
-                return;
-              }
+  final isActuallyGuest =
+      isGuest || context.read<AuthCubit>().state is AuthGuest;
 
-              await _addArtworkToCart(
-                context: context,
-                art: art,
-              );
-            },
+  if (isActuallyGuest) {
+    context.push('/auth');
+    return;
+  }
+
+  await _addArtworkToCart(
+    context: context,
+    art: art,
+  );
+},
           );
         },
       ),

@@ -65,11 +65,11 @@ class _SplashScreenState
 
     final authState = context.read<AuthCubit>().state;
 
-    if (authState is AuthSuccess || authState is AuthGuest) {
-      context.go('/');
-    } else {
-      context.go('/onboarding');
-    }
+if (authState is AuthSuccess) {
+  context.go('/');
+} else {
+  context.go('/onboarding');
+  }
   }
 
   @override

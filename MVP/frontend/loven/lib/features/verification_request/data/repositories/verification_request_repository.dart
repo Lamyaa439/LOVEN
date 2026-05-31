@@ -16,17 +16,14 @@ import 'package:loven/core/network/api_constants.dart';
 class VerificationRequestRepository {
   final ApiClient _apiClient;
 
-  /// Creates a repository backed by the shared [apiClient] instance.
-  VerificationRequestRepository({required ApiClient apiClient})
-      : _apiClient = apiClient;
+  VerificationRequestRepository({
+    required ApiClient apiClient,
+  }) : _apiClient = apiClient;
 
   Map<String, dynamic> _asMap(dynamic data) {
     return Map<String, dynamic>.from(data as Map);
   }
 
-  /// Submits a verification request for the authenticated artist.
-  ///
-  /// Returns the decoded JSON body (typically confirmation or request record).
   Future<Map<String, dynamic>> submitRequest({
     required String documentType,
     required String institutionName,
@@ -38,6 +35,47 @@ class VerificationRequestRepository {
         'document_type': documentType,
         'institution_name': institutionName,
         'document_number': documentNumber,
+      },
+    );
+
+    return _asMap(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchAllRequests() async {
+    final response = await _apiClient.get(
+      ApiConstants.adminVerificationRequests,
+    );
+
+    final data = response.data;
+
+    if (data is Map<String, dynamic>) {
+      final requests =
+          data['requests'] ?? data['data'] ?? [];
+
+      return List<Map<String, dynamic>>.from(
+        requests,
+      );
+    }
+
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(
+        data,
+      );
+    }
+
+    return [];
+  }
+
+  Future<Map<String, dynamic>> updateRequestStatus({
+    required String requestId,
+    required String status,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiConstants.verificationRequestStatus(
+        requestId,
+      ),
+      data: {
+        'status': status,
       },
     );
 

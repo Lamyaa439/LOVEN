@@ -103,15 +103,23 @@ class OrderRepository {
   }
 
   /// Updates shipment status for an order (artist or admin).
-  Future<Map<String, dynamic>> updateOrderStatus({
-    required String orderId,
-    required String status,
-  }) async {
-    final response = await _apiClient.patch(
-      ApiConstants.orderStatus(orderId),
-      data: {'status': status},
-    );
+Future<Map<String, dynamic>> updateOrderStatus({
+  required String orderId,
+  required String status,
+  String? shippingCompany,
+  String? trackingNumber,
+}) async {
+  final response = await _apiClient.patch(
+    ApiConstants.orderStatus(orderId),
+    data: {
+      'status': status,
+      if (shippingCompany != null && shippingCompany.isNotEmpty)
+        'shipping_company': shippingCompany,
+      if (trackingNumber != null && trackingNumber.isNotEmpty)
+        'tracking_number': trackingNumber,
+    },
+  );
 
-    return _asMap(response.data);
-  }
+  return _asMap(response.data);
+}
 }

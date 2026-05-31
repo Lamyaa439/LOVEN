@@ -144,6 +144,14 @@ class ApiConstants {
 
   static const String verificationRequests = '/verification-requests';
 
+  static const String adminVerificationRequests =
+    '/admin/verification-requests';
+
+static String verificationRequestStatus(
+  String requestId,
+) =>
+    '/admin/verification-requests/$requestId/status';
+
   // =====================================================
   // Payments (feature prefix: /api/v1/payments/…)
   // =====================================================

@@ -135,9 +135,12 @@ def create_app():
 
     # Authentication routes
     app.register_blueprint(auth_bp, url_prefix="/api/v1")
-
+    
     # Artist profile routes
-    app.register_blueprint(artist_profiles_bp, url_prefix="/api/v1")
+    app.register_blueprint(
+        artist_profiles_bp,
+        url_prefix="/api/v1/artist-profiles"
+    )
     
     # Shopping cart routes
     app.register_blueprint(carts_bp, url_prefix="/api/v1/carts")
@@ -165,6 +168,8 @@ def create_app():
 
     # Payment routes
     app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
+
+    print(app.url_map)
 
     logger.debug("Registered routes: %s", app.url_map)
 
