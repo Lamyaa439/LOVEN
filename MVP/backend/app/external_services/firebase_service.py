@@ -11,6 +11,7 @@ import firebase_admin
 from firebase_admin import credentials, messaging, storage
 import logging
 import os
+from firebase_admin import auth
 
 logger = logging.getLogger(__name__)
 
@@ -182,3 +183,17 @@ def delete_cloud_file(file_path: str) -> bool:
     except Exception as exc:
         logger.error("Cloud file deletion failed for %s: %s", file_path, exc)
         return False
+    
+# ==========================================
+# 3. Firebase token verification
+# ==========================================
+
+def verify_firebase_token(id_token: str) -> dict:
+    if not _ensure_firebase():
+        raise ValueError("Firebase unavailable")
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        return decoded_token
+    except Exception:
+        raise ValueError("Invalid Firebase token")

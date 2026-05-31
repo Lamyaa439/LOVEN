@@ -96,6 +96,7 @@ def logout():
 
     return jsonify(result), status_code
 
+
 @auth_bp.patch("/change-password")
 @jwt_required()
 def change_password_route():
@@ -107,4 +108,16 @@ def change_password_route():
         data,
     )
 
+    return jsonify(result), status_code
+
+
+@auth_bp.post("/google")
+def google_login():
+    data = request.get_json(silent=True) or {}
+    id_token = data.get("id_token")
+
+    if not id_token:
+        return jsonify({"error": "id_token is required"}), 400
+
+    result, status_code = AuthFacade.google_login(id_token)
     return jsonify(result), status_code

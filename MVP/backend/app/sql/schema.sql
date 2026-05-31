@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS "users" (
     "password" VARCHAR(255) NOT NULL, -- Stored as a bcrypt hash
     "system_role" VARCHAR(50) DEFAULT 'customer' CHECK (system_role IN ('admin', 'customer', 'artist')),
     "fcm_token" VARCHAR(255), -- Firebase Cloud Messaging token
+    "firebase_uid" VARCHAR(128) UNIQUE,
+    "auth_provider" VARCHAR(32) DEFAULT 'email',
     "profile_image_url" TEXT,
     "is_active" BOOLEAN DEFAULT true,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
