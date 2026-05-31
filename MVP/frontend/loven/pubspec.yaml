@@ -82,3 +82,4 @@ flutter:
     - assets/images/ #For art pieces and backgrounds
     - assets/icons/ # For LOVEN branding
     - assets/fonts/ # For custom SVGs (such as cart, heart, etc.)
+    - .env
