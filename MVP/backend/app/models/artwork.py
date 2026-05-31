@@ -170,6 +170,31 @@ class Artwork(BaseModel):
 
         return fee_decimal
 
+    # ----------------- validate for artwork_image_url -----------------
+    @validates("artwork_image_url")
+    def validate_artwork_image_url(self, key, value):
+        """
+        Optional field. When provided, must be an HTTP(S) URL to prevent
+        XSS payloads (javascript:, data:, etc.) from being stored.
+        """
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise ValueError("Image URL must be text.")
+
+        clean_url = value.strip()
+        if clean_url == "":
+            return None
+
+        if not clean_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Image URL must start with http:// or https://.")
+
+        if len(clean_url) > 2048:
+            raise ValueError("Image URL must be 2048 characters or fewer.")
+
+        return clean_url
+
     # ----------------- validate for status -----------------
     @validates("status")
     def validate_status(self, key, value):
@@ -186,6 +211,26 @@ class Artwork(BaseModel):
             )
 
         return value
+
+    def to_dict(self):
+        """
+        Canonical serialization matching the shape previously produced by
+        ``_artwork_to_dict()`` in the service layer. Decimals are converted
+        to strings to preserve financial precision across JSON transport.
+        """
+        return {
+            "id": str(self.id) if self.id else None,
+            "artist_profile_id": str(self.artist_profile_id) if self.artist_profile_id else None,
+            "title": self.title,
+            "description": self.description,
+            "price": str(self.price) if self.price is not None else None,
+            "quantity_available": self.quantity_available,
+            "shipping_fee": str(self.shipping_fee) if self.shipping_fee is not None else None,
+            "artwork_image_url": self.artwork_image_url,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
     def __repr__(self):
         return f"<Artwork(title={self.title}, price={self.price}, status={self.status})>"

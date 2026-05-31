@@ -1,6 +1,4 @@
-from app.persistence.repositories.feedback_repo import (
-    create_feedback,
-)
+from app.persistence.repositories.feedback_repo import feedback_repo
 
 
 # =========================================================
@@ -30,7 +28,7 @@ def submit_feedback(data):
     if not message:
         return {"error": "message is required"}, 400
 
-    feedback = create_feedback(
+    feedback = feedback_repo.create_feedback(
         user_id=user_id,
         subject=subject,
         message=message,
@@ -38,15 +36,5 @@ def submit_feedback(data):
 
     return {
         "message": "Feedback submitted successfully",
-        "feedback": {
-            "id": str(feedback[0]),
-            "user_id": str(feedback[1]),
-            "subject": feedback[2],
-            "message": feedback[3],
-            "created_at": (
-                feedback[4].isoformat()
-                if feedback[4]
-                else None
-            ),
-        },
+        "feedback": feedback.to_dict(),
     }, 201

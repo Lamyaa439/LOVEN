@@ -14,8 +14,9 @@ API HTTP Status Codes Reference:
 * 500 (Internal Server Error): An unexpected server-side issue or database failure.
 """
 
-import uuid
 from sqlalchemy.exc import IntegrityError
+
+from app.core.uuid_utils import as_uuid
 
 from app.models.artist_profile import ArtistProfile
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
@@ -36,26 +37,6 @@ _MAX_SHIPPING_POLICY_LEN = 5000
 
 
 # --------------- Private Helpers ---------------
-def _as_uuid(value):
-    """
-    Normalize JWT / string IDs to uuid.UUID for DB comparisons.
-
-     Args:
-        value (str or uuid.UUID): The ID to normalize. Can be a string 
-        or a UUID object.
-
-      Returns: 
-        uuid.UUID or None: A valid UUID object, or None if the input was None.
-    """
-    if value is None:
-        return None
-    # if the value already UUID object, return the value
-    if isinstance(value, uuid.UUID):
-        return value
-    # if not make it UUID object
-    return uuid.UUID(str(value))
-
-
 def _resolve_user_id(jwt_identity):
     """
     Extract the users.id UUID from JWT identity.
@@ -69,7 +50,7 @@ def _resolve_user_id(jwt_identity):
         raw = jwt_identity.get("user_id") or jwt_identity.get("sub")
     else:
         raw = jwt_identity
-    return _as_uuid(raw)
+    return as_uuid(raw)
 
 
 def _profile_to_dict(profile):
@@ -91,7 +72,11 @@ def _profile_to_dict(profile):
         "display_name": profile.display_name,
         "city": profile.city,
         "bio": profile.bio,
-        "profile_image_url": profile.user.profile_image_url if profile.user else None,
+        "profile_image_url": (
+            getattr(profile.user, "profile_image_url", None)
+            if profile.user
+            else None
+        ),
         "is_verified": profile.is_verified,
         "shipping_policy": profile.shipping_policy,
         "created_at": profile.created_at.isoformat() if profile.created_at else None,
@@ -181,20 +166,17 @@ def _validate_shipping_policy(value):
 
 # ----------------------------- Public Functions ---------------------------------
 
-def bootstrap_artist_profile(user_id, data):
+def prepare_registration_profile(user_id, data):
     """
-    Create an empty artist profile right after registration.
+    Build an ArtistProfile instance for signup without persisting.
 
-    Skips the artist-role check used by create_artist_profile so every new
-    account can call GET /artist-profiles/me. Idempotent if a profile exists.
+    Used by atomic registration so user + profile share one transaction.
+
+    Raises ValueError when display name cannot be resolved.
     """
     uid = _resolve_user_id(user_id)
     if not uid:
-        return {"error": "Invalid user id"}, 400
-
-    existing = artist_profile_repo.get_active_by_user_id(uid)
-    if existing:
-        return {"message": "Artist profile already exists", "profile": _profile_to_dict(existing)}, 200
+        raise ValueError("Invalid user id")
 
     email = (data or {}).get("email") or ""
     raw_name = (
@@ -215,11 +197,29 @@ def bootstrap_artist_profile(user_id, data):
         display_name = f"{base[:240]}_{suffix}"
         suffix += 1
 
+    return ArtistProfile(
+        user_id=uid,
+        display_name=display_name,
+    )
+
+
+def bootstrap_artist_profile(user_id, data):
+    """
+    Create an empty artist profile right after registration.
+
+    Skips the artist-role check used by create_artist_profile so every new
+    account can call GET /artist-profiles/me. Idempotent if a profile exists.
+    """
+    uid = _resolve_user_id(user_id)
+    if not uid:
+        return {"error": "Invalid user id"}, 400
+
+    existing = artist_profile_repo.get_active_by_user_id(uid)
+    if existing:
+        return {"message": "Artist profile already exists", "profile": _profile_to_dict(existing)}, 200
+
     try:
-        profile = ArtistProfile(
-            user_id=uid,
-            display_name=display_name,
-        )
+        profile = prepare_registration_profile(user_id, data)
         artist_profile_repo.add(profile)
         return {
             "message": "Artist profile created",
@@ -239,7 +239,7 @@ def create_artist_profile(user_id, data):
 
     Expects data with at least display_name (required for a brand-new profile).
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     user = user_repo.get_user_by_id(uid)
     if not user:
         return {"error": "User not found"}, 404
@@ -349,7 +349,7 @@ def get_profile_by_id(profile_id):
         tuple: A tuple containing a JSON-serializable dictionary with the profile data 
         (or an error message) and the 200/404 HTTP status code.
     """
-    pid = _as_uuid(profile_id)
+    pid = as_uuid(profile_id)
     profile = artist_profile_repo.get(pid)
     if not profile:
         return {"error": "Artist profile not found"}, 404
@@ -428,7 +428,7 @@ def update_my_profile(user_id, data):
         tuple: A tuple containing a success/error message with the updated profile data,
         and the appropriate HTTP status code (200, 400, 404, or 500).
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     profile = artist_profile_repo.get_active_by_user_id(uid)
     if not profile:
         return {"error": "Artist profile not found"}, 404
@@ -474,7 +474,7 @@ def soft_delete_my_profile(user_id):
         tuple: A JSON-serializable dictionary containing a success or error message, 
         along with the appropriate HTTP status code (200, 404, or 500).
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     profile = artist_profile_repo.get_active_by_user_id(uid)
     if not profile:
         return {"error": "Artist profile not found"}, 404

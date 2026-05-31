@@ -1,91 +1,70 @@
-/// ========================================================================
-/// Authentication Cubit
-///
-/// Orchestrates authentication state transitions for the UI layer.
-///
-/// Architectural decisions:
-/// - Accepts [AuthRepository] via constructor injection — never
-///   instantiates its own data-layer dependencies.
-/// - FCM token retrieval is kept here (platform concern, not data concern)
-///   and passed through to the repository as an optional field.
-/// - Firebase Auth anonymous sign-in is used solely for guest browsing;
-///   the real session is the JWT managed by [AuthRepository].
-/// - Error messages from [ApiClient] arrive as `Exception("...")`.
-///   [_extractMessage] unwraps them into clean UI strings.
-/// ========================================================================
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/auth/data/models/user_model.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  final TokenStorage _tokenStorage;
 
   AuthCubit({
     required AuthRepository authRepository,
+    required TokenStorage tokenStorage,
   })  : _authRepository = authRepository,
+        _tokenStorage = tokenStorage,
         super(AuthInitial());
 
-  // =====================================================================
-  // Session Bootstrap
-  // =====================================================================
-
   Future<void> checkAuthStatus() async {
-    final isLoggedIn =
-        await _authRepository.isLoggedIn();
+    final token = await _tokenStorage.getAccessToken();
 
-    if (isLoggedIn) {
-      emit(AuthSuccess());
-      return;
-    }
+    if (token != null && token.isNotEmpty) {
+      final role = await _tokenStorage.getUserRole();
 
-    final user = FirebaseAuth.instance.currentUser;
+      print('LOADED ROLE: $role');
 
-    if (user != null && user.isAnonymous) {
+      emit(
+        AuthSuccess(
+          user: UserModel(
+            id: '',
+            name: '',
+            email: '',
+            phoneNumber: null,
+            profileImageUrl: null,
+            systemRole: role ?? '',
+          ),
+        ),
+      );
+    } else {
       emit(AuthGuest());
-      return;
     }
-
-    emit(AuthInitial());
   }
 
-  /// Signs in anonymously via Firebase to enable guest browsing.
   Future<void> continueAsGuest() async {
     emit(AuthLoading());
 
     try {
       await FirebaseAuth.instance.signInAnonymously();
-
       emit(AuthGuest());
     } catch (e) {
       debugPrint('Guest sign-in error: $e');
-
-      emit(
-        AuthFailure(
-          'Could not enter guest mode.',
-        ),
-      );
+      emit(AuthFailure('Could not enter guest mode.'));
     }
   }
 
-  // =====================================================================
-  // Core Auth Operations
-  // =====================================================================
-
-  /// Authenticates via the backend API and transitions to [AuthSuccess].
   Future<void> login({
     required String email,
     required String password,
+    String? systemRole,
   }) async {
     emit(AuthLoading());
 
     try {
-      final fcmToken =
-          await _getFcmTokenSafely();
+      final fcmToken = await _getFcmTokenSafely();
 
       await _authRepository.login(
         email: email,
@@ -93,19 +72,45 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      emit(AuthSuccess());
-    } catch (e) {
-      debugPrint('Login error: $e');
+      final savedRole = await _tokenStorage.getUserRole();
+      final role = systemRole ?? savedRole ?? '';
 
       emit(
-        AuthFailure(
-          _extractMessage(e),
+        AuthSuccess(
+          user: UserModel(
+            id: '',
+            name: '',
+            email: email,
+            phoneNumber: null,
+            profileImageUrl: null,
+            systemRole: role,
+          ),
         ),
       );
+    } catch (e) {
+      debugPrint('Login error: $e');
+      emit(AuthFailure(_extractMessage(e)));
     }
   }
 
-  /// Registers a new account via the backend API.
+  Future<void> signInWithGoogle() async {
+  emit(AuthLoading());
+
+  try {
+    await _authRepository.signInWithGoogle();
+
+    final user = await _authRepository.getCurrentUser();
+
+    await _tokenStorage.saveUserRole(
+      user.systemRole,
+    );
+
+    emit(AuthSuccess(user: user));
+  } catch (e) {
+    emit(AuthFailure(_extractMessage(e)));
+  }
+}
+
   Future<void> signup({
     required String name,
     required String email,
@@ -115,8 +120,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthLoading());
 
     try {
-      final fcmToken =
-          await _getFcmTokenSafely();
+      final fcmToken = await _getFcmTokenSafely();
 
       await _authRepository.register(
         name: name,
@@ -126,32 +130,39 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      emit(AuthSuccess());
-    } catch (e) {
-      debugPrint('Signup error: $e');
+      print('SAVING ROLE: $systemRole');
+
+      await _tokenStorage.saveUserRole(systemRole);
 
       emit(
-        AuthFailure(
-          _extractMessage(e),
+        AuthSuccess(
+          user: UserModel(
+            id: '',
+            name: name,
+            email: email,
+            phoneNumber: null,
+            profileImageUrl: null,
+            systemRole: systemRole,
+          ),
         ),
       );
+    } catch (e) {
+      debugPrint('Signup error: $e');
+      emit(AuthFailure(_extractMessage(e)));
     }
   }
 
-  /// Logs out from the backend, clears local tokens,
-  /// and signs out of Firebase.
   Future<void> logout() async {
     emit(AuthLoading());
 
     try {
       await _authRepository.logout();
-
       await FirebaseAuth.instance.signOut();
-
+      await _tokenStorage.clearUserRole();
       emit(AuthGuest());
     } catch (_) {
       await FirebaseAuth.instance.signOut();
-
+      await _tokenStorage.clearUserRole();
       emit(AuthGuest());
     }
   }
@@ -168,32 +179,39 @@ class AuthCubit extends Cubit<AuthState> {
         newPassword: newPassword,
       );
 
-      emit(AuthSuccess());
-    } catch (e) {
+      final role = await _tokenStorage.getUserRole();
+
+
       emit(
-        AuthFailure(
-          _extractMessage(e),
+        AuthSuccess(
+          user: UserModel(
+            id: '',
+            name: '',
+            email: '',
+            phoneNumber: null,
+            profileImageUrl: null,
+            systemRole: role ?? '',
+          ),
         ),
       );
+    } catch (e) {
+      emit(AuthFailure(_extractMessage(e)));
     }
   }
-  
+
   Future<void> loadCurrentUser() async {
-  emit(AuthLoading());
+    emit(AuthLoading());
 
-  try {
-    final user =
-        await _authRepository.getCurrentUser();
+    try {
+      final user = await _authRepository.getCurrentUser();
 
-    emit(AuthSuccess(user: user));
-  } catch (e) {
-    emit(
-      AuthFailure(
-        _extractMessage(e),
-      ),
-    );
+      await _tokenStorage.saveUserRole(user.systemRole);
+
+      emit(AuthSuccess(user: user));
+    } catch (e) {
+      emit(AuthFailure(_extractMessage(e)));
+    }
   }
-}
 
   Future<void> updateProfile({
     required String name,
@@ -201,84 +219,56 @@ class AuthCubit extends Cubit<AuthState> {
     String? profileImageUrl,
   }) async {
     emit(AuthLoading());
-    
+
     try {
-      final user =
-      await _authRepository.updateProfile(
+      final user = await _authRepository.updateProfile(
         name: name,
         email: email,
         profileImageUrl: profileImageUrl,
       );
-      
+
+      await _tokenStorage.saveUserRole(user.systemRole);
+
       emit(AuthSuccess(user: user));
-      } catch (e) {
-        emit(
-          AuthFailure(
-            _extractMessage(e),
-          ),
-        );
-      }
+    } catch (e) {
+      emit(AuthFailure(_extractMessage(e)));
     }
+  }
 
-  // =====================================================================
-  // Async Email Validation (used by signup page debounce)
-  // =====================================================================
-
-  /// Checks whether [email] is already registered on the backend.
-  Future<bool> checkEmailExists(
-    String email,
-  ) async {
+  Future<bool> checkEmailExists(String email) async {
     try {
-      return await _authRepository
-          .checkEmailDuplication(email);
+      return await _authRepository.checkEmailDuplication(email);
     } catch (e) {
       debugPrint('Email check error: $e');
-
       return false;
     }
   }
 
-  // =====================================================================
-  // Helpers
-  // =====================================================================
-
-  /// Retrieves the FCM device token safely.
   Future<String?> _getFcmTokenSafely() async {
     try {
-      await FirebaseMessaging.instance
-          .requestPermission(
+      await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
         sound: true,
       );
 
-      if (!kIsWeb &&
-          defaultTargetPlatform ==
-              TargetPlatform.iOS) {
-        final apnsToken =
-            await FirebaseMessaging.instance
-                .getAPNSToken();
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
 
         if (apnsToken == null) {
           return null;
         }
       }
 
-      return await FirebaseMessaging.instance
-          .getToken();
+      return await FirebaseMessaging.instance.getToken();
     } catch (e) {
       debugPrint('FCM token error: $e');
-
       return null;
     }
   }
 
-  /// Unwraps the message from an Exception.
-  String _extractMessage(
-    Object error,
-  ) {
+  String _extractMessage(Object error) {
     final raw = error.toString();
-
     const prefix = 'Exception: ';
 
     if (raw.startsWith(prefix)) {

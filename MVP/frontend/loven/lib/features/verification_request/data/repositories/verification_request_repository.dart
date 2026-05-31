@@ -1,15 +1,28 @@
+/// ========================================================================
+/// Verification Request Repository
+///
+/// Data-access layer for artist identity verification submissions.
+///
+/// Architectural decisions:
+/// - Accepts [ApiClient] via constructor injection so auth headers, base URL,
+///   and error handling stay centralized and mockable.
+/// - Delegates HTTP to [ApiClient]; non-2xx responses throw [Exception]s
+///   with backend messages — this repository does not catch them.
+/// - Posts to the root-mounted `/verification-requests` route on `/api/v1`.
+/// ========================================================================
+
 import 'package:loven/core/network/api_constants.dart';
-import 'package:loven/core/storage/token_storage.dart';
 
 class VerificationRequestRepository {
   final ApiClient _apiClient;
-  final TokenStorage _tokenStorage;
 
   VerificationRequestRepository({
     required ApiClient apiClient,
-    required TokenStorage tokenStorage,
-  })  : _apiClient = apiClient,
-        _tokenStorage = tokenStorage;
+  }) : _apiClient = apiClient;
+
+  Map<String, dynamic> _asMap(dynamic data) {
+    return Map<String, dynamic>.from(data as Map);
+  }
 
   Future<Map<String, dynamic>> submitRequest({
     required String documentType,
@@ -25,35 +38,39 @@ class VerificationRequestRepository {
       },
     );
 
-    return Map<String, dynamic>.from(
-      response.data,
-    );
+    return _asMap(response.data);
   }
 
   Future<List<Map<String, dynamic>>> fetchAllRequests() async {
     final response = await _apiClient.get(
-      ApiConstants.verificationRequests,
+      ApiConstants.adminVerificationRequests,
     );
 
     final data = response.data;
 
-    if (data is List) {
-      return data.cast<Map<String, dynamic>>();
+    if (data is Map<String, dynamic>) {
+      final requests =
+          data['requests'] ?? data['data'] ?? [];
+
+      return List<Map<String, dynamic>>.from(
+        requests,
+      );
     }
 
-    if (data['requests'] is List) {
-      return (data['requests'] as List)
-          .cast<Map<String, dynamic>>();
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(
+        data,
+      );
     }
 
     return [];
   }
 
-  Future<void> updateRequestStatus({
+  Future<Map<String, dynamic>> updateRequestStatus({
     required String requestId,
     required String status,
   }) async {
-    await _apiClient.patch(
+    final response = await _apiClient.patch(
       ApiConstants.verificationRequestStatus(
         requestId,
       ),
@@ -61,5 +78,7 @@ class VerificationRequestRepository {
         'status': status,
       },
     );
+
+    return _asMap(response.data);
   }
 }

@@ -1,7 +1,16 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 
+from app.core.auth_utils import (
+    get_authenticated_user_id,
+    get_authenticated_user_role,
+)
+
+from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
+from app.persistence.repositories.order_repo import order_repo
 from app.services.facade.order_facade import OrderFacade
+
+artist_profile_repo = ArtistProfileRepository()
 
 
 # Order API routes.
@@ -11,21 +20,39 @@ from app.services.facade.order_facade import OrderFacade
 order_bp = Blueprint("orders", __name__)
 
 
-def get_authenticated_user_id():
+def _is_admin(role):
     """
-    Extract the current user's ID from the JWT token.
-
-    Supports both JWT formats used in the project:
-    - sub as a direct UUID string
-    - sub as a dictionary containing user_id
+    Check if the provided role belongs to a system administrator.
     """
+    return role == "admin"
 
-    current_user_identity = get_jwt_identity()
 
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
+def _forbidden():
+    """
+    Generate a standardized 403 Forbidden JSON response for unauthorized access.
+    """
+    return jsonify({"error": "Forbidden"}), 403
 
-    return current_user_identity
+
+def _user_owns_artist_profile(user_id, artist_profile_id):
+    """
+    Verify if the authenticated user is the legitimate owner of the specified artist profile.
+    """
+    profile = artist_profile_repo.get(artist_profile_id)
+    if not profile:
+        return False
+    return str(profile.user_id) == str(user_id)
+
+
+def _artist_can_update_order(user_id, order_id):
+    """
+    Validate that the user has an active artist profile and the specified order belongs to them.
+    """
+    profile = artist_profile_repo.get_active_by_user_id(user_id)
+    if not profile:
+        return False
+
+    return order_repo.artist_has_order(profile.id, order_id)
 
 
 @order_bp.post("/")
@@ -46,11 +73,13 @@ def create_order():
         "items": [
             {
                 "artwork_id": "...",
-                "quantity": 1,
-                "price_at_purchase": 150.00
+                "quantity": 1
             }
         ]
     }
+
+    Totals are validated against server-computed artwork prices; tampered
+    amounts are rejected. Line prices are always taken from the database.
     """
 
     data = request.get_json() or {}
@@ -83,13 +112,19 @@ def view_my_orders():
 
 
 @order_bp.get("/buyer/<buyer_id>")
+@jwt_required()
 def view_buyer_orders(buyer_id):
     """
-    Existing buyer lookup route.
+    Retrieve orders for a buyer.
 
-    Kept temporarily for testing/backward compatibility.
-    Prefer /mine for authenticated frontend usage.
+    Authenticated users may only access their own buyer_id unless admin.
+    Prefer GET /mine for the current user's orders.
     """
+    user_id = get_authenticated_user_id()
+    role = get_authenticated_user_role()
+
+    if not _is_admin(role) and str(user_id) != str(buyer_id):
+        return _forbidden()
 
     result, status_code = OrderFacade.get_customer_orders(
         buyer_id
@@ -99,13 +134,19 @@ def view_buyer_orders(buyer_id):
 
 
 @order_bp.get("/artist/<artist_profile_id>")
+@jwt_required()
 def view_artist_orders(artist_profile_id):
     """
     Retrieve incoming orders for an artist profile.
 
-    This route is kept unchanged for now because it depends
-    on artist profile ownership rules.
+    Authenticated users may only access orders for a profile they own,
+    unless admin.
     """
+    user_id = get_authenticated_user_id()
+    role = get_authenticated_user_role()
+
+    if not _is_admin(role) and not _user_owns_artist_profile(user_id, artist_profile_id):
+        return _forbidden()
 
     result, status_code = (
         OrderFacade.get_artist_incoming_orders(
@@ -117,14 +158,19 @@ def view_artist_orders(artist_profile_id):
 
 
 @order_bp.patch("/<order_id>/status")
+@jwt_required()
 def update_status(order_id):
     """
     Update order status and shipment details.
 
-    Usually used when an artist marks an order as shipped.
-    Role/ownership protection can be added once artist-order
-    permission rules are finalized.
+    Only the artist who owns artworks in the order (or an admin) may update
+    shipment status.
     """
+    user_id = get_authenticated_user_id()
+    role = get_authenticated_user_role()
+
+    if not _is_admin(role) and not _artist_can_update_order(user_id, order_id):
+        return _forbidden()
 
     data = request.get_json() or {}
 

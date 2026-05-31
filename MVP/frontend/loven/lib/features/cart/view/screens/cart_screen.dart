@@ -24,12 +24,15 @@ class _CartScreenState extends State<CartScreen> {
     context.read<CartCubit>().getCart();
   }
 
+  /// Builds the checkout payload aligned with the backend contract.
+  ///
+  /// Totals are sent for server validation; line items carry only identity
+  /// and quantity — artwork prices are always computed on the server.
   Future<void> _checkout(CartModel cart) async {
     final items = cart.items.map((item) {
       return {
         'artwork_id': item.artworkId,
         'quantity': item.quantity,
-        'price_at_purchase': item.price,
       };
     }).toList();
 
@@ -71,6 +74,13 @@ class _CartScreenState extends State<CartScreen> {
         }
 
         if (state is OrderError) {
+          // Re-fetch cart when server rejected stale client totals at checkout.
+          if (state.shouldRefreshCart) {
+            await context.read<CartCubit>().getCart();
+          }
+
+          if (!context.mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -91,7 +101,7 @@ class _CartScreenState extends State<CartScreen> {
           }
 
           if (state is CartLoaded) {
-            final cart = CartModel.fromJson(state.cart);
+            final cart = state.cart;
 
             if (cart.items.isEmpty) {
               return const Center(

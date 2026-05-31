@@ -12,7 +12,12 @@
           "package_name": "com.example.loven"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "168795837419-6ss77pu2v1p8kejgjs600savjlf6lpre.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAGR1gxZYnbvPedCDnFWhTRm3WsoW0MZx8"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "168795837419-6ss77pu2v1p8kejgjs600savjlf6lpre.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "168795837419-39391jqv0h49l9g2ovv692qrilr4ujv0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.five.loven"
+              }
+            }
+          ]
         }
       }
     }

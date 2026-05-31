@@ -6,12 +6,13 @@ without cluttering the core service logic.
 """
 
 from app.external_services.firebase_service import send_welcome_notification
+from app.core.uuid_utils import as_uuid
 from app.persistence.repositories.user_repo import UserRepository
-from app.services.auth_service import login_user, register_user
-from app.services.facade.artists_profile_facade import ArtistsProfileFacade
-from app.services.auth_service import login_user, register_user, change_password
+from app.services.auth_service import change_password, login_user, register_user
+import logging
 
 user_repo = UserRepository()
+logger = logging.getLogger(__name__)
 
 
 class AuthFacade:
@@ -21,42 +22,14 @@ class AuthFacade:
         """
         Manages the new user registration process.
 
-        Orchestration:
-        1. Create User (auth_service.register_user)
-        2. Create linked ArtistProfile (ArtistsProfileFacade.create_for_registration)
-        3. If step 2 fails, remove the user so the DB stays consistent
-        4. Optional Firebase welcome notification
+        User and artist profile are created atomically in register_user.
+        Welcome notification is sent only after a successful commit.
         """
         result, status_code = register_user(data)
 
         if status_code != 201:
             return result, status_code
 
-        user_id = result.get("user_id")
-        if not user_id:
-            return {"error": "Registration succeeded but user_id is missing"}, 500
-
-        # Step 2: empty artist profile so GET /artist-profiles/me does not 404.
-        profile_result, profile_status = ArtistsProfileFacade.create_for_registration(
-            user_id,
-            data,
-        )
-
-        if profile_status not in (200, 201):
-            # Step 3: profile failed — roll back the user row.
-            try:
-                user_repo.delete(user_id)
-            except Exception as cleanup_error:
-                print(f"Failed to roll back user after profile error: {cleanup_error}")
-
-            return {
-                "error": profile_result.get(
-                    "error",
-                    "User was created but artist profile setup failed",
-                ),
-            }, profile_status if profile_status >= 400 else 500
-
-        # Step 4: welcome push (non-blocking).
         user_name = data.get("name", "Dear artist")
         fcm_token = data.get("fcm_token")
 
@@ -64,7 +37,9 @@ class AuthFacade:
             try:
                 send_welcome_notification(fcm_token, user_name)
             except Exception as e:
-                print(f"Failed to send welcome notification: {e}")
+                logger.warning(
+                    "Failed to send welcome notification: %s", e
+                )
 
         return result, status_code
 
@@ -86,22 +61,73 @@ class AuthFacade:
         return change_password(user_id, data)
 
     @staticmethod
-    def logout(user_id: str):
+    def logout(user_id):
         """
         Manages the logout process.
         Clears the FCM token to prevent push notifications to a logged-out device.
         Args:
-            user_id (str): The ID of the user logging out.
+            user_id: Normalized user UUID string from JWT (via auth_utils).
 
         Returns:
             tuple: (response data, HTTP status code)
         """
         try:
-            user_repo.update_fcm_token(user_id, None)
+            uid = as_uuid(user_id)
+        except (TypeError, ValueError):
+            return {"error": "Invalid user identity"}, 401
+
+        if not uid:
+            return {"error": "Invalid user identity"}, 401
+
+        try:
+            updated = user_repo.update_fcm_token(uid, None)
+            if not updated:
+                return {"error": "User not found"}, 404
 
             return {
                 "message": "Logged out successfully and notifications disabled for this device."
             }, 200
-        except Exception as e:
-            print(f"Error during logout: {e}")
+        except Exception:
+            logger.exception("Error during logout")
             return {"error": "An internal error occurred during logout"}, 500
+        
+
+    def __init__(self, user_repo, jwt_service, firebase_auth_service):
+        self.user_repo = user_repo
+        self.jwt_service = jwt_service
+        self.firebase_auth_service = firebase_auth_service
+
+    def google_login(self, firebase_id_token: str):
+        decoded = self.firebase_auth_service.verify_id_token(firebase_id_token)
+
+        firebase_uid = decoded.get("uid")
+        email = decoded.get("email")
+        name = decoded.get("name")
+        picture = decoded.get("picture")
+
+        if not firebase_uid or not email:
+            raise ValueError("Google account must provide email")
+
+        user = self.user_repo.get_by_firebase_uid(firebase_uid)
+
+        if not user:
+            user = self.user_repo.get_by_email(email)
+
+            if user:
+                user = self.user_repo.link_firebase_uid(user, firebase_uid)
+            else:
+                user = self.user_repo.create_google_user(
+                    email=email,
+                    name=name,
+                    firebase_uid=firebase_uid,
+                    profile_picture=picture,
+                )
+
+        access_token = self.jwt_service.create_access_token(user)
+        refresh_token = self.jwt_service.create_refresh_token(user)
+
+        return {
+            "user": user.to_dict(),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }

@@ -1,6 +1,9 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import HTTPException
+import logging
+
 from app.extensions import db
 from config import Config
 
@@ -14,11 +17,85 @@ from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
+from app.api.v1.payments import payments_bp
 from app.api.v1.account import account_bp
 from flask_migrate import Migrate
 
 # Global JWT instance
 jwt = JWTManager()
+
+
+@jwt.unauthorized_loader
+def jwt_unauthorized(_error):
+    return jsonify({"error": "Authorization token required"}), 401
+
+
+@jwt.invalid_token_loader
+def jwt_invalid(_error):
+    return jsonify({"error": "Invalid token"}), 422
+
+
+@jwt.expired_token_loader
+def jwt_expired(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Token has expired"}), 401
+
+
+@jwt.revoked_token_loader
+def jwt_revoked(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Token has been revoked"}), 401
+
+
+@jwt.needs_fresh_token_loader
+def jwt_needs_fresh(_jwt_header, _jwt_payload):
+    return jsonify({"error": "Fresh token required"}), 401
+
+
+@jwt.token_verification_failed_loader
+def jwt_verification_failed(_jwt_header, _jwt_data):
+    return jsonify({"error": "Token verification failed"}), 401
+
+
+@jwt.user_lookup_error_loader
+def jwt_user_lookup_failed(_jwt_header, _jwt_data):
+    return jsonify({"error": "User not found"}), 401
+
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging(app):
+    """Configure application-wide logging when no handlers exist yet."""
+    if logging.getLogger().handlers:
+        return
+
+    level = logging.DEBUG if app.debug else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+
+
+def _register_error_handlers(app):
+    """Return JSON error responses for API clients."""
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Not found"}), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        logger.exception("Internal server error")
+        return jsonify({"error": "Internal server error"}), 500
+
+    @app.errorhandler(Exception)
+    def unhandled_exception(error):
+        if isinstance(error, HTTPException):
+            return jsonify(
+                {"error": error.description or error.name}
+            ), error.code
+
+        logger.exception("Unhandled exception")
+        return jsonify({"error": "Internal server error"}), 500
+
 
 def create_app():
     app = Flask(__name__)
@@ -26,12 +103,12 @@ def create_app():
     # Load application configuration
     app.config.from_object(Config)
 
-    # Enable CORS for API routes
+    _configure_logging(app)
+    _register_error_handlers(app)
+
     CORS(
         app,
-        resources={r"/api/*": {"origins": "*"}},
-        allow_headers=["Content-Type", "Authorization"],
-        methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
         supports_credentials=True,
     )
 
@@ -58,9 +135,12 @@ def create_app():
 
     # Authentication routes
     app.register_blueprint(auth_bp, url_prefix="/api/v1")
-
+    
     # Artist profile routes
-    app.register_blueprint(artist_profiles_bp, url_prefix="/api/v1")
+    app.register_blueprint(
+        artist_profiles_bp,
+        url_prefix="/api/v1/artist-profiles"
+    )
     
     # Shopping cart routes
     app.register_blueprint(carts_bp, url_prefix="/api/v1/carts")
@@ -86,7 +166,11 @@ def create_app():
     # Account routes
     app.register_blueprint(account_bp, url_prefix="/api/v1")
 
-    # Print all registered routes
+    # Payment routes
+    app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
+
     print(app.url_map)
+
+    logger.debug("Registered routes: %s", app.url_map)
 
     return app

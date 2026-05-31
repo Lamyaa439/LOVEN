@@ -9,15 +9,19 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db
 from app.models.user import User
+from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 from app.persistence.repositories.user_repo import UserRepository
+from app.services.artists_profiles_service import prepare_registration_profile
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 user_repo = UserRepository()
+artist_profile_repo = ArtistProfileRepository()
 
 
 def register_user(data):
     """
-    Register a new user.
+    Register a new user and linked artist profile in one transaction.
+
     Args:
         data : Request data containing:
             - name (str)
@@ -55,15 +59,17 @@ def register_user(data):
             system_role=role,
         )
 
-        # User only — ArtistProfile is created by AuthFacade.register (orchestration).
         db.session.add(new_user)
+        db.session.flush()
+
+        if not artist_profile_repo.get_active_by_user_id(new_user.id):
+            profile = prepare_registration_profile(new_user.id, data)
+            db.session.add(profile)
+
         db.session.commit()
 
-        # Generate JWT access token:
-        # 1- Define user identity
         user_identity = str(new_user.id)
         
-        # 2- Generate BOTH tokens using the flask_jwt_extended library
         access_token = create_access_token(
             identity=user_identity,
             additional_claims={"role": new_user.system_role}

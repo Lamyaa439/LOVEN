@@ -1,6 +1,4 @@
-from app.persistence.repositories.report_repo import (
-    create_report,
-)
+from app.persistence.repositories.report_repo import report_repo
 
 
 # =========================================================
@@ -39,7 +37,7 @@ def submit_report(data):
     if not reason:
         return {"error": "reason is required"}, 400
 
-    report = create_report(
+    report = report_repo.create_report(
         reporter_id=reporter_id,
         target_artwork_id=target_artwork_id,
         reason=reason,
@@ -48,22 +46,5 @@ def submit_report(data):
 
     return {
         "message": "Report submitted successfully",
-        "report": {
-            "id": str(report[0]),
-            "reporter_id": str(report[1]),
-            "target_artwork_id": str(report[2]),
-            "reason": report[3],
-            "details": report[4],
-            "status": report[5],
-            "created_at": (
-                report[6].isoformat()
-                if report[6]
-                else None
-            ),
-            "updated_at": (
-                report[7].isoformat()
-                if report[7]
-                else None
-            ),
-        },
+        "report": report.to_dict(),
     }, 201

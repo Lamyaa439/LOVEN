@@ -5,9 +5,9 @@ Business logic for shopping cart operations. Returns (dict, status_code) tuples
 like other services in this project.
 """
 
-import uuid
-
 from sqlalchemy.exc import IntegrityError
+
+from app.core.uuid_utils import as_uuid
 
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
@@ -20,16 +20,6 @@ artwork_repo = ArtworkRepository()
 user_repo = UserRepository()
 
 # -------------------------- Private Helpers ---------------------------
-
-def _as_uuid(value):
-    """
-    Normalize JWT / string IDs to uuid.UUID for DB comparisons.
-    """
-    if value is None:
-        return None
-    if isinstance(value, uuid.UUID):
-        return value
-    return uuid.UUID(str(value))
 
 # تتأكد إن الكمية رقم صحيح موجب
 def _parse_quantity(value, default=1):
@@ -129,7 +119,7 @@ def _get_or_create_cart(user_id):
         Returns:
             Cart: The active, restored, or newly created cart object.
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
 
     # إذا السلة موجود ترجعها
     cart = cart_repo.get_by_user_id(uid)
@@ -161,7 +151,7 @@ def _get_user_cart(user_id):
     Returns:
         Cart: The active cart object, or None if not found.
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     return cart_repo.get_by_user_id(uid)
 
 # تتأكد إن السلة تنتمي للمستخدم
@@ -202,7 +192,7 @@ def _validate_artwork_for_cart(artwork_id):
             If successful, returns (artwork, None). 
             If validation fails, returns (None, (error_dict, status_code)).
     """
-    artwork = artwork_repo.get(_as_uuid(artwork_id))
+    artwork = artwork_repo.get(as_uuid(artwork_id))
 
     # إذا المنتج غير موجود أو محذوف
     if not artwork:
@@ -230,7 +220,7 @@ def get_cart(user_id, include_artwork=True):
     Returns:
         tuple: A pair containing the response dictionary (payload or error message) and the HTTP status code (200 or 404).
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     # نتأكد المستخدم موجود
     if not user_repo.get_user_by_id(uid):
         return {"error": "User not found"}, 404
@@ -256,7 +246,7 @@ def add_to_cart(user_id, data):
         - quantity (optional, default 1)
     """
     # -------- Input Validation --------
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     # نتأكد إن المستخدم موجود
     if not user_repo.get_user_by_id(uid):
         return {"error": "User not found"}, 404
@@ -288,7 +278,7 @@ def add_to_cart(user_id, data):
     # --------- Core Logic ----------
     try:
         cart = _get_or_create_cart(uid)
-        aid = _as_uuid(artwork_id)
+        aid = as_uuid(artwork_id)
         existing = cart_repo.get_item_by_cart_and_artwork(cart.id, aid)
 
         # إذا المنتج موجود في السلة نزيد الكمية
@@ -329,7 +319,7 @@ def update_cart_item(user_id, item_id, data):
     Expects data with:
         - quantity (required)
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     # نتأكد المستخدم موجود
     if not user_repo.get_user_by_id(uid):
         return {"error": "User not found"}, 404
@@ -345,7 +335,7 @@ def update_cart_item(user_id, item_id, data):
         return {"error": str(e)}, 400
     
     # البحث عن المنتج داخل السلة
-    item = cart_repo.get_item(_as_uuid(item_id))
+    item = cart_repo.get_item(as_uuid(item_id))
     if not item:
         return {"error": "Cart item not found"}, 404
     # إذا حاول يعدل منتجات سلة مهب سلته
@@ -385,12 +375,12 @@ def remove_cart_item(user_id, item_id):
     Returns:
         tuple: A success message with a 200 status, or an error payload.
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     # التأكد إن المستخدم موجود
     if not user_repo.get_user_by_id(uid):
         return {"error": "User not found"}, 404
     # نتأكد إن المنتج المراد حذفه موجود 
-    item = cart_repo.get_item(_as_uuid(item_id))
+    item = cart_repo.get_item(as_uuid(item_id))
     if not item:
         return {"error": "Cart item not found"}, 404
     if not _item_belongs_to_user(item, uid):
@@ -414,7 +404,7 @@ def clear_cart(user_id):
         tuple: A success payload indicating the number of cleared items،
         or a 500 error on failure.
     """
-    uid = _as_uuid(user_id)
+    uid = as_uuid(user_id)
     cart = _get_user_cart(uid)
     if not cart:
         return {"message": "Cart is already empty", "cleared": 0}, 200

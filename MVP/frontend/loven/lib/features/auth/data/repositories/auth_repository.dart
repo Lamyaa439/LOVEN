@@ -1,26 +1,27 @@
 /// ========================================================================
 /// Authentication Repository
 ///
-/// Data-access layer responsible for all authentication-related API calls.
+/// Data-access layer for auth session lifecycle and account profile calls.
 ///
 /// Architectural decisions:
-/// - Accepts [ApiClient] and [TokenStorage] via constructor injection
-///   for testability and separation of concerns.
-/// - Delegates all HTTP networking to the centralized Dio-based [ApiClient],
-///   which reads the base URL from .env and handles error extraction.
-/// - No manual JSON encoding/decoding — Dio serializes request maps
-///   automatically and returns decoded maps via `response.data`.
-/// - Endpoint paths are relative constants from [ApiConstants]; the base
-///   URL is prepended by Dio's [BaseOptions].
+/// - Accepts [ApiClient] and [TokenStorage] via constructor injection.
+/// - Delegates HTTP and error extraction to [ApiClient]; this repository
+///   does not catch or translate exceptions except for best-effort logout.
+/// - Login/register persist both JWT tokens via [_persistSessionTokens].
+/// - Account reads/writes use `GET/PATCH /account/me` ([ApiConstants.currentUser]).
 /// ========================================================================
 
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthRepository({
     required ApiClient apiClient,
@@ -28,10 +29,27 @@ class AuthRepository {
   })  : _apiClient = apiClient,
         _tokenStorage = tokenStorage;
 
-  /// Authenticates an existing user and persists the JWT access token.
-  ///
-  /// Throws an [Exception] propagated from [ApiClient] if the backend
-  /// returns a non-2xx status (e.g. 401 invalid credentials).
+  Map<String, dynamic> _asMap(dynamic data) {
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+  /// Persists access and refresh tokens returned by login/register.
+  Future<void> _persistSessionTokens(Map<String, dynamic> data) async {
+    final accessToken = data['access_token'] as String?;
+    final refreshToken = data['refresh_token'] as String?;
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception('Server did not return an access token');
+    }
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('Server did not return a refresh token');
+    }
+
+    await _tokenStorage.saveAccessToken(accessToken);
+    await _tokenStorage.saveRefreshToken(refreshToken);
+  }
+
+  /// Authenticates an existing user and persists JWT session tokens.
   Future<void> login({
     required String email,
     required String password,
@@ -46,17 +64,10 @@ class AuthRepository {
       },
     );
 
-    final token = response.data['access_token'] as String?;
-    if (token == null) throw Exception('Server did not return an access token');
-
-    await _tokenStorage.saveAccessToken(token);
+    await _persistSessionTokens(_asMap(response.data));
   }
 
-  /// Registers a new user account and persists the JWT access token.
-  ///
-  /// The backend returns 201 on success with `access_token` in the body.
-  /// Any validation or duplication error (400/409) surfaces through
-  /// the [ApiClient] error handler as a user-friendly message.
+  /// Registers a new user account and persists JWT session tokens.
   Future<void> register({
     required String name,
     required String email,
@@ -75,83 +86,131 @@ class AuthRepository {
       },
     );
 
-    final token = response.data['access_token'] as String?;
-    if (token == null) throw Exception('Server did not return an access token');
-
-    await _tokenStorage.saveAccessToken(token);
+    await _persistSessionTokens(_asMap(response.data));
   }
 
-/// Changes the current user's password.
-Future<void> changePassword({
-  required String currentPassword,
-  required String newPassword,
-}) async {
-  await _apiClient.patch(
-    ApiConstants.changePassword,
+  Future<void> signInWithGoogle() async {
+  final googleUser = await _googleSignIn.signIn();
+
+  if (googleUser == null) {
+    throw Exception('Google sign in cancelled');
+  }
+
+  final googleAuth = await googleUser.authentication;
+
+  final credential = GoogleAuthProvider.credential(
+    accessToken: googleAuth.accessToken,
+    idToken: googleAuth.idToken,
+  );
+
+  final firebaseCredential =
+      await _firebaseAuth.signInWithCredential(
+    credential,
+  );
+
+  final firebaseIdToken =
+      await firebaseCredential.user?.getIdToken(true);
+
+  if (firebaseIdToken == null) {
+    throw Exception('Failed to get Firebase token');
+  }
+
+  final response = await _apiClient.post(
+    '/google',
     data: {
-      'current_password': currentPassword,
-      'new_password': newPassword,
+      'id_token': firebaseIdToken,
     },
+  );
+
+  await _persistSessionTokens(
+    _asMap(response.data),
   );
 }
 
-Future<UserModel> getCurrentUser() async {
-  final response = await _apiClient.get(ApiConstants.currentUser);
+  /// Invalidates the session on the backend and clears local tokens.
+  ///
+  /// Network failures are swallowed — local cleanup always proceeds.
+  Future<void> logout() async {
+    try {
+      await _apiClient.post(ApiConstants.logout, data: {});
+    } catch (_) {
+      // Best-effort server call.
+    }
 
-  return UserModel.fromJson(response.data);
-}
+    await _tokenStorage.clearAllTokens();
+  }
 
-Future<UserModel> updateProfile({
-  required String name,
-  required String email,
-  String? profileImageUrl,
-}) async {
-  final response = await _apiClient.patch(
-    ApiConstants.currentUser,
-    data: {
-      'name': name,
-      'email': email,
-      if (profileImageUrl != null)
-        'profile_image_url': profileImageUrl,
-    },
-  );
+  /// Exchanges the stored refresh JWT for a new access token (`POST /refresh`).
+  Future<void> refreshAccessToken() async {
+    final refreshToken = await _tokenStorage.getRefreshToken();
 
-  return UserModel.fromJson(response.data);
-}
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('No refresh token available');
+    }
 
-/// Invalidates the current session on the backend and clears local tokens.
-///
-/// The Authorization header is injected automatically by the [ApiClient]'s
-/// auth interceptor — no manual token handling needed here.
-///
-/// Swallows network errors intentionally — the user should always end up
-/// logged out locally even if the server call fails (e.g. expired token).
-Future<void> logout() async {
-  try {
-    await _apiClient.post(
-      ApiConstants.logout,
+    final response = await _apiClient.postWithBearerToken(
+      ApiConstants.refresh,
+      bearerToken: refreshToken,
       data: {},
     );
-  } catch (_) {
-    // Best-effort server call; local cleanup always proceeds.
+
+    final data = _asMap(response.data);
+    final accessToken = data['access_token'] as String?;
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception('Server did not return an access token');
+    }
+
+    await _tokenStorage.saveAccessToken(accessToken);
   }
 
-  await _tokenStorage.clearAllTokens();
-}
-
-/// Checks whether the given [email] is already registered.
-Future<bool> checkEmailDuplication(
-  String email,
-) async {
-  return false;
-}
-
-/// Checks whether a valid local auth token exists.
-Future<bool> isLoggedIn() async {
-  final token =
-      await _tokenStorage.getAccessToken();
-
-  return token != null && token.isNotEmpty;
+  /// Updates the authenticated user's password (`PATCH /change-password`).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _apiClient.patch(
+      ApiConstants.changePassword,
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      },
+    );
   }
 
+  /// Fetches the authenticated user's account profile (`GET /account/me`).
+  Future<UserModel> getCurrentUser() async {
+    final response = await _apiClient.get(ApiConstants.currentUser);
+
+    return UserModel.fromJson(_asMap(response.data));
+  }
+
+  /// Updates the authenticated user's account profile (`PATCH /account/me`).
+  Future<UserModel> updateProfile({
+    required String name,
+    required String email,
+    String? profileImageUrl,
+  }) async {
+    final response = await _apiClient.patch(
+      ApiConstants.currentUser,
+      data: {
+        'name': name,
+        'email': email,
+        if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
+      },
+    );
+
+    return UserModel.fromJson(_asMap(response.data));
+  }
+
+  /// Returns whether a non-empty access token is stored locally.
+  Future<bool> isLoggedIn() => _tokenStorage.hasValidSession();
+
+  /// Checks whether [email] is already registered.
+  ///
+  /// TODO: Wire to a backend endpoint once available. Returns `false` as a
+  /// safe default so signup validation is never blocked by a missing route.
+  Future<bool> checkEmailDuplication(String email) async {
+    return false;
+  }
 }

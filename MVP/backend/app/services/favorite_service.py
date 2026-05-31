@@ -14,10 +14,10 @@ Architecture:
     API Route -> Facade -> Service -> Repository -> Database
 """
 
-import uuid
 from sqlalchemy.exc import IntegrityError
 
-from app.models.artwork import Artwork
+from app.core.uuid_utils import as_uuid
+
 from app.models.favorites import Favorite
 
 from app.persistence.repositories.artwork_repo import ArtworkRepository
@@ -31,24 +31,6 @@ artwork_repo = ArtworkRepository()
 # =========================================================
 # Private Helpers
 # =========================================================
-
-def _as_uuid(value):
-    """
-    Normalize IDs into uuid.UUID objects.
-
-    Supports:
-    - UUID objects
-    - string UUIDs
-    """
-
-    if value is None:
-        return None
-
-    if isinstance(value, uuid.UUID):
-        return value
-
-    return uuid.UUID(str(value))
-
 
 def _favorite_to_dict(favorite):
     """
@@ -117,14 +99,14 @@ def add_favorite(user_id, artwork_id):
     - artwork must not already be favorited
     """
 
-    artwork = artwork_repo.get(_as_uuid(artwork_id))
+    artwork = artwork_repo.get(as_uuid(artwork_id))
 
     if not artwork:
         return {"error": "Artwork not found"}, 404
 
     existing = favorite_repo.get_user_favorite(
-        _as_uuid(user_id),
-        _as_uuid(artwork_id),
+        as_uuid(user_id),
+        as_uuid(artwork_id),
     )
 
     if existing:
@@ -132,8 +114,8 @@ def add_favorite(user_id, artwork_id):
 
     try:
         favorite = Favorite(
-            user_id=_as_uuid(user_id),
-            artwork_id=_as_uuid(artwork_id),
+            user_id=as_uuid(user_id),
+            artwork_id=as_uuid(artwork_id),
         )
 
         favorite_repo.add(favorite)
@@ -156,8 +138,8 @@ def remove_favorite(user_id, artwork_id):
     """
 
     favorite = favorite_repo.get_user_favorite(
-        _as_uuid(user_id),
-        _as_uuid(artwork_id),
+        as_uuid(user_id),
+        as_uuid(artwork_id),
     )
 
     if not favorite:
@@ -180,8 +162,8 @@ def check_favorite(user_id, artwork_id):
     """
 
     favorite = favorite_repo.get_user_favorite(
-        _as_uuid(user_id),
-        _as_uuid(artwork_id),
+        as_uuid(user_id),
+        as_uuid(artwork_id),
     )
 
     return {
@@ -194,19 +176,13 @@ def list_my_favorites(user_id):
     List all favorited artworks for user.
     """
 
-    favorites = favorite_repo.list_user_favorites(
-        _as_uuid(user_id),
+    artworks = favorite_repo.list_user_favorite_artworks(
+        as_uuid(user_id),
     )
 
-    favorite_artworks = []
-
-    for favorite in favorites:
-        artwork = artwork_repo.get(favorite.artwork_id)
-
-        if artwork and artwork.deleted_at is None:
-            favorite_artworks.append(
-                _artwork_to_dict(artwork)
-            )
+    favorite_artworks = [
+        _artwork_to_dict(artwork) for artwork in artworks
+    ]
 
     return {
         "favorites": favorite_artworks,

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
@@ -110,7 +112,9 @@ class ArtCard extends StatelessWidget {
                                 color: Colors.red,
                               ),
                               onPressed: () {
-                                if (isGuest) {
+                                final isActuallyGuest =
+                              isGuest || context.read<AuthCubit>().state is AuthGuest;
+                                if (isActuallyGuest) {
                                   context.push('/auth');
                                 } else {
                                   context
@@ -137,7 +141,9 @@ class ArtCard extends StatelessWidget {
                             color: AppColors.primaryBlue,
                           ),
                           onPressed: () {
-                            if (isGuest) {
+                              final isActuallyGuest =
+                              isGuest || context.read<AuthCubit>().state is AuthGuest;
+                            if (isActuallyGuest) {
                               context.push('/auth');
                             } else {
                               onActionPressed();

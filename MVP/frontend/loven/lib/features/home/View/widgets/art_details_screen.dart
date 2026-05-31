@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/features/artist_profile/model/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
-import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
@@ -15,7 +15,7 @@ class ArtDetailsScreen extends StatefulWidget {
   const ArtDetailsScreen({
     super.key,
     required this.artItem,
-    this.isGuest = false,
+    required this.isGuest,
   });
 
   @override
@@ -35,10 +35,32 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
   }
 
   Future<void> _checkIfOwnArtwork() async {
-    setState(() {
-      _isOwnArtwork = false;
-      _checkingOwner = false;
-    });
+    if (widget.isGuest) {
+      setState(() {
+        _isOwnArtwork = false;
+        _checkingOwner = false;
+      });
+      return;
+    }
+
+    try {
+      final artistRepository = context.read<ArtistRepository>();
+      final artist = await artistRepository.getMyProfile();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isOwnArtwork = artist.id == widget.artItem.artistProfileId;
+        _checkingOwner = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isOwnArtwork = false;
+        _checkingOwner = false;
+      });
+    }
   }
 
   Future<void> _addToCart() async {
@@ -427,7 +449,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
           child: TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<NavigationBarCubit>().navigateTo(2);
+              context.go('/cart');
             },
             style: TextButton.styleFrom(
               backgroundColor: theme.colorScheme.surface,

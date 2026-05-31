@@ -1,19 +1,23 @@
+"""
+Verification request repository.
+
+Handles ORM persistence for artist verification submissions.
+"""
+
 from app.extensions import db
+from app.models.artist_profile import ArtistProfile
+from app.models.verification_requests import VerificationRequest
+from app.persistence.repository import SQLAlchemyRepository
 
-from app.models.verification_requests import (
-    VerificationRequest,
-)
 
+class VerificationRequestRepository(SQLAlchemyRepository):
+    VALID_STATUSES = frozenset({"pending", "approved", "rejected"})
 
-class VerificationRequestRepository:
-    VALID_STATUSES = {
-        "pending",
-        "approved",
-        "rejected",
-    }
+    def __init__(self):
+        super().__init__(VerificationRequest)
 
-    @staticmethod
-    def create(data):
+    def create_request(self, data):
+        """Create and persist a new verification request."""
         verification_request = VerificationRequest(
             artist_profile_id=data["artist_profile_id"],
             document_type=data.get("document_type"),
@@ -21,69 +25,53 @@ class VerificationRequestRepository:
             document_number=data.get("document_number"),
             status="pending",
         )
+        return self.save(verification_request)
 
-        db.session.add(verification_request)
-        db.session.commit()
-
-        return verification_request
-    
-    @staticmethod
-    def get_pending_request_for_profile(
-        artist_profile_id,
-        ):
+    def get_pending_request_for_profile(self, artist_profile_id):
         """
-        Returns existing pending verification request
-        for artist profile if one exists.
+        Return the active pending verification request for a profile, if any.
         """
-        return VerificationRequest.query.filter_by(
-            artist_profile_id=artist_profile_id,
-            status="pending",
-        ).first()
+        if not artist_profile_id:
+            return None
 
-    @staticmethod
-    def get_all():
-        return VerificationRequest.query.order_by(
-            VerificationRequest.created_at.desc()
-        ).all()
-
-    @staticmethod
-    def get_by_id(request_id):
-        return db.session.get(
-            VerificationRequest,
-            request_id,
+        return (
+            self.model.query.filter_by(
+                artist_profile_id=artist_profile_id,
+                status="pending",
+            )
+            .filter(self.model.deleted_at.is_(None))
+            .first()
         )
-    
-    @staticmethod
-    def update_status(
-        verification_request,
-        status,
-    ):
+
+    def list_all(self):
+        """Return all non-deleted verification requests, newest first."""
+        return (
+            self.model.query.filter(self.model.deleted_at.is_(None))
+            .order_by(self.model.created_at.desc())
+            .all()
+        )
+
+    def update_status(self, verification_request, status):
         """
-        Update verification request status.
-        If approved:
-        - mark artist profile as verified
+        Update verification request status and, when approved, mark the
+        linked artist profile as verified in a single transaction.
         """
-        if status not in VerificationRequestRepository.VALID_STATUSES:
+        if status not in self.VALID_STATUSES:
             raise ValueError(
                 "status must be pending, approved, or rejected"
             )
-        
+
         verification_request.status = status
-        
-        # =========================================================
-        # Auto-verify artist profile on approval
-        # ========================================================= 
+
         if status == "approved":
-            from app.models.artist_profile import ArtistProfile
-            
             artist_profile = db.session.get(
                 ArtistProfile,
                 verification_request.artist_profile_id,
             )
-
             if artist_profile:
                 artist_profile.is_verified = True
-                
-        db.session.commit()
-                
-        return verification_request
+
+        return self.save(verification_request)
+
+
+verification_request_repo = VerificationRequestRepository()

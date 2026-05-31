@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS "users" (
     "password" VARCHAR(255) NOT NULL, -- Stored as a bcrypt hash
     "system_role" VARCHAR(50) DEFAULT 'customer' CHECK (system_role IN ('admin', 'customer', 'artist')),
     "fcm_token" VARCHAR(255), -- Firebase Cloud Messaging token
+    "firebase_uid" VARCHAR(128) UNIQUE,
+    "auth_provider" VARCHAR(32) DEFAULT 'email',
     "profile_image_url" TEXT,
     "is_active" BOOLEAN DEFAULT true,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -76,7 +78,8 @@ CREATE TABLE IF NOT EXISTS "carts" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "user_id" UUID NOT NULL UNIQUE,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -89,7 +92,9 @@ CREATE TABLE IF NOT EXISTS "cart_items" (
     "cart_id" UUID NOT NULL,
     "artwork_id" UUID NOT NULL,
     "quantity" INTEGER DEFAULT 1 CHECK (quantity > 0),
-    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -151,7 +156,8 @@ CREATE TABLE IF NOT EXISTS "reports" (
     "details" TEXT,
     "status" VARCHAR(50) DEFAULT 'open',
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -164,7 +170,9 @@ CREATE TABLE IF NOT EXISTS "feedback" (
     "user_id" UUID NOT NULL,
     "subject" VARCHAR(255),
     "message" TEXT NOT NULL,
-    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================
@@ -179,8 +187,9 @@ CREATE TABLE IF NOT EXISTS "verification_requests" (
     "institution_name" VARCHAR(255),
     "document_number" VARCHAR(100),
     "status" VARCHAR(50) DEFAULT 'pending',
-    "submitted_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP
 );
 
 /* =======================================================================

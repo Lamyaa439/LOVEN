@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from flask_cors import cross_origin
 from app.services.facade.artists_profile_facade import ArtistsProfileFacade
 from app.services.facade.artwork_facade import ArtworkFacade
 
 artist_profiles_bp = Blueprint(
-    "artist_profiles", __name__, url_prefix="/artist-profiles"
+    "artist_profiles",
+    __name__,
 )
 
 # ----------------- Helper Functions -----------------
@@ -69,12 +70,9 @@ def create_profile():
     return jsonify(result), status_code
 
 # استعراض البروفايل 
-@artist_profiles_bp.route("/me", methods=["GET", "OPTIONS"])
-@jwt_required(optional=True)
+@artist_profiles_bp.get("/me")
+@jwt_required()
 def get_my_profile():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
-
     result, status_code = ArtistsProfileFacade.get_my_profile(get_jwt_identity())
     return jsonify(result), status_code
 

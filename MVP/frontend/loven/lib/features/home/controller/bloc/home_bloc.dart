@@ -16,16 +16,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     'Photography',
     'Digital Art',
   ];
-  
+
+  /// [artworkRepository] is injected from app startup ([LovenApp]) so the
+  /// bloc shares the same [ApiClient]-backed instance as [ArtworkCubit],
+  /// rather than constructing its own repository internally.
   HomeBloc({
     required ArtworkRepository artworkRepository,
-})  : _artworkRepository = artworkRepository,
-      super(HomeLoading()) {
-        on<FetchHomeData>((
-          event,
-          emit,
-          ) async {
-            emit(HomeLoading());
+  })  : _artworkRepository = artworkRepository,
+        super(HomeLoading()) {
+    on<FetchHomeData>((
+      event,
+      emit,
+    ) async {
+      emit(HomeLoading());
 
       try {
         final rawArtworks =

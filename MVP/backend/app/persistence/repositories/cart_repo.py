@@ -42,7 +42,7 @@ class CartRepository(SQLAlchemyRepository):
     # لما المستخدم يدخل على السلة
     def get_by_user_id_with_items(self, user_id):
         """
-        Fetch cart and line items in one query (JOIN via joinedload).
+        Fetch cart, line items, and artworks in one query.
 
         Returns:
             (cart, items): items is [] if no cart exists.
@@ -57,8 +57,9 @@ class CartRepository(SQLAlchemyRepository):
                 # نتأكد إن السلة مب محذوفة
                 self.model.deleted_at.is_(None),
             )
-            # هنا نجيب كل المنتجات اللي في السلة
-            .options(joinedload(Cart.items))
+            .options(
+                joinedload(Cart.items).joinedload(CartItem.artwork)
+            )
             .first()
         )
         if not cart:

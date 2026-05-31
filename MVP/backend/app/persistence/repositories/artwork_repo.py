@@ -83,6 +83,24 @@ class ArtworkRepository(SQLAlchemyRepository):
             .all()
         )
 
+    def get_public(self, artwork_id, status="available"):
+        """
+        Fetch a single artwork for public marketplace detail views.
+
+        Excludes soft-deleted rows. When status is set (default "available"),
+        hidden and sold_out listings are not returned.
+        """
+        if not artwork_id:
+            return None
+
+        query = self.model.query.filter(
+            self.model.id == artwork_id,
+            self.model.deleted_at.is_(None),
+        )
+        if status is not None:
+            query = query.filter(self.model.status == status)
+        return query.first()
+
     def search_by_title(self, query_text, limit=20, offset=0, status="available"):
         """
         Case-insensitive partial match on title (PostgreSQL ILIKE).

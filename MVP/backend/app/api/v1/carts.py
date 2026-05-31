@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required
 
+from app.core.auth_utils import get_authenticated_user_id
 from app.services.facade.cart_facade import CartFacade
 
 carts_bp = Blueprint("carts", __name__)
@@ -35,7 +36,7 @@ def get_cart():
         include_artwork: true or false (default true)
     """
     result, status_code = CartFacade.get(
-        get_jwt_identity(),
+        get_authenticated_user_id(),
         include_artwork=_include_artwork_from_query(),
     )
     return jsonify(result), status_code
@@ -55,7 +56,7 @@ def add_cart_item():
     if not data.get("artwork_id"):
         return jsonify({"error": "artwork_id is required"}), 400
 
-    result, status_code = CartFacade.add(get_jwt_identity(), data)
+    result, status_code = CartFacade.add(get_authenticated_user_id(), data)
     return jsonify(result), status_code
 
 # تحديث كمية منتج داخل السلة
@@ -73,7 +74,7 @@ def update_cart_item(item_id):
         return jsonify({"error": "quantity is required"}), 400
 
     result, status_code = CartFacade.update_item(
-        get_jwt_identity(), item_id, data
+        get_authenticated_user_id(), item_id, data
     )
     return jsonify(result), status_code
 
@@ -82,7 +83,9 @@ def update_cart_item(item_id):
 @jwt_required()
 def remove_cart_item(item_id):
     """Remove one line from the cart."""
-    result, status_code = CartFacade.remove_item(get_jwt_identity(), item_id)
+    result, status_code = CartFacade.remove_item(
+        get_authenticated_user_id(), item_id
+    )
     return jsonify(result), status_code
 
 # حذف السلة بالكامل
@@ -90,5 +93,5 @@ def remove_cart_item(item_id):
 @jwt_required()
 def clear_cart():
     """Remove all items from the cart."""
-    result, status_code = CartFacade.clear(get_jwt_identity())
+    result, status_code = CartFacade.clear(get_authenticated_user_id())
     return jsonify(result), status_code

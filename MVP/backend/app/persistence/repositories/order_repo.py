@@ -1,352 +1,277 @@
-import uuid
-from sqlalchemy import text
+"""
+Order repository.
+
+Handles ORM persistence for Order and OrderItem models.
+"""
+
+from decimal import Decimal, InvalidOperation
+
 from app.extensions import db
-
-# =========================================================
-# Repository: Order Repository
-# Description:
-# Handles all database operations related to:
-# - orders
-# - order_items
-#
-# Responsibilities:
-# - Create customer orders
-# - Create order items
-# - Retrieve buyer orders
-# - Retrieve incoming artist orders
-# - Update shipment/order status
-#
-# Architecture Notes:
-# - Uses SQLAlchemy session management
-# - Uses raw SQL via sqlalchemy.text()
-# - Keeps SQL isolated from service layer
-# =========================================================
+from app.models.artwork import Artwork
+from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.user import User
+from app.persistence.repository import SQLAlchemyRepository
 
 
-# =========================================================
-# Create Order
-# =========================================================
-def create_order(
-    buyer_id,
-    subtotal,
-    shipping_fee,
-    total_amount,
-    status="pending",
-):
-    """
-    Create a new order.
+def _quantize_money(value) -> Decimal:
+    """Normalize monetary values to two decimal places."""
+    return Decimal(str(value)).quantize(Decimal("0.01"))
 
-    Args:
-        buyer_id (UUID): Buyer user ID.
-        subtotal (float): Order subtotal.
-        shipping_fee (float): Shipping cost.
-        total_amount (float): Final order total.
-        status (str): Initial order status.
 
-    Returns:
-        Row: Newly created order row.
-    """
+def _optional_expected_money(value):
+    """Parse optional client-supplied totals for validation."""
+    if value is None:
+        return None
+    try:
+        return _quantize_money(value)
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError("Invalid monetary amount in order totals") from None
 
-    # Generate unique order ID
-    order_id = str(uuid.uuid4())
 
-    # Raw SQL insert query
-    query = text("""
-        INSERT INTO orders (
-            id,
-            buyer_id,
-            subtotal,
-            shipping_fee,
-            total_amount,
-            status
+class OrderRepository(SQLAlchemyRepository):
+    def __init__(self):
+        super().__init__(Order)
+
+    def create_order(
+        self,
+        buyer_id,
+        subtotal,
+        shipping_fee,
+        total_amount,
+        status="pending",
+    ):
+        """Create and persist a new order."""
+        order = Order(
+            buyer_id=buyer_id,
+            subtotal=subtotal,
+            shipping_fee=shipping_fee,
+            total_amount=total_amount,
+            status=status,
         )
-        VALUES (
-            :id,
-            :buyer_id,
-            :subtotal,
-            :shipping_fee,
-            :total_amount,
-            :status
+        return self.save(order)
+
+    def create_order_item(
+        self,
+        order_id,
+        artwork_id,
+        quantity,
+        price_at_purchase,
+    ):
+        """Create and persist a line item on an existing order."""
+        order_item = OrderItem(
+            order_id=order_id,
+            artwork_id=artwork_id,
+            quantity=quantity,
+            price_at_purchase=price_at_purchase,
         )
-        RETURNING
-            id,
-            buyer_id,
-            subtotal,
-            shipping_fee,
-            total_amount,
-            status,
-            created_at
-    """)
+        return self.save(order_item)
 
-    # Execute query
-    result = db.session.execute(query, {
-        "id": order_id,
-        "buyer_id": buyer_id,
-        "subtotal": subtotal,
-        "shipping_fee": shipping_fee,
-        "total_amount": total_amount,
-        "status": status,
-    })
+    def create_order_with_items(
+        self,
+        buyer_id,
+        items,
+        status="pending",
+        *,
+        expected_subtotal=None,
+        expected_shipping_fee=None,
+        expected_total_amount=None,
+    ):
+        """
+        Create an order, its line items, and inventory updates atomically.
 
-    # Commit transaction
-    db.session.commit()
+        Prices and totals are computed from artwork rows in the database.
+        Client-supplied totals are validated when provided and never trusted
+        for persistence.
 
-    # Return inserted row
-    return result.fetchone()
+        Raises ValueError when an artwork is unavailable, stock is insufficient,
+        or client totals do not match server-computed amounts.
+        """
+        if not items:
+            raise ValueError("Order must contain at least one item")
 
+        expected_subtotal = _optional_expected_money(expected_subtotal)
+        expected_shipping_fee = _optional_expected_money(expected_shipping_fee)
+        expected_total_amount = _optional_expected_money(expected_total_amount)
 
-# =========================================================
-# Create Order Item
-# =========================================================
-def create_order_item(
-    order_id,
-    artwork_id,
-    quantity,
-    price_at_purchase,
-):
-    """
-    Create a new order item.
+        subtotal = Decimal("0.00")
+        shipping_fee = Decimal("0.00")
+        created_items = []
 
-    Args:
-        order_id (UUID): Parent order ID.
-        artwork_id (UUID): Purchased artwork ID.
-        quantity (int): Quantity purchased.
-        price_at_purchase (float): Locked purchase price.
+        try:
+            order = Order(
+                buyer_id=buyer_id,
+                status=status,
+            )
+            db.session.add(order)
+            db.session.flush()
 
-    Returns:
-        Row: Newly created order item row.
-    """
+            for item in items:
+                artwork_id = item["artwork_id"]
+                quantity = int(item["quantity"])
 
-    # Generate unique order item ID
-    order_item_id = str(uuid.uuid4())
+                if quantity < 1:
+                    raise ValueError(
+                        "Each item quantity must be at least 1"
+                    )
 
-    # Raw SQL insert query
-    query = text("""
-        INSERT INTO order_items (
-            id,
-            order_id,
-            artwork_id,
-            quantity,
-            price_at_purchase
+                artwork = db.session.get(Artwork, artwork_id)
+                if not artwork or artwork.deleted_at is not None:
+                    raise ValueError(
+                        f"Artwork not found: {artwork_id}"
+                    )
+
+                if artwork.status != "available":
+                    raise ValueError(
+                        f"Artwork is not available for purchase: {artwork_id}"
+                    )
+
+                if artwork.quantity_available < quantity:
+                    raise ValueError(
+                        "Insufficient quantity for artwork "
+                        f"{artwork_id}"
+                    )
+
+                unit_price = _quantize_money(artwork.price)
+                line_shipping = _quantize_money(artwork.shipping_fee)
+
+                subtotal += unit_price * quantity
+                shipping_fee += line_shipping
+
+                order_item = OrderItem(
+                    order_id=order.id,
+                    artwork_id=artwork_id,
+                    quantity=quantity,
+                    price_at_purchase=unit_price,
+                )
+                db.session.add(order_item)
+                created_items.append(order_item)
+
+                artwork.quantity_available -= quantity
+                if artwork.quantity_available <= 0:
+                    artwork.quantity_available = 0
+                    artwork.status = "sold_out"
+
+            subtotal = _quantize_money(subtotal)
+            shipping_fee = _quantize_money(shipping_fee)
+            total_amount = _quantize_money(subtotal + shipping_fee)
+
+            if (
+                expected_subtotal is not None
+                and expected_subtotal != subtotal
+            ):
+                raise ValueError(
+                    "Order subtotal does not match server pricing"
+                )
+
+            if (
+                expected_shipping_fee is not None
+                and expected_shipping_fee != shipping_fee
+            ):
+                raise ValueError(
+                    "Order shipping fee does not match server pricing"
+                )
+
+            if (
+                expected_total_amount is not None
+                and expected_total_amount != total_amount
+            ):
+                raise ValueError(
+                    "Order total does not match server pricing"
+                )
+
+            order.subtotal = subtotal
+            order.shipping_fee = shipping_fee
+            order.total_amount = total_amount
+
+            db.session.commit()
+            return order, created_items
+        except Exception:
+            db.session.rollback()
+            raise
+
+    def get_orders_by_buyer(self, buyer_id):
+        """Return all orders for a buyer, newest first."""
+        if not buyer_id:
+            return []
+
+        return (
+            Order.query.filter_by(buyer_id=buyer_id)
+            .order_by(Order.created_at.desc())
+            .all()
         )
-        VALUES (
-            :id,
-            :order_id,
-            :artwork_id,
-            :quantity,
-            :price_at_purchase
+
+    def get_incoming_orders_by_artist(self, artist_profile_id):
+        """
+        Return distinct orders containing artworks owned by the artist.
+        """
+        if not artist_profile_id:
+            return []
+
+        return (
+            db.session.query(Order)
+            .join(OrderItem, OrderItem.order_id == Order.id)
+            .join(Artwork, OrderItem.artwork_id == Artwork.id)
+            .filter(Artwork.artist_profile_id == artist_profile_id)
+            .distinct()
+            .order_by(Order.created_at.desc())
+            .all()
         )
-        RETURNING
-            id,
-            order_id,
-            artwork_id,
-            quantity,
-            price_at_purchase
-    """)
 
-    # Execute query
-    result = db.session.execute(query, {
-        "id": order_item_id,
-        "order_id": order_id,
-        "artwork_id": artwork_id,
-        "quantity": quantity,
-        "price_at_purchase": price_at_purchase,
-    })
+    def artist_has_order(self, artist_profile_id, order_id):
+        """
+        Return True when the order includes at least one artwork
+        owned by the given artist profile.
+        """
+        if not artist_profile_id or not order_id:
+            return False
 
-    # Commit transaction
-    db.session.commit()
+        return (
+            db.session.query(Order.id)
+            .join(OrderItem, OrderItem.order_id == Order.id)
+            .join(Artwork, OrderItem.artwork_id == Artwork.id)
+            .filter(
+                Order.id == order_id,
+                Artwork.artist_profile_id == artist_profile_id,
+            )
+            .first()
+            is not None
+        )
 
-    # Return inserted row
-    return result.fetchone()
+    def update_order_status(
+        self,
+        order_id,
+        status,
+        shipping_company=None,
+        tracking_number=None,
+    ):
+        """Update shipment fields on an order and return the model."""
+        order = db.session.get(Order, order_id)
+        if not order:
+            return None
 
+        order.status = status
+        if shipping_company is not None:
+            order.shipping_company = shipping_company
+        if tracking_number is not None:
+            order.tracking_number = tracking_number
 
-# =========================================================
-# Retrieve Buyer Orders
-# =========================================================
-def get_orders_by_buyer(buyer_id):
-    """
-    Retrieve all orders placed by a buyer.
+        return self.save(order)
 
-    Args:
-        buyer_id (UUID): Buyer user ID.
+    def get_buyer_notification_info(self, buyer_id):
+        """
+        Return the active buyer User for shipment notifications.
 
-    Returns:
-        list: Buyer orders ordered by newest first.
-    """
+        Returns None when the buyer does not exist or is inactive.
+        """
+        if not buyer_id:
+            return None
 
-    query = text("""
-        SELECT
-            id,
-            buyer_id,
-            subtotal,
-            shipping_fee,
-            total_amount,
-            status,
-            shipping_company,
-            tracking_number,
-            created_at
-        FROM orders
-        WHERE buyer_id = :buyer_id
-        ORDER BY created_at DESC
-    """)
+        user = db.session.get(User, buyer_id)
+        if not user or not user.is_active:
+            return None
 
-    result = db.session.execute(query, {
-        "buyer_id": buyer_id,
-    })
-
-    return result.fetchall()
+        return user
 
 
-# =========================================================
-# Retrieve Artist Incoming Orders
-# =========================================================
-def get_incoming_orders_by_artist(artist_profile_id):
-    """
-    Retrieve all incoming orders for an artist.
-
-    Logic:
-    - Join orders with order_items
-    - Join order_items with artworks
-    - Filter artworks owned by artist
-
-    Args:
-        artist_profile_id (UUID): Artist profile ID.
-
-    Returns:
-        list: Incoming artist orders.
-    """
-
-    query = text("""
-        SELECT DISTINCT
-            o.id,
-            o.buyer_id,
-            o.subtotal,
-            o.shipping_fee,
-            o.total_amount,
-            o.status,
-            o.shipping_company,
-            o.tracking_number,
-            o.created_at
-        FROM orders o
-        JOIN order_items oi
-            ON o.id = oi.order_id
-        JOIN artworks a
-            ON oi.artwork_id = a.id
-        WHERE a.artist_profile_id = :artist_profile_id
-        ORDER BY o.created_at DESC
-    """)
-
-    result = db.session.execute(query, {
-        "artist_profile_id": artist_profile_id,
-    })
-
-    return result.fetchall()
-
-
-# =========================================================
-# Update Order Status
-# =========================================================
-def update_order_status(
-    order_id,
-    status,
-    shipping_company=None,
-    tracking_number=None,
-):
-    """
-    Update order shipment and status information.
-
-    Args:
-        order_id (UUID): Order ID.
-        status (str): New order status.
-        shipping_company (str): Shipping provider.
-        tracking_number (str): Shipment tracking number.
-
-    Returns:
-        Row: Updated order row.
-    """
-
-    query = text("""
-        UPDATE orders
-        SET
-            status = :status,
-            shipping_company = :shipping_company,
-            tracking_number = :tracking_number,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = :order_id
-        RETURNING
-            id,
-            buyer_id,
-            subtotal,
-            shipping_fee,
-            total_amount,
-            status,
-            shipping_company,
-            tracking_number,
-            created_at
-    """)
-
-    result = db.session.execute(query, {
-        "order_id": order_id,
-        "status": status,
-        "shipping_company": shipping_company,
-        "tracking_number": tracking_number,
-    })
-
-    db.session.commit()
-
-    return result.fetchone()
-
-# =========================================================
-# Get buyer notification info
-# =========================================================
-
-def get_buyer_notification_info(buyer_id):
-    """
-    Retrieve the buyer name and Firebase token used for
-    shipment notifications.
-
-    The order service uses this after an order is marked
-    as shipped so the notification goes to the real buyer
-    instead of using a hardcoded placeholder token.
-    """
-
-    query = text("""
-        SELECT
-            name,
-            fcm_token
-        FROM users
-        WHERE id = :buyer_id
-          AND is_active = true
-    """)
-
-    result = db.session.execute(query, {
-        "buyer_id": buyer_id,
-    })
-
-    return result.fetchone()
-
-# =========================================================
-# Get order items
-# =========================================================
-
-def get_order_items(order_id):
-    query = text("""
-        SELECT
-            oi.id,
-            oi.order_id,
-            oi.artwork_id,
-            oi.quantity,
-            oi.price_at_purchase,
-            a.title,
-            a.artwork_image_url
-        FROM order_items oi
-        JOIN artworks a
-            ON oi.artwork_id = a.id
-        WHERE oi.order_id = :order_id
-    """)
-
-    result = db.session.execute(query, {
-        "order_id": order_id,
-    })
-
-    return result.fetchall()
+order_repo = OrderRepository()

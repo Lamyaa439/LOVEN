@@ -20,6 +20,8 @@ import 'features/artist_profile/model/artist_repository.dart';
 
 import 'features/cart/data/repositories/cart_repository.dart';
 import 'features/cart/controller/cubit/cart_cubit.dart';
+import 'package:loven/features/artist_profile/model/artist_repository.dart';
+import 'features/artist_profile/controller/artist_profile_cubit.dart';
 
 import 'features/artwork/data/repositories/artwork_repository.dart';
 import 'features/artwork/controller/cubit/artwork_cubit.dart';
@@ -77,6 +79,15 @@ class _LovenAppState extends State<LovenApp> {
   final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
+  /// Shared artwork data layer — injected into [HomeBloc] and [ArtworkCubit]
+  /// so both features use one [ApiClient] instance.
+  late final ArtworkRepository _artworkRepository;
+  /// Order checkout and listing — shares the app-wide [ApiClient].
+  late final OrderRepository _orderRepository;
+  /// Artist profile and profile-scoped artwork access.
+  late final ArtistRepository _artistRepository;
+  late final FavoritesRepository _favoritesRepository;
+  late final VerificationRequestRepository _verificationRequestRepository;
   late final AuthCubit _authCubit;
   late final AppRouter _appRouter;
   
@@ -90,17 +101,24 @@ class _LovenAppState extends State<LovenApp> {
       apiClient: _apiClient,
       tokenStorage: _tokenStorage,
     );
-    
+    // Single repository instance wired to the shared ApiClient.
+    _artworkRepository = ArtworkRepository(apiClient: _apiClient);
+    _orderRepository = OrderRepository(apiClient: _apiClient);
+    _artistRepository = ArtistRepository(apiClient: _apiClient);
+    _favoritesRepository = FavoritesRepository(apiClient: _apiClient);
+    _verificationRequestRepository = VerificationRequestRepository(
+      apiClient: _apiClient,
+    );
     _authCubit = AuthCubit(
       authRepository: _authRepository,
-      )..checkAuthStatus();
-      
-      _appRouter = AppRouter(
-        authCubit: _authCubit,
-        apiClient: _apiClient,
-        tokenStorage: _tokenStorage,
-      );
-    }
+      tokenStorage: _tokenStorage,
+    )..checkAuthStatus();
+    _appRouter = AppRouter(
+      _authCubit,
+      artistRepository: _artistRepository,
+      verificationRequestRepository: _verificationRequestRepository,
+    );
+  }
 
   @override
   void dispose() {
@@ -109,8 +127,17 @@ class _LovenAppState extends State<LovenApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
+Widget build(BuildContext context) {
+  return MultiRepositoryProvider(
+    providers: [
+      RepositoryProvider<ArtistRepository>.value(
+        value: _artistRepository,
+      ),
+      RepositoryProvider<AuthRepository>.value(
+        value: _authRepository,
+      ),
+    ],
+    child: MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _authCubit),
 
@@ -120,85 +147,58 @@ class _LovenAppState extends State<LovenApp> {
 
         BlocProvider(
           create: (context) => HomeBloc(
-            artworkRepository: ArtworkRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
+            artworkRepository: _artworkRepository,
           )..add(FetchHomeData()),
         ),
+
         BlocProvider(
           create: (context) => ThemeBloc(),
         ),
 
         BlocProvider(
-          create: (context) => ArtistProfileCubit(
-            repository: ArtistRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
-          ),
-        ),
-        
-        BlocProvider(
           create: (context) => CartCubit(
-            CartRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
+            CartRepository(apiClient: _apiClient),
           ),
         ),
-        
+
         BlocProvider(
           create: (context) => ArtworkCubit(
-            ArtworkRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
+            _artworkRepository,
           ),
         ),
-        
+
         BlocProvider(
           create: (context) => OrderCubit(
-            OrderRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
+            _orderRepository,
           ),
         ),
-        
+
         BlocProvider(
           create: (context) => FeedbackCubit(
             FeedbackRepository(
               apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
             ),
           ),
         ),
-        
+
         BlocProvider(
           create: (context) => ReportCubit(
             ReportRepository(
               apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
             ),
           ),
         ),
-        
+
+        // FIXED: removed automatic loadFavorites()
         BlocProvider(
           create: (_) => FavoritesCubit(
-            FavoritesRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
-          )..loadFavorites(),
+            _favoritesRepository,
+          ),
         ),
-        
+
         BlocProvider(
           create: (_) => VerificationRequestCubit(
-            VerificationRequestRepository(
-              apiClient: _apiClient,
-              tokenStorage: _tokenStorage,
-            ),
+            _verificationRequestRepository,
           ),
         ),
       ],
@@ -223,6 +223,7 @@ class _LovenAppState extends State<LovenApp> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

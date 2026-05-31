@@ -13,10 +13,11 @@ Architecture:
 """
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import (
-    jwt_required,
-    get_jwt_identity,
-    get_jwt,
+from flask_jwt_extended import jwt_required
+
+from app.core.auth_utils import (
+    get_authenticated_user_id,
+    get_authenticated_user_role,
 )
 
 from app.services.facade.verification_request_facade import (
@@ -45,32 +46,6 @@ def _json_body():
     """
 
     return request.get_json(silent=True) or {}
-
-
-def get_authenticated_user_id():
-    """
-    Extract authenticated user ID from JWT payload.
-    """
-
-    current_user_identity = get_jwt_identity()
-
-    if isinstance(current_user_identity, dict):
-        return current_user_identity.get("user_id")
-
-    return current_user_identity
-
-
-def get_authenticated_user_role():
-    """
-    Extract authenticated user role from JWT claims.
-    """
-
-    claims = get_jwt()
-
-    return (
-        claims.get("role")
-        or claims.get("system_role")
-    )
 
 
 def require_admin():
