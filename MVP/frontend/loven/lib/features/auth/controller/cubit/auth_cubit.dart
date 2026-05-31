@@ -93,6 +93,24 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+  emit(AuthLoading());
+
+  try {
+    await _authRepository.signInWithGoogle();
+
+    final user = await _authRepository.getCurrentUser();
+
+    await _tokenStorage.saveUserRole(
+      user.systemRole,
+    );
+
+    emit(AuthSuccess(user: user));
+  } catch (e) {
+    emit(AuthFailure(_extractMessage(e)));
+  }
+}
+
   Future<void> signup({
     required String name,
     required String email,
