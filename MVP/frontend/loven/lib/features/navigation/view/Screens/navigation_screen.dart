@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
-import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
-import 'package:loven/features/auth/view/screens/profile_screen.dart';
 import 'package:loven/features/cart/view/screens/cart_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
@@ -37,19 +35,14 @@ class _NavigationScreenState extends State<NavigationScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!widget.isGuest && mounted) {
+      if (!widget.isGuest) {
         context.read<FavoritesCubit>().loadFavorites();
       }
     });
   }
 
   @override
-  void dispose() {
-    _navigationCubit.close();
-    super.dispose();
-  }
-
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -76,9 +69,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           return IndexedStack(
             index: state.currentIndex,
             children: [
-              HomeScreen(
-                isGuest: widget.isGuest,
-              ),
+              HomeScreen(isGuest: widget.isGuest),
               widget.isGuest
                   ? _buildGuestGate(
                       context,
@@ -148,9 +139,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 ),
               ),
               onPressed: () => context.push('/auth'),
-              child: const Text(
-                'Sign Up / Login',
-              ),
+              child: const Text('Sign Up / Login'),
             ),
           ],
         ),

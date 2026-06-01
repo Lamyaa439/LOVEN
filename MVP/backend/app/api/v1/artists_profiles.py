@@ -7,6 +7,7 @@ from app.services.facade.artwork_facade import ArtworkFacade
 artist_profiles_bp = Blueprint(
     "artist_profiles",
     __name__,
+    url_prefix="/artist-profiles",
 )
 
 # ----------------- Helper Functions -----------------
