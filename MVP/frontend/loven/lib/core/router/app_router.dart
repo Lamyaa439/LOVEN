@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -28,7 +29,7 @@ import 'package:loven/features/verification_request/view/screens/verification_re
 
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
-import 'package:loven/features/artist_profile/model/artist_repository.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
 import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_screen.dart';
 
@@ -51,8 +52,8 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
   GoRouterRefreshStream(Stream<dynamic> stream) {
     _subscription = stream.asBroadcastStream().listen(
-      (_) => notifyListeners(),
-    );
+          (_) => notifyListeners(),
+        );
   }
 
   @override

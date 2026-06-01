@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
@@ -45,15 +46,13 @@ class FavoritesScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Your Favorites',
-                          style:
-                              theme.textTheme.headlineSmall?.copyWith(
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(
@@ -137,7 +136,7 @@ class _FavoriteTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       onTap: () {
         final artworkModel = ArtworkModel.fromJson(artwork);
-        
+
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -147,6 +146,7 @@ class _FavoriteTile extends StatelessWidget {
               heightFactor: 0.92,
               child: ArtDetailsScreen(
                 artItem: artworkModel,
+                artistRepository: context.read<ArtistRepository>(),
                 isGuest: false,
               ),
             );
@@ -172,9 +172,7 @@ class _FavoriteTile extends StatelessWidget {
               },
             ),
           ),
-
           const SizedBox(width: 14),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,9 +185,7 @@ class _FavoriteTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(height: 6),
-
                 Text(
                   '${artwork['price'] ?? 0} SAR',
                   style: TextStyle(
@@ -200,12 +196,9 @@ class _FavoriteTile extends StatelessWidget {
               ],
             ),
           ),
-
           IconButton(
             onPressed: () {
-              context
-                  .read<FavoritesCubit>()
-                  .toggleFavorite(artworkId);
+              context.read<FavoritesCubit>().toggleFavorite(artworkId);
             },
             icon: Icon(
               Icons.favorite,

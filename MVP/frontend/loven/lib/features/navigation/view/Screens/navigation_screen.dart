@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
-import 'package:loven/features/artist_profile/model/artist_repository.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -32,14 +30,12 @@ class NavigationScreen extends StatefulWidget {
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
-  late final NavigationBarCubit _navigationCubit;
-
   @override
   void initState() {
     super.initState();
 
-    _navigationCubit = NavigationBarCubit()
-      ..navigateTo(widget.initialIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!widget.isGuest && mounted) {
@@ -54,86 +50,60 @@ class _NavigationScreenState extends State<NavigationScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider<NavigationBarCubit>.value(
-      value: _navigationCubit,
-      child: Builder(
-        builder: (context) {
-          return Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: Image.asset(
-                'assets/images/loven-logo.png',
-                height: 40,
-              ),
-              centerTitle: true,
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    context.watch<ThemeBloc>().state == ThemeMode.light
-                        ? Icons.nightlight_outlined
-                        : Icons.light_mode_outlined,
-                  ),
-                  onPressed: () {
-                    context.read<ThemeBloc>().toggleTheme();
-                  },
-                ),
-              ],
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Image.asset(
+          'assets/images/loven-logo.png',
+          height: 40,
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              context.watch<ThemeBloc>().state == ThemeMode.light
+                  ? Icons.nightlight_outlined
+                  : Icons.light_mode_outlined,
             ),
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            extendBody: true,
-            body: BlocBuilder<NavigationBarCubit, NavigationBarState>(
-              builder: (context, state) {
-                return IndexedStack(
-                  index: state.currentIndex,
-                  children: [
-                    HomeScreen(
-                      isGuest: widget.isGuest,
-                    ),
-                    widget.isGuest
-                        ? _buildGuestGate(
-                            context,
-                            'Sign in to view your favorites',
-                          )
-                        : const FavoritesScreen(),
-                    widget.isGuest
-                        ? _buildGuestGate(
-                            context,
-                            'Sign in to view your cart',
-                          )
-                        : const CartScreen(),
-widget.isGuest
-    ? _buildGuestGate(
-        context,
-        'Sign in to view your profile',
-      )
-    : BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          if (authState is AuthSuccess) {
-            final role =
-                authState.user?.systemRole.trim().toLowerCase();
-
-            print('USER ROLE: $role');
-
-            if (role == 'artist') {
-              return ArtistProfileScreen(
-                repository: context.read<ArtistRepository>(),
-              );
-            }
-          }
-
-          return const ProfileScreen();
-        },
+            onPressed: () => context.read<ThemeBloc>().toggleTheme(),
+          ),
+        ],
       ),
-                  ],
-                );
-              },
-            ),
-            bottomNavigationBar: const NavigationWidget(),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBody: true,
+      body: BlocBuilder<NavigationBarCubit, NavigationBarState>(
+        builder: (context, state) {
+          return IndexedStack(
+            index: state.currentIndex,
+            children: [
+              HomeScreen(
+                isGuest: widget.isGuest,
+              ),
+              widget.isGuest
+                  ? _buildGuestGate(
+                      context,
+                      "Sign in to view your favorites",
+                    )
+                  : const FavoritesScreen(),
+              widget.isGuest
+                  ? _buildGuestGate(
+                      context,
+                      "Sign in to view your cart",
+                    )
+                  : const CartScreen(),
+              widget.isGuest
+                  ? _buildGuestGate(
+                      context,
+                      "Sign in to view your profile",
+                    )
+                  : ArtistProfileScreen(
+                      repository: context.read<ArtistRepository>(),
+                    ),
+            ],
           );
         },
       ),
+      bottomNavigationBar: const NavigationWidget(),
     );
   }
 
@@ -177,10 +147,10 @@ widget.isGuest
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: () {
-                context.push('/auth');
-              },
-              child: const Text('Sign Up / Login'),
+              onPressed: () => context.push('/auth'),
+              child: const Text(
+                'Sign Up / Login',
+              ),
             ),
           ],
         ),

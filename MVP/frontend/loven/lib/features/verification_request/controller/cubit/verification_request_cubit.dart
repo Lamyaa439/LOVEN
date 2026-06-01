@@ -33,9 +33,12 @@ class VerificationRequestCubit extends Cubit<VerificationRequestState> {
     emit(VerificationRequestLoading());
 
     try {
-      final requests = await _repository.fetchAllRequests();
+      final raw = await _repository.fetchAllRequests();
 
-      emit(VerificationRequestsLoaded(requests));
+      final typedRequests =
+          (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
+
+      emit(VerificationRequestsLoaded(typedRequests));
     } catch (e) {
       emit(VerificationRequestError(e.toString()));
     }

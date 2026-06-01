@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
@@ -43,8 +46,7 @@ class ArtworkGridWidget extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: artworks.length,
-        gridDelegate:
-            const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
@@ -82,8 +84,7 @@ class _ArtworkCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final hasImage =
-        artwork.artworkImageUrl != null &&
-            artwork.artworkImageUrl!.isNotEmpty;
+        artwork.artworkImageUrl != null && artwork.artworkImageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () {
@@ -102,6 +103,7 @@ class _ArtworkCard extends StatelessWidget {
               child: ArtDetailsScreen(
                 artItem: artwork,
                 isGuest: isGuest,
+                artistRepository: context.read<ArtistRepository>(),
               ),
             );
           },
@@ -119,8 +121,7 @@ class _ArtworkCard extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
               child: Stack(
@@ -130,12 +131,10 @@ class _ArtworkCard extends StatelessWidget {
                       ? Image.network(
                           artwork.artworkImageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder:
-                              (_, __, ___) =>
-                                  const _ImagePlaceholder(),
+                          errorBuilder: (_, __, ___) =>
+                              const _ImagePlaceholder(),
                         )
                       : const _ImagePlaceholder(),
-
                   if (canManage)
                     Positioned(
                       top: 8,
@@ -152,11 +151,9 @@ class _ArtworkCard extends StatelessWidget {
                             size: 20,
                           ),
                           onPressed: () async {
-                            final confirmed =
-                                await showDialog<bool>(
+                            final confirmed = await showDialog<bool>(
                               context: context,
-                              builder:
-                                  (dialogContext) {
+                              builder: (dialogContext) {
                                 return AlertDialog(
                                   title: const Text(
                                     'Delete artwork?',
@@ -176,7 +173,6 @@ class _ArtworkCard extends StatelessWidget {
                                         'Cancel',
                                       ),
                                     ),
-
                                     ElevatedButton(
                                       onPressed: () {
                                         Navigator.pop(
@@ -193,8 +189,7 @@ class _ArtworkCard extends StatelessWidget {
                               },
                             );
 
-                            if (confirmed == true &&
-                                onDelete != null) {
+                            if (confirmed == true && onDelete != null) {
                               await onDelete!(
                                 artwork,
                               );
@@ -206,39 +201,28 @@ class _ArtworkCard extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     artwork.title,
                     maxLines: 1,
-                    overflow:
-                        TextOverflow.ellipsis,
-                    style: theme
-                        .textTheme.titleMedium
-                        ?.copyWith(
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: 13,
                     ),
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
                     _formatPrice(
                       artwork.price,
                     ),
-                    style: theme
-                        .textTheme.bodyMedium
-                        ?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       fontSize: 12,
-                      fontWeight:
-                          FontWeight.w600,
-                      color:
-                          AppColors.deepPurple,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.deepPurple,
                     ),
                   ),
                 ],
@@ -259,8 +243,7 @@ class _ArtworkCard extends StatelessWidget {
   }
 }
 
-class _ImagePlaceholder
-    extends StatelessWidget {
+class _ImagePlaceholder extends StatelessWidget {
   const _ImagePlaceholder();
 
   @override

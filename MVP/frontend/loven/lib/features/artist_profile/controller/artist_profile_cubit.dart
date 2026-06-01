@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../model/artist_model.dart';
-import '../model/artist_repository.dart';
+import '../data/artist_repository.dart';
 import 'artist_profile_state.dart';
 
 /// Controller (ViewModel) for the logged-in artist's profile screen.

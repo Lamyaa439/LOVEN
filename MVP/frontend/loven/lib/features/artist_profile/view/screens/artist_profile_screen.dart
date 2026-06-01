@@ -13,7 +13,7 @@ import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
 import '../../../../core/res/theme/app_colors.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
-import '../../model/artist_repository.dart';
+import '../../data/artist_repository.dart';
 import '../widgets/artist_header_widget.dart';
 
 class ArtistProfileScreen extends StatefulWidget {
@@ -27,10 +27,10 @@ class ArtistProfileScreen extends StatefulWidget {
   final String? artistProfileId;
 
   @override
-  State<ArtistProfileScreen> createState() =>
-      _ArtistProfileScreenState();
+  State<ArtistProfileScreen> createState() => _ArtistProfileScreenState();
 }
 
+// all cubit handling and build() should be inside _ArtistProfileScreenState
 class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   late final ArtistProfileCubit cubit;
 
@@ -61,7 +61,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
 
   Future<void> _reload() {
     if (_isPublicView && widget.artistProfileId != null) {
-      return cubit.fetchPublicArtistProfile(widget.artistProfileId!);
+      return cubit.fetchPublicArtistProfile(
+        widget.artistProfileId!,
+      );
     }
 
     return cubit.fetchMyProfileData();
@@ -197,12 +199,10 @@ class _SuccessContent extends StatelessWidget {
       final sub = data['sub'];
 
       if (sub is Map<String, dynamic>) {
-        return sub['role']?.toString() ??
-            sub['system_role']?.toString();
+        return sub['role']?.toString() ?? sub['system_role']?.toString();
       }
 
-      return data['role']?.toString() ??
-          data['system_role']?.toString();
+      return data['role']?.toString() ?? data['system_role']?.toString();
     } catch (_) {
       return null;
     }
@@ -217,6 +217,7 @@ class _SuccessContent extends StatelessWidget {
       future: _getRoleFromToken(),
       builder: (context, snapshot) {
         final role = snapshot.data;
+
         final showArtistFeatures = isPublicView || role == 'artist';
 
         return RefreshIndicator(
@@ -233,7 +234,12 @@ class _SuccessContent extends StatelessWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    20,
+                    4,
+                    20,
+                    0,
+                  ),
                   child: Divider(
                     height: 1,
                     color: theme.dividerColor,
@@ -255,7 +261,12 @@ class _SuccessContent extends StatelessWidget {
               if (showArtistFeatures)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      24,
+                      20,
+                      12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -302,7 +313,9 @@ class _SuccessContent extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(
+                            height: 28,
+                          ),
                         ],
                         Text(
                           'Gallery',
@@ -450,9 +463,7 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                onRetry();
-              },
+              onPressed: onRetry,
               child: const Text('Retry'),
             ),
           ],

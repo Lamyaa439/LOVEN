@@ -16,8 +16,7 @@
 /// ========================================================================
 
 import 'package:loven/core/network/api_constants.dart';
-
-import 'artist_model.dart';
+import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 class ArtistRepository {
   final ApiClient _apiClient;
@@ -133,8 +132,7 @@ class ArtistRepository {
     if (price != null) body['price'] = price;
 
     if (quantityAvailable != null) {
-      body['quantity_available'] =
-          quantityAvailable;
+      body['quantity_available'] = quantityAvailable;
     }
 
     if (shippingFee != null) {
@@ -142,8 +140,7 @@ class ArtistRepository {
     }
 
     if (artworkImageUrl != null) {
-      body['artwork_image_url'] =
-          artworkImageUrl;
+      body['artwork_image_url'] = artworkImageUrl;
     }
 
     if (status != null) {
