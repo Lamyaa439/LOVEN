@@ -25,16 +25,21 @@ class NavigationScreen extends StatefulWidget {
     this.isGuest = false,
   });
 
-  @override
-  State<NavigationScreen> createState() => _NavigationScreenState();
+ @override
+ State<NavigationScreen> createState() => _NavigationScreenState();
+  void dispose() {
+    _navigationCubit.close();
+    super.dispose();
 }
 
-class _NavigationScreenState extends State<NavigationScreen> {
+ 
+
+class _NavigationScreenState extends State<NavigationScreen> {}
   @override
-  void initState() {
+  void? initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback(_) {
       context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,14 +47,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
         context.read<FavoritesCubit>().loadFavorites();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _navigationCubit.close();
-    super.dispose();
-  }
-
+  
+@override
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -157,4 +156,5 @@ class _NavigationScreenState extends State<NavigationScreen> {
       ),
     );
   }
+}
 }
