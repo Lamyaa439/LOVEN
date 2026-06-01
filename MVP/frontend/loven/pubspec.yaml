@@ -80,7 +80,7 @@ flutter:
          weight: 700     
         
   assets:
-    - .env
+    - assets/.env
     - assets/images/ #For art pieces and backgrounds
     - assets/icons/ # For LOVEN branding
     - assets/fonts/ # For custom SVGs (such as cart, heart, etc.)
