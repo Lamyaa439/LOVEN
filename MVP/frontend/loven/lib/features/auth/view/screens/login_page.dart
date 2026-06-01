@@ -392,11 +392,7 @@ class _LoginPageState extends State<LoginPage> {
                       label: 'Sign in with Google',
                       onTap: isLoading
                       ? () {}
-                      : () {
-                        context
-                        .read<AuthCubit>()
-                        .signInWithGoogle();
-                      },
+                      : () {},
                     ),
 
                     const SizedBox(height: 10),
