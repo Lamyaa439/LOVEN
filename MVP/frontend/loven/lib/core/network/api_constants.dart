@@ -6,22 +6,22 @@ import 'package:loven/core/storage/token_storage.dart';
 
 /// ========================================================================
 /// API Client Configuration & Endpoints
-/// 
+///
 /// This file contains the core API networking layer using Dio.
-/// It implements Clean Architecture principles by separating the 
-/// endpoints (ApiEndpoints) from the networking logic (ApiClient).
-/// Base URLs are securely loaded from environment variables (.env).
+/// It implements Clean Architecture principles by separating the
+/// endpoints ([ApiConstants]) from the networking logic ([ApiClient]).
 ///
 /// Authentication:
-/// An [InterceptorsWrapper] automatically reads the JWT from
-/// [TokenStorage] and attaches it as a Bearer token on every outgoing
-/// request. Public endpoints (login, register) simply have no stored
-/// token, so the header is skipped — no per-route opt-out needed.
+/// - A request interceptor attaches the access JWT from [TokenStorage].
+/// - A response interceptor renews expired sessions via `POST /refresh`
+///   and retries the failed call once (see [_SessionInterceptor]).
 /// ========================================================================
 
+/// Dio [RequestOptions.extra] flag — prevents infinite retry loops after refresh.
+const String _kRetriedAfterRefreshKey = 'retried_after_refresh';
 
 /// Holds URI paths passed to [ApiClient] (Dio). Every path is **relative to**
-/// [ApiClient]'s `baseUrl`, which must be the API root (e.g. `http://host/api/v1`
+/// [ApiClient.baseUrl], which must be the API root (e.g. `http://host/api/v1`
 /// from `.env` `BASE_URL`).
 ///
 /// ## Path conventions
@@ -52,7 +52,7 @@ class ApiConstants {
   static const String logout = '/logout';
   static const String changePassword = '/change-password';
   static const String currentUser = '/account/me';
-  
+
   // =====================================================
   // Artist profiles (root-mounted: /api/v1/artist-profiles/…)
   // =====================================================
@@ -144,13 +144,10 @@ class ApiConstants {
 
   static const String verificationRequests = '/verification-requests';
 
-static const String adminVerificationRequests =
-    '/verification-requests';
+  static const String adminVerificationRequests = '/verification-requests';
 
-static String verificationRequestStatus(
-  String requestId,
-) =>
-    '/verification-requests/$requestId/status';
+  static String verificationRequestStatus(String requestId) =>
+      '/verification-requests/$requestId/status';
 
   // =====================================================
   // Payments (feature prefix: /api/v1/payments/…)
@@ -173,17 +170,29 @@ static String verificationRequestStatus(
 /// Accepts a [TokenStorage] instance to power the automatic auth interceptor.
 /// Create once at app startup and inject into all repositories.
 class ApiClient {
+  /// Single, version-controlled fallback when `.env` is missing or empty.
+  static const String defaultBaseUrl =
+      'http://34.224.37.128:5000/api/v1';
+
   late final Dio _dio;
   final TokenStorage _tokenStorage;
 
-  ApiClient({required TokenStorage tokenStorage})
-      : _tokenStorage = tokenStorage {
-    final String baseUrl =
-        dotenv.env['BASE_URL'] ?? 'http://16.170.246.241:5000/api/v1';
+  /// Resolved API root used by this client instance.
+  final String baseUrl;
 
+  VoidCallback? _onSessionExpired;
+
+  /// Coalesces parallel 401s into one refresh call (avoids token stampede).
+  Future<void>? _refreshInFlight;
+
+  ApiClient({
+    required TokenStorage tokenStorage,
+    String? baseUrl,
+  })  : _tokenStorage = tokenStorage,
+        baseUrl = baseUrl ?? resolveBaseUrl() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: baseUrl,
+        baseUrl: this.baseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -193,40 +202,113 @@ class ApiClient {
       ),
     );
 
-    // =====================================================================
-    // Auth Interceptor
-    // Reads the JWT from secure storage before every request and attaches
-    // it as a Bearer token. For unauthenticated endpoints (login, register)
-    // the token will be null and the header is simply not added.
-    // =====================================================================
+    _dio.interceptors.add(_AuthRequestInterceptor(_tokenStorage));
     _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // Callers that set Authorization explicitly (e.g. POST /refresh
-          // with the refresh JWT) must not be overwritten by the access token.
-          final existingAuth = options.headers['Authorization'];
-          if (existingAuth != null && existingAuth.toString().isNotEmpty) {
-            handler.next(options);
-            return;
-          }
-
-          final token = await _tokenStorage.getAccessToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
+      _SessionInterceptor(
+        dio: _dio,
+        tokenStorage: _tokenStorage,
+        refreshAccessToken: _coalescedRefresh,
+        onSessionExpired: _notifySessionExpired,
       ),
     );
 
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: true,
-        error: true,
-      ));
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          requestHeader: true,
+          error: true,
+        ),
+      );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Base URL resolution (Infrastructure / configuration boundary)
+  // ---------------------------------------------------------------------------
+
+  /// Resolves the API root from `.env`, with a single explicit dev fallback.
+  ///
+  /// **Clean Architecture:** Repositories must not read `dotenv` themselves.
+  /// Configuration is resolved once at the infrastructure edge ([ApiClient])
+  /// so the rest of the app depends on a stable, injected base URL.
+  static String resolveBaseUrl() {
+    final fromEnv = dotenv.env['BASE_URL']?.trim();
+
+    if (fromEnv != null && fromEnv.isNotEmpty) {
+      return _normalizeBaseUrl(fromEnv);
+    }
+
+    // Warn in debug so missing `.env` is obvious during local runs.
+    if (kDebugMode) {
+      debugPrint(
+        '[ApiClient] BASE_URL is unset — using defaultBaseUrl ($defaultBaseUrl). '
+        'Add BASE_URL to .env for team/staging hosts.',
+      );
+    }
+
+    return defaultBaseUrl;
+  }
+
+  /// Ensures Dio concatenation is predictable (`host/api/v1` + `/carts/`).
+  static String _normalizeBaseUrl(String url) {
+    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Session lifecycle hook (presentation layer wires AuthCubit here)
+  // ---------------------------------------------------------------------------
+
+  /// Registers a callback when refresh fails after a 401 (session is invalid).
+  ///
+  /// **Why a callback instead of importing [AuthCubit]?** The network layer
+  /// must not depend on feature/UI code. [main.dart] attaches
+  /// `authCubit.handleSessionExpired` after DI is ready — inversion of control.
+  void attachSessionExpiredHandler(VoidCallback onSessionExpired) {
+    _onSessionExpired = onSessionExpired;
+  }
+
+  void _notifySessionExpired() {
+    _onSessionExpired?.call();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Token refresh (used by [_SessionInterceptor], mirrors AuthRepository)
+  // ---------------------------------------------------------------------------
+
+  Future<void> _refreshAccessToken() async {
+    final refreshToken = await _tokenStorage.getRefreshToken();
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw Exception('No refresh token available');
+    }
+
+    final response = await postWithBearerToken(
+      ApiConstants.refresh,
+      bearerToken: refreshToken,
+      data: {},
+    );
+
+    final data = response.data;
+    if (data is! Map) {
+      throw Exception('Invalid refresh response');
+    }
+
+    final accessToken = data['access_token']?.toString();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw Exception('Server did not return an access token');
+    }
+
+    await _tokenStorage.saveAccessToken(accessToken);
+  }
+
+  /// One refresh at a time; concurrent 401s await the same future.
+  Future<void> _coalescedRefresh() {
+    _refreshInFlight ??= _refreshAccessToken().whenComplete(() {
+      _refreshInFlight = null;
+    });
+    return _refreshInFlight!;
   }
 
   // =======================================================================
@@ -267,7 +349,10 @@ class ApiClient {
   }
 
   /// Generic GET request method with centralized error handling
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
       return response;
@@ -277,11 +362,6 @@ class ApiClient {
   }
 
   /// Sends a PATCH request to [path] (relative to [BaseOptions.baseUrl]).
-  ///
-  /// [data] is serialized to JSON by Dio. Used by repositories for partial
-  /// updates (e.g. cart item quantity). Returns the raw [Response] on
-  /// success; non-2xx status codes are converted to [Exception] via
-  /// [_handleError] so callers can surface backend messages in the UI.
   Future<Response> patch(String path, {Map<String, dynamic>? data}) async {
     try {
       final response = await _dio.patch(path, data: data);
@@ -292,10 +372,6 @@ class ApiClient {
   }
 
   /// Sends a DELETE request to [path] (relative to [BaseOptions.baseUrl]).
-  ///
-  /// Used for resource removal (e.g. cart items, clearing a cart).
-  /// Returns the raw [Response] on success; failures throw [Exception]
-  /// with a message extracted from the backend response body.
   Future<Response> delete(String path) async {
     try {
       final response = await _dio.delete(path);
@@ -310,18 +386,119 @@ class ApiClient {
   // =======================================================================
 
   /// Extracts backend error messages safely to be displayed in the UI.
-  ///
-  /// The Flask backend returns errors under either the `"error"` key
-  /// (auth/validation) or the `"message"` key (general responses).
-  /// This handler checks both to ensure no error string is lost.
   String _handleError(DioException error) {
     if (error.response != null && error.response?.data != null) {
       final data = error.response!.data;
       if (data is Map) {
-        if (data.containsKey('error')) return data['error'];
-        if (data.containsKey('message')) return data['message'];
+        if (data.containsKey('error')) return data['error'].toString();
+        if (data.containsKey('message')) return data['message'].toString();
       }
     }
-    return "Network error occurred. Please try again later.";
+    return 'Network error occurred. Please try again later.';
+  }
+}
+
+// =============================================================================
+// Interceptors (kept private — infrastructure detail of this file)
+// =============================================================================
+
+/// Attaches the short-lived access JWT to outgoing requests.
+///
+/// Callers that set `Authorization` explicitly (e.g. `POST /refresh`) are
+/// left untouched so the refresh token is not overwritten.
+class _AuthRequestInterceptor extends Interceptor {
+  _AuthRequestInterceptor(this._tokenStorage);
+
+  final TokenStorage _tokenStorage;
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    final existingAuth = options.headers['Authorization'];
+    if (existingAuth != null && existingAuth.toString().isNotEmpty) {
+      handler.next(options);
+      return;
     }
+
+    final token = await _tokenStorage.getAccessToken();
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+
+    handler.next(options);
+  }
+}
+
+/// Handles expired access tokens: refresh once, retry once, then sign out.
+///
+/// **Why in the client layer?** Session renewal is a cross-cutting infrastructure
+/// concern. Repositories stay thin (one responsibility: map endpoints to DTOs)
+/// and do not each re-implement 401 handling.
+class _SessionInterceptor extends Interceptor {
+  _SessionInterceptor({
+    required Dio dio,
+    required TokenStorage tokenStorage,
+    required Future<void> Function() refreshAccessToken,
+    required void Function() onSessionExpired,
+  })  : _dio = dio,
+        _tokenStorage = tokenStorage,
+        _refreshAccessToken = refreshAccessToken,
+        _onSessionExpired = onSessionExpired;
+
+  final Dio _dio;
+  final TokenStorage _tokenStorage;
+  final Future<void> Function() _refreshAccessToken;
+  final void Function() _onSessionExpired;
+
+  static const _publicAuthPaths = {
+    ApiConstants.login,
+    ApiConstants.register,
+    ApiConstants.refresh,
+  };
+
+  @override
+  void onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final statusCode = err.response?.statusCode;
+    if (statusCode != 401) {
+      handler.next(err);
+      return;
+    }
+
+    final options = err.requestOptions;
+
+    // Do not refresh for auth endpoints or after we already retried.
+    if (_publicAuthPaths.contains(options.path) ||
+        options.extra[_kRetriedAfterRefreshKey] == true) {
+      handler.next(err);
+      return;
+    }
+
+    try {
+      await _refreshAccessToken();
+
+      final newAccessToken = await _tokenStorage.getAccessToken();
+      if (newAccessToken == null || newAccessToken.isEmpty) {
+        throw Exception('No access token after refresh');
+      }
+
+      final retryOptions = options.copyWith(
+        extra: Map<String, dynamic>.from(options.extra)
+          ..[_kRetriedAfterRefreshKey] = true,
+        headers: Map<String, dynamic>.from(options.headers)
+          ..['Authorization'] = 'Bearer $newAccessToken',
+      );
+
+      final response = await _dio.fetch(retryOptions);
+      handler.resolve(response);
+    } catch (_) {
+      await _tokenStorage.clearAllTokens();
+      _onSessionExpired();
+      handler.next(err);
+    }
+  }
 }
