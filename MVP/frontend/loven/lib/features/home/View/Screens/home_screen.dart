@@ -25,22 +25,23 @@ class HomeScreen extends StatelessWidget {
     context.push('/signup?fromGuest=true');
   }
 
-Future<void> _addArtworkToCart({
-  required BuildContext context,
-  required ArtworkModel art,
-}) async {
-  final artworkId = art.id;
+  Future<void> _addArtworkToCart({
+    required BuildContext context,
+    required ArtworkModel art,
+  }) async {
+    final artworkId = art.id;
 
-  if (artworkId.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Artwork ID missing'),
-      ),
-    );
-    return;
-  }
+    if (artworkId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Artwork ID missing')),
+      );
+      return;
+    }
 
-  final stock = art.quantityAvailable ?? 0;
+    final stock = art.quantityAvailable ?? 0;
+    int currentCartQuantity = 0;
+
+    final cartState = context.read<CartCubit>().state;
 
     if (cartState is CartLoaded) {
       for (final item in cartState.cart.items) {
@@ -50,34 +51,31 @@ Future<void> _addArtworkToCart({
         }
       }
     }
-  }
 
-  if (currentCartQuantity >= stock) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          stock == 1
-              ? 'Only 1 item is available in stock.'
-              : 'Only $stock items are available in stock.',
+    if (currentCartQuantity >= stock) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            stock == 1
+                ? 'Only 1 item is available in stock.'
+                : 'Only $stock items are available in stock.',
+          ),
         ),
-      ),
-    );
-    return;
-  }
-
-  await context.read<CartCubit>().addItem(
-        artworkId: artworkId,
-        quantity: 1,
       );
+      return;
+    }
 
-  await context.read<CartCubit>().getCart();
+    await context.read<CartCubit>().addItem(
+          artworkId: artworkId,
+          quantity: 1,
+        );
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text('${art.title} added to cart'),
-    ),
-  );
-}
+    await context.read<CartCubit>().getCart();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${art.title} added to cart')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,15 +245,11 @@ Future<void> _addArtworkToCart({
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       minimumSize: const Size(0, 34),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          999,
-                        ),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
                     child: const Text(
@@ -347,19 +341,19 @@ Future<void> _addArtworkToCart({
             artwork: art,
             isGuest: isGuest,
             onActionPressed: () async {
-  final isActuallyGuest =
-      isGuest || context.read<AuthCubit>().state is AuthGuest;
+              final isActuallyGuest =
+                  isGuest || context.read<AuthCubit>().state is AuthGuest;
 
-  if (isActuallyGuest) {
-    context.push('/auth');
-    return;
-  }
+              if (isActuallyGuest) {
+                context.push('/auth');
+                return;
+              }
 
-  await _addArtworkToCart(
-    context: context,
-    art: art,
-  );
-},
+              await _addArtworkToCart(
+                context: context,
+                art: art,
+              );
+            },
           );
         },
       ),
@@ -411,23 +405,17 @@ Future<void> _addArtworkToCart({
                     return;
                   }
 
-                  context.push(
-                    '/artist/$artistId',
-                  );
+                  context.push('/artist/$artistId');
                 },
                 child: Container(
                   width: 92,
-                  margin: const EdgeInsets.only(
-                    right: 18,
-                  ),
+                  margin: const EdgeInsets.only(right: 18),
                   child: Column(
                     children: [
                       CircleAvatar(
                         radius: 34,
                         backgroundImage: artwork.artistProfileImageUrl != null
-                            ? NetworkImage(
-                                artwork.artistProfileImageUrl!,
-                              )
+                            ? NetworkImage(artwork.artistProfileImageUrl!)
                             : null,
                         backgroundColor:
                             theme.colorScheme.primary.withOpacity(0.12),
@@ -439,9 +427,7 @@ Future<void> _addArtworkToCart({
                               )
                             : null,
                       ),
-                      const SizedBox(
-                        height: 8,
-                      ),
+                      const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -456,9 +442,7 @@ Future<void> _addArtworkToCart({
                             ),
                           ),
                           if (artwork.artistIsVerified) ...[
-                            const SizedBox(
-                              width: 4,
-                            ),
+                            const SizedBox(width: 4),
                             Icon(
                               Icons.verified_rounded,
                               size: 16,
@@ -506,9 +490,7 @@ Future<void> _addArtworkToCart({
         child: TextField(
           onChanged: (text) {
             context.read<HomeBloc>().add(
-                  FilterArtworks(
-                    searchText: text,
-                  ),
+                  FilterArtworks(searchText: text),
                 );
           },
           decoration: InputDecoration(
@@ -545,7 +527,6 @@ Future<void> _addArtworkToCart({
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final categoryName = categories[index];
-
           final isSelected = categoryName == selectedCategory;
 
           return Padding(
@@ -571,15 +552,11 @@ Future<void> _addArtworkToCart({
     return GestureDetector(
       onTap: () {
         context.read<HomeBloc>().add(
-              FilterArtworks(
-                category: title,
-              ),
+              FilterArtworks(category: title),
             );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 18,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.primary
