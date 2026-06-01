@@ -118,6 +118,6 @@ class OrderRepository {
       },
     );
 
-    return _asMap(response.data);
-  }
+  return _asMap(response.data);
+}
 }

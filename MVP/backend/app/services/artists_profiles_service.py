@@ -72,7 +72,11 @@ def _profile_to_dict(profile):
         "display_name": profile.display_name,
         "city": profile.city,
         "bio": profile.bio,
-        "profile_image_url": profile.user.profile_image_url if profile.user else None,
+        "profile_image_url": (
+            getattr(profile.user, "profile_image_url", None)
+            if profile.user
+            else None
+        ),
         "is_verified": profile.is_verified,
         "shipping_policy": profile.shipping_policy,
         "created_at": profile.created_at.isoformat() if profile.created_at else None,

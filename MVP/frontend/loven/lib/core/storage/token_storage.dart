@@ -11,34 +11,24 @@ class TokenStorage {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const String accessTokenKey = 'access_token';
-
   static const String refreshTokenKey = 'refresh_token';
+  static const String userRoleKey = 'user_role';
 
   // =====================================================
   // Session helpers
   // =====================================================
 
-  /// True when a non-empty access token is stored locally.
-  ///
-  /// Used at app launch ([AuthCubit.checkAuthStatus]) to distinguish
-  /// authenticated users from guests without calling the network.
   Future<bool> hasValidSession() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
 
-  /// True when the stored access token's `exp` claim is in the past.
-  ///
-  /// Decodes the JWT payload client-side (no signature verification — the
-  /// backend remains authoritative). Returns `true` when no token exists or
-  /// the payload cannot be parsed.
   Future<bool> isAccessTokenExpired() async {
     final token = await getAccessToken();
     if (token == null || token.isEmpty) return true;
     return _isJwtExpired(token);
   }
 
-  /// Parses the `exp` claim from [jwt] and compares it to the current time.
   bool _isJwtExpired(String jwt) {
     try {
       final parts = jwt.split('.');
@@ -110,6 +100,29 @@ class TokenStorage {
   Future<void> clearRefreshToken() async {
     await _storage.delete(
       key: refreshTokenKey,
+    );
+  }
+
+  // =====================================================
+  // User Role
+  // =====================================================
+
+  Future<void> saveUserRole(String role) async {
+    await _storage.write(
+      key: userRoleKey,
+      value: role,
+    );
+  }
+
+  Future<String?> getUserRole() async {
+    return await _storage.read(
+      key: userRoleKey,
+    );
+  }
+
+  Future<void> clearUserRole() async {
+    await _storage.delete(
+      key: userRoleKey,
     );
   }
 

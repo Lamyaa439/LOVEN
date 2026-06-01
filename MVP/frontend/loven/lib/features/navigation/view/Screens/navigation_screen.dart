@@ -3,14 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/auth/view/screens/profile_screen.dart';
+import 'package:loven/features/cart/view/screens/cart_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
+import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
+
 import '../../../../main.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
 import '../widget/navigation_widget.dart';
-import 'package:loven/features/cart/view/screens/cart_screen.dart';
-import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
 
 class NavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -34,17 +37,18 @@ class _NavigationScreenState extends State<NavigationScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
 
-      if (!widget.isGuest) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!widget.isGuest && mounted) {
         context.read<FavoritesCubit>().loadFavorites();
       }
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    debugPrint(
-      "NavigationScreen isGuest: ${widget.isGuest}",
-    );
+  void dispose() {
+    _navigationCubit.close();
+    super.dispose();
+  }
 
     return Scaffold(
       appBar: AppBar(
@@ -109,14 +113,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
   ) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.lock_outline,
               size: 64,
-              color: Colors.grey,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.45),
             ),
             const SizedBox(height: 16),
             Text(
@@ -124,7 +131,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 24),
@@ -135,6 +142,9 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
               onPressed: () => context.push('/auth'),

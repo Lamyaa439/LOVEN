@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/storage/token_storage.dart';
-import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
@@ -41,13 +40,13 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   void initState() {
     super.initState();
 
-    cubit = context.read<ArtistProfileCubit>();
+    cubit = ArtistProfileCubit(
+      repository: widget.repository,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_isPublicView) {
-        cubit.fetchPublicArtistProfile(
-          widget.artistProfileId!,
-        );
+        cubit.fetchPublicArtistProfile(widget.artistProfileId!);
       } else {
         cubit.fetchMyProfileData();
       }
@@ -56,6 +55,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
 
   @override
   void dispose() {
+    cubit.close();
     super.dispose();
   }
 
@@ -196,7 +196,6 @@ class _SuccessContent extends StatelessWidget {
       );
 
       final data = jsonDecode(payload);
-
       final sub = data['sub'];
 
       if (sub is Map<String, dynamic>) {
@@ -335,9 +334,6 @@ class _SuccessContent extends StatelessWidget {
                     isGuest: context.read<AuthCubit>().state is AuthGuest,
                     canManage: !isPublicView,
                     onDelete: (artwork) async {
-                      // Route through the globally provided ArtworkCubit so
-                      // delete uses the shared ApiClient-backed repository
-                      // instead of constructing ArtworkRepository() locally.
                       await context.read<ArtworkCubit>().deleteArtwork(
                             artworkId: artwork.id,
                           );
@@ -348,7 +344,10 @@ class _SuccessContent extends StatelessWidget {
                             content: Text('Artwork deleted'),
                           ),
                         );
-                        context.read<ArtistProfileCubit>().fetchMyProfileData();
+
+                        context
+                            .read<ArtistProfileCubit>()
+                            .fetchMyProfileData();
                       }
                     },
                   ),
@@ -390,9 +389,7 @@ class _ProfileActionButton extends StatelessWidget {
           elevation: 0,
           backgroundColor: AppColors.primaryBlue,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(
-            vertical: 11,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 11),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -409,9 +406,7 @@ class _ProfileActionButton extends StatelessWidget {
       label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.primaryBlue,
-        padding: const EdgeInsets.symmetric(
-          vertical: 11,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 11),
         side: BorderSide(
           color: AppColors.primaryBlue.withValues(alpha: 0.35),
         ),
@@ -433,7 +428,7 @@ class _ErrorView extends StatelessWidget {
   });
 
   final String message;
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {

@@ -8,7 +8,7 @@ without cluttering the core service logic.
 from app.external_services.firebase_service import send_welcome_notification
 from app.core.uuid_utils import as_uuid
 from app.persistence.repositories.user_repo import UserRepository
-from app.services.auth_service import login_user, register_user
+from app.services.auth_service import change_password, login_user, register_user
 import logging
 
 user_repo = UserRepository()
@@ -90,3 +90,44 @@ class AuthFacade:
         except Exception:
             logger.exception("Error during logout")
             return {"error": "An internal error occurred during logout"}, 500
+        
+
+    def __init__(self, user_repo, jwt_service, firebase_auth_service):
+        self.user_repo = user_repo
+        self.jwt_service = jwt_service
+        self.firebase_auth_service = firebase_auth_service
+
+    def google_login(self, firebase_id_token: str):
+        decoded = self.firebase_auth_service.verify_id_token(firebase_id_token)
+
+        firebase_uid = decoded.get("uid")
+        email = decoded.get("email")
+        name = decoded.get("name")
+        picture = decoded.get("picture")
+
+        if not firebase_uid or not email:
+            raise ValueError("Google account must provide email")
+
+        user = self.user_repo.get_by_firebase_uid(firebase_uid)
+
+        if not user:
+            user = self.user_repo.get_by_email(email)
+
+            if user:
+                user = self.user_repo.link_firebase_uid(user, firebase_uid)
+            else:
+                user = self.user_repo.create_google_user(
+                    email=email,
+                    name=name,
+                    firebase_uid=firebase_uid,
+                    profile_picture=picture,
+                )
+
+        access_token = self.jwt_service.create_access_token(user)
+        refresh_token = self.jwt_service.create_refresh_token(user)
+
+        return {
+            "user": user.to_dict(),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }

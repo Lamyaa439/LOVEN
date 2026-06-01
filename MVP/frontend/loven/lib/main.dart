@@ -125,8 +125,17 @@ class _LovenAppState extends State<LovenApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
+Widget build(BuildContext context) {
+  return MultiRepositoryProvider(
+    providers: [
+      RepositoryProvider<ArtistRepository>.value(
+        value: _artistRepository,
+      ),
+      RepositoryProvider<AuthRepository>.value(
+        value: _authRepository,
+      ),
+    ],
+    child: MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _authCubit),
 
@@ -148,28 +157,42 @@ class _LovenAppState extends State<LovenApp> {
             CartRepository(apiClient: _apiClient),
           ),
         ),
-        // Same repository instance keeps artwork CRUD and home feed in sync.
+
         BlocProvider(
-          create: (context) => ArtworkCubit(_artworkRepository),
+          create: (context) => ArtworkCubit(
+            _artworkRepository,
+          ),
         ),
+
         BlocProvider(
-          create: (context) => OrderCubit(_orderRepository),
+          create: (context) => OrderCubit(
+            _orderRepository,
+          ),
         ),
+
         BlocProvider(
           create: (context) => FeedbackCubit(
-            FeedbackRepository(apiClient: _apiClient),
+            FeedbackRepository(
+              apiClient: _apiClient,
+            ),
           ),
         ),
+
         BlocProvider(
           create: (context) => ReportCubit(
-            ReportRepository(apiClient: _apiClient),
+            ReportRepository(
+              apiClient: _apiClient,
+            ),
           ),
         ),
+
+        // FIXED: removed automatic loadFavorites()
         BlocProvider(
           create: (_) => FavoritesCubit(
             _favoritesRepository,
-          )..loadFavorites(),
+          ),
         ),
+
         BlocProvider(
           create: (_) => VerificationRequestCubit(
             _verificationRequestRepository,

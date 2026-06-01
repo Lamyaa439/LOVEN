@@ -12,9 +12,9 @@ import 'package:loven/core/network/api_constants.dart';
 class VerificationRequestRepository {
   final ApiClient _apiClient;
 
-  /// Creates a repository backed by the shared [apiClient] instance.
-  VerificationRequestRepository({required ApiClient apiClient})
-      : _apiClient = apiClient;
+  VerificationRequestRepository({
+    required ApiClient apiClient,
+  }) : _apiClient = apiClient;
 
   Map<String, dynamic> _asMap(dynamic data) {
     return Map<String, dynamic>.from(data as Map);

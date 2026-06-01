@@ -68,3 +68,31 @@ class UserRepository(SQLAlchemyRepository):
         db.session.commit()
 
         return user
+    
+    def get_by_email(self, email: str):
+        return User.query.filter_by(email=email).first()
+    
+    
+    def get_by_firebase_uid(self, firebase_uid: str):
+        return User.query.filter_by(firebase_uid=firebase_uid).first()
+    
+    
+    def create_google_user(self, email, name, firebase_uid, profile_picture=None):
+        user = User(
+            email=email,
+            full_name=name or email.split("@")[0],
+            firebase_uid=firebase_uid,
+            auth_provider="google",
+            profile_picture=profile_picture,
+            password_hash=None,
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user
+    
+    def link_firebase_uid(self, user, firebase_uid: str):
+        user.firebase_uid = firebase_uid
+        if not user.auth_provider:
+            user.auth_provider = "google"
+            db.session.commit()
+            return user

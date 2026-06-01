@@ -390,7 +390,13 @@ class _LoginPageState extends State<LoginPage> {
                     _SocialButton(
                       icon: Icons.g_mobiledata,
                       label: 'Sign in with Google',
-                      onTap: () {},
+                      onTap: isLoading
+                      ? () {}
+                      : () {
+                        context
+                        .read<AuthCubit>()
+                        .signInWithGoogle();
+                      },
                     ),
 
                     const SizedBox(height: 10),
