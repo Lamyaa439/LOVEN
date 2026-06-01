@@ -45,6 +45,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  widgetbook: ^3.0.0
 
 # Configuration for Flutter Native 
 flutter_native_splash:
