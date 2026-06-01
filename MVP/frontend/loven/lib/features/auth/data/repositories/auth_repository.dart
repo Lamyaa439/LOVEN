@@ -14,14 +14,10 @@
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/data/models/user_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthRepository({
     required ApiClient apiClient,
@@ -88,44 +84,6 @@ class AuthRepository {
 
     await _persistSessionTokens(_asMap(response.data));
   }
-
-  Future<void> signInWithGoogle() async {
-  final googleUser = await _googleSignIn.signIn();
-
-  if (googleUser == null) {
-    throw Exception('Google sign in cancelled');
-  }
-
-  final googleAuth = await googleUser.authentication;
-
-  final credential = GoogleAuthProvider.credential(
-    accessToken: googleAuth.accessToken,
-    idToken: googleAuth.idToken,
-  );
-
-  final firebaseCredential =
-      await _firebaseAuth.signInWithCredential(
-    credential,
-  );
-
-  final firebaseIdToken =
-      await firebaseCredential.user?.getIdToken(true);
-
-  if (firebaseIdToken == null) {
-    throw Exception('Failed to get Firebase token');
-  }
-
-  final response = await _apiClient.post(
-    '/google',
-    data: {
-      'id_token': firebaseIdToken,
-    },
-  );
-
-  await _persistSessionTokens(
-    _asMap(response.data),
-  );
-}
 
   /// Invalidates the session on the backend and clears local tokens.
   ///
