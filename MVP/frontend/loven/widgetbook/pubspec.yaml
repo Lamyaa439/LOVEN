@@ -1,0 +1,26 @@
+name: widgetbook_workspace
+description: Isolated Widgetbook catalog for the LOVEN Flutter app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  widgetbook: ^3.23.0
+  widgetbook_annotation: ^3.11.0
+  loven:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  widgetbook_generator: ^3.23.0
+
+flutter:
+  uses-material-design: true

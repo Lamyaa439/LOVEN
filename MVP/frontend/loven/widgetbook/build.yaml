@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      widgetbook_generator:widgetbook_generator:
+        options:
+          directories:
+            - lib
