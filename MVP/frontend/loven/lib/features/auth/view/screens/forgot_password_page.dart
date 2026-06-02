@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// Password-reset entry screen.
+///
+/// Backend reset endpoints are not integrated yet, so this page now communicates
+/// availability honestly instead of simulating a complete reset flow.
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -31,10 +35,17 @@ class _ForgotPasswordPageState
     if (!formKey.currentState!.validate()) {
       return;
     }
-    
-    context.push(
-      '/forgot-password/code',
-      extra: emailController.text.trim(),
+
+    setState(() {
+      emailSent = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Forgot password is coming soon. Backend integration is not ready yet.',
+        ),
+      ),
     );
   }
 
@@ -199,9 +210,7 @@ class _ForgotPasswordPageState
                       ),
                     ),
                     child: Text(
-                      emailSent
-                          ? 'Email Sent'
-                          : 'Send Reset Link',
+                      emailSent ? 'Coming Soon' : 'Send Reset Link',
                     ),
                   ),
                 ),
