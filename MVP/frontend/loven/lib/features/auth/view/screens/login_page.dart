@@ -1,14 +1,16 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
-import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
+/// Login screen for email/password auth.
+///
+/// Navigation decisions are derived from [AuthSuccess.user] emitted by
+/// [AuthCubit], not from token parsing inside the UI layer.
 class LoginPage extends StatefulWidget {
   final bool fromGuest;
 
@@ -46,36 +48,14 @@ class _LoginPageState extends State<LoginPage> {
         );
   }
 
-  Future<void> _goToLoggedInHome() async {
-    final token = await TokenStorage().getAccessToken();
-
-    String? role;
-
-    if (token != null && token.isNotEmpty) {
-      try {
-        final parts = token.split('.');
-
-        if (parts.length == 3) {
-          final payload = utf8.decode(
-            base64Url.decode(
-              base64Url.normalize(parts[1]),
-            ),
-          );
-
-          final data = jsonDecode(payload);
-          role = data['role']?.toString();
-        }
-      } catch (_) {
-        role = null;
-      }
-    }
-
+  void _goToLoggedInHome(AuthSuccess state) {
+    final role = state.user?.systemRole;
     if (!mounted) return;
 
     if (role == 'admin') {
-      context.go('/admin');
+      context.go(AppRoutes.admin);
     } else {
-      context.go('/');
+      context.go(AppRoutes.home);
     }
   }
 
@@ -119,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthSuccess) {
-          _goToLoggedInHome();
+          _goToLoggedInHome(state);
         }
 
         if (state is AuthFailure) {
@@ -158,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                               if (context.canPop()) {
                                 context.pop();
                               } else {
-                                context.go('/');
+                                context.go(AppRoutes.home);
                               }
                             },
                       icon: Icon(
@@ -268,9 +248,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoading
                         ? null
                         : () {
-                          context.push(
-                            '/forgot-password',
-                          );
+                          context.push(AppRoutes.forgotPassword);
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -338,7 +316,7 @@ class _LoginPageState extends State<LoginPage> {
                               ? null
                               : () {
                                   context.pushReplacement(
-                                    '/auth',
+                                    AppRoutes.auth,
                                   );
                                 },
                           child: const Text(
@@ -391,8 +369,10 @@ class _LoginPageState extends State<LoginPage> {
                       icon: Icons.g_mobiledata,
                       label: 'Sign in with Google',
                       onTap: isLoading
-                      ? () {}
-                      : () {},
+                          ? () {}
+                          : () {
+                              context.read<AuthCubit>().signInWithGoogle();
+                            },
                     ),
 
                     const SizedBox(height: 10),
@@ -400,7 +380,15 @@ class _LoginPageState extends State<LoginPage> {
                     _SocialButton(
                       icon: Icons.apple,
                       label: 'Sign in with Apple',
-                      onTap: () {},
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Sign in with Apple is coming soon.',
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 18),
