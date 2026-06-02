@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// New-password UI placeholder for forgot-password flow.
+///
+/// This screen remains intentionally non-functional until backend reset APIs
+/// are available. It avoids misleading users by showing clear status messages.
 class NewPasswordPage extends StatefulWidget {
   const NewPasswordPage({
     super.key,
@@ -32,8 +36,12 @@ class _NewPasswordPageState
   }
 
   void _submit() {
-    context.go(
-      '/forgot-password/success',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Password reset is not available yet. Backend integration is coming soon.',
+        ),
+      ),
     );
   }
 
@@ -163,8 +171,7 @@ class _NewPasswordPageState
                       ),
                     ),
                   ),
-                  child:
-                      const Text('Send'),
+                    child: const Text('Coming Soon'),
                 ),
               ),
             ],
