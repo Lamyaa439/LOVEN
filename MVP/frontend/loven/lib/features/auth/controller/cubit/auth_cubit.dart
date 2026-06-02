@@ -27,7 +27,8 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Boot-time session restore — single source of truth for auth bootstrap.
   ///
-  /// Called from [LovenApp] and awaited by [SplashScreen] (idempotent).
+  /// Invoke only from [LovenApp.initState] (one call site per app launch).
+  /// [SplashScreen] must not call this; routing waits on [AuthCubit.stream].
   Future<void> restoreSession() {
     _bootstrapFuture ??= _restoreSession();
     return _bootstrapFuture!;
