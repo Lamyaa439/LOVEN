@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:loven/features/artist_profile/data/artist_repository.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -34,9 +34,10 @@ import 'package:loven/features/artist_profile/view/screens/artist_profile_screen
 import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_screen.dart';
 
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
-import 'package:loven/features/navigation/view/screens/navigation_screen.dart';
+import 'package:loven/features/navigation/view/Screens/navigation_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_dashboard_screen.dart';
+import 'package:loven/features/admin/view/screens/admin_reports_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_verification_requests_screen.dart';
 import 'package:loven/features/splash/onboarding_screen.dart';
 import 'package:loven/features/home/View/Screens/artists_list_screen.dart';
@@ -46,6 +47,29 @@ import 'package:loven/features/cart/view/screens/confirm_order_screen.dart';
 import 'package:loven/features/location/view/screens/location_screen.dart';
 import 'package:loven/features/location/view/screens/address_form_screen.dart';
 import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
+
+/// Application router configuration for the Loven app.
+///
+/// This file defines all app navigation routes using `go_router`,
+/// applies auth-based redirection, and wires route-level dependencies
+/// such as feature cubits and repositories.
+///
+/// Notes:
+/// - Route paths are centralized in `AppRoutes`.
+/// - Protected routes are guarded for guest users.
+/// - Selected routes validate `state.extra` and fall back safely
+///   instead of crashing on invalid navigation arguments.
+
+
+Widget _invalidRouteExtraFallback({
+  required String title,
+  required String message,
+}) {
+  return Scaffold(
+    appBar: AppBar(title: Text(title)),
+    body: Center(child: Text(message)),
+  );
+}
 
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
@@ -68,15 +92,15 @@ class GoRouterRefreshStream extends ChangeNotifier {
 /// Public artist browsing (`/artists`, `/artist/:id`) is intentionally excluded.
 bool _requiresAuthenticatedSession(String path) {
   const protectedExact = {
-    '/my-profile',
-    '/settings',
-    '/verification-request',
-    '/artworks/create',
-    '/change-password',
-    '/confirm-order',
-    '/profile/edit',
-    '/artist-profile/edit',
-    '/feedback',
+    AppRoutes.myProfile,
+    AppRoutes.settings,
+    AppRoutes.verificationRequest,
+    AppRoutes.artworksCreate,
+    AppRoutes.changePassword,
+    AppRoutes.confirmOrder,
+    AppRoutes.profileEdit,
+    AppRoutes.artistProfileEdit,
+    AppRoutes.feedback,
   };
 
   if (protectedExact.contains(path)) {
@@ -84,8 +108,8 @@ bool _requiresAuthenticatedSession(String path) {
   }
 
   const protectedPrefixes = [
-    '/cart',
-    '/admin',
+    AppRoutes.cart,
+    AppRoutes.admin,
     '/orders/',
   ];
 
@@ -114,7 +138,7 @@ class AppRouter {
   });
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/splash_screen',
+    initialLocation: AppRoutes.splashLegacy,
     refreshListenable: GoRouterRefreshStream(authCubit.stream),
     redirect: (context, state) {
       final authState = authCubit.state;
@@ -122,22 +146,22 @@ class AppRouter {
       final path = state.matchedLocation;
 
       if (isGuest && _requiresAuthenticatedSession(path)) {
-        return '/auth';
+        return AppRoutes.auth;
       }
 
       return null;
     },
     routes: [
       GoRoute(
-        path: '/splash_screen',
+        path: AppRoutes.splashLegacy,
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
-        path: '/onboarding',
+        path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
-        path: '/',
+        path: AppRoutes.home,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final isGuest =
@@ -147,37 +171,51 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/profile',
+        path: AppRoutes.profile,
         builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
-        path: '/notifications',
+        path: AppRoutes.notifications,
         builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
-        path: '/orders/details',
+        path: AppRoutes.ordersDetails,
         builder: (context, state) {
-          final order = Map<String, dynamic>.from(state.extra as Map);
+          final raw = state.extra;
+          if (raw is! Map) {
+            return _invalidRouteExtraFallback(
+              title: 'Order Details',
+              message: 'Unable to open order details.',
+            );
+          }
+          final order = Map<String, dynamic>.from(raw);
           return OrderDetailsScreen(order: order);
         },
       ),
       GoRoute(
-        path: '/orders/incoming',
+        path: AppRoutes.ordersIncoming,
         builder: (context, state) {
-          final artistProfileId = state.extra as String;
+          final raw = state.extra;
+          if (raw is! String || raw.isEmpty) {
+            return _invalidRouteExtraFallback(
+              title: 'Incoming Orders',
+              message: 'Artist profile ID is missing.',
+            );
+          }
+          final artistProfileId = raw;
           return IncomingOrdersScreen(artistProfileId: artistProfileId);
         },
       ),
       GoRoute(
-        path: '/orders/history',
+        path: AppRoutes.ordersHistory,
         builder: (context, state) => const OrderHistoryScreen(),
       ),
       GoRoute(
-        path: '/admin',
+        path: AppRoutes.admin,
         builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
-        path: '/admin/verification-requests',
+        path: AppRoutes.adminVerificationRequests,
         builder: (context, state) {
           return BlocProvider(
             create: (_) => VerificationRequestCubit(
@@ -188,45 +226,42 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/admin/reports',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text('Admin Reports')),
-          body: const Center(child: Text('Admin Reports')),
-        ),
+        path: AppRoutes.adminReports,
+        builder: (context, state) => const AdminReportsScreen(),
       ),
       GoRoute(
-        path: '/auth',
+        path: AppRoutes.auth,
         builder: (context, state) => const SignupPage(),
       ),
       GoRoute(
-        path: '/login',
+        path: AppRoutes.login,
         builder: (context, state) => const LoginPage(fromGuest: true),
       ),
       GoRoute(
-        path: '/forgot-password',
+        path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordPage(),
       ),
       GoRoute(
-        path: '/forgot-password/code',
+        path: AppRoutes.forgotPasswordCode,
         builder: (context, state) {
           final email = state.extra as String? ?? '';
           return VerificationCodePage(email: email);
         },
       ),
       GoRoute(
-        path: '/forgot-password/new-password',
+        path: AppRoutes.forgotPasswordNewPassword,
         builder: (context, state) => const NewPasswordPage(),
       ),
       GoRoute(
-        path: '/forgot-password/success',
+        path: AppRoutes.forgotPasswordSuccess,
         builder: (context, state) => const PasswordChangedPage(),
       ),
       GoRoute(
-        path: '/change-password',
+        path: AppRoutes.changePassword,
         builder: (context, state) => const ChangePasswordScreen(),
       ),
       GoRoute(
-        path: '/my-profile',
+        path: AppRoutes.myProfile,
         builder: (context, state) {
           return BlocProvider(
             create: (_) => ArtistProfileCubit(
@@ -237,11 +272,11 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/artists',
+        path: AppRoutes.artists,
         builder: (context, state) => const ArtistsListScreen(),
       ),
       GoRoute(
-        path: '/artist/:artistId',
+        path: AppRoutes.artistById,
         builder: (context, state) {
           final artistId = state.pathParameters['artistId']!;
 
@@ -257,30 +292,30 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/artworks-list/:type',
+        path: AppRoutes.artworksListByType,
         builder: (context, state) {
           final type = state.pathParameters['type'] ?? 'featured';
           return ArtworksListScreen(type: type);
         },
       ),
       GoRoute(
-        path: '/feedback',
+        path: AppRoutes.feedback,
         builder: (context, state) => const FeedbackScreen(),
       ),
       GoRoute(
-        path: '/confirm-order',
+        path: AppRoutes.confirmOrder,
         builder: (context, state) => const ConfirmOrderScreen(),
       ),
       GoRoute(
-        path: '/location',
+        path: AppRoutes.location,
         builder: (context, state) => const LocationScreen(),
       ),
       GoRoute(
-        path: '/location/address-form',
+        path: AppRoutes.locationAddressForm,
         builder: (context, state) => const AddressFormScreen(),
       ),
       GoRoute(
-        path: '/settings',
+        path: AppRoutes.settings,
         builder: (context, state) {
           return BlocProvider(
             create: (_) => ArtistProfileCubit(
@@ -291,11 +326,11 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/profile/edit',
+        path: AppRoutes.profileEdit,
         builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
-        path: '/cart',
+        path: AppRoutes.cart,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final isGuest =
@@ -308,13 +343,20 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/artworks/create',
+        path: AppRoutes.artworksCreate,
         builder: (context, state) => const CreateArtworkScreen(),
       ),
       GoRoute(
-        path: '/artist-profile/edit',
+        path: AppRoutes.artistProfileEdit,
         builder: (context, state) {
-          final artist = state.extra as ArtistModel;
+          final raw = state.extra;
+          if (raw is! ArtistModel) {
+            return _invalidRouteExtraFallback(
+              title: 'Edit Artist Profile',
+              message: 'Artist data is missing.',
+            );
+          }
+          final artist = raw;
 
           return BlocProvider(
             create: (_) => ArtistProfileCubit(
@@ -325,18 +367,26 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: '/signup/verify-email',
+        path: AppRoutes.signup,
+        builder: (context, state) {
+          final fromGuest =
+              state.uri.queryParameters['fromGuest'] == 'true';
+          return SignupPage(fromGuest: fromGuest);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.signupVerifyEmail,
         builder: (context, state) {
           final email = state.extra as String? ?? '';
           return SignupVerificationEmailPage(email: email);
         },
       ),
       GoRoute(
-        path: '/signup/success',
+        path: AppRoutes.signupSuccess,
         builder: (context, state) => const SignupSuccessPage(),
       ),
       GoRoute(
-        path: '/verification-request',
+        path: AppRoutes.verificationRequest,
         builder: (context, state) {
           return BlocProvider(
             create: (_) => VerificationRequestCubit(
