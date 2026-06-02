@@ -4,13 +4,19 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/storage/token_storage.dart';
-import 'package:loven/features/auth/data/models/user_model.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
+/// Auth/session source of truth for the app.
+///
+/// This cubit owns session bootstrap, login/register/logout, and account profile
+/// hydration so UI/screens do not need to infer auth state from raw tokens.
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
   final TokenStorage _tokenStorage;
+
+  /// Ensures [restoreSession] runs at most once per app launch.
+  Future<void>? _bootstrapFuture;
 
   AuthCubit({
     required AuthRepository authRepository,
@@ -19,29 +25,62 @@ class AuthCubit extends Cubit<AuthState> {
         _tokenStorage = tokenStorage,
         super(AuthInitial());
 
-  Future<void> checkAuthStatus() async {
+  /// Boot-time session restore — single source of truth for auth bootstrap.
+  ///
+  /// Called from [LovenApp] and awaited by [SplashScreen] (idempotent).
+  Future<void> restoreSession() {
+    _bootstrapFuture ??= _restoreSession();
+    return _bootstrapFuture!;
+  }
+
+  /// @deprecated Use [restoreSession] — kept for any stale call sites.
+  Future<void> checkAuthStatus() => restoreSession();
+
+  Future<void> _restoreSession() async {
     final token = await _tokenStorage.getAccessToken();
 
-    if (token != null && token.isNotEmpty) {
-      final role = await _tokenStorage.getUserRole();
-
-      print('LOADED ROLE: $role');
-
-      emit(
-        AuthSuccess(
-          user: UserModel(
-            id: '',
-            name: '',
-            email: '',
-            phoneNumber: null,
-            profileImageUrl: null,
-            systemRole: role ?? '',
-          ),
-        ),
-      );
-    } else {
+    if (token == null || token.isEmpty) {
       emit(AuthGuest());
+      return;
     }
+
+    emit(AuthLoading());
+
+    try {
+      await _completeAuthenticatedSession();
+    } catch (_) {
+      try {
+        await _authRepository.refreshAccessToken();
+        await _completeAuthenticatedSession();
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Session restore failed: $e');
+        }
+        await _tokenStorage.clearAllTokens();
+        emit(AuthGuest());
+      }
+    }
+  }
+
+  /// Loads account profile into [AuthSuccess.user] after login/register/restore.
+  Future<void> _completeAuthenticatedSession() async {
+    final user = await _authRepository.getCurrentUser();
+    await _tokenStorage.saveUserRole(user.systemRole);
+    emit(AuthSuccess(user: user));
+  }
+
+  /// Invoked by [ApiClient] when refresh fails after a 401.
+  Future<void> handleSessionExpired() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {
+      // Best-effort Firebase cleanup.
+    }
+
+    // Defensive clear: ApiClient already clears tokens on refresh failure,
+    // but this keeps cubit behavior safe if the callback is reused elsewhere.
+    await _tokenStorage.clearAllTokens();
+    emit(AuthGuest());
   }
 
   Future<void> continueAsGuest() async {
@@ -51,7 +90,9 @@ class AuthCubit extends Cubit<AuthState> {
       await FirebaseAuth.instance.signInAnonymously();
       emit(AuthGuest());
     } catch (e) {
-      debugPrint('Guest sign-in error: $e');
+      if (kDebugMode) {
+        debugPrint('Guest sign-in error: $e');
+      }
       emit(AuthFailure('Could not enter guest mode.'));
     }
   }
@@ -72,25 +113,21 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      final savedRole = await _tokenStorage.getUserRole();
-      final role = systemRole ?? savedRole ?? '';
-
-      emit(
-        AuthSuccess(
-          user: UserModel(
-            id: '',
-            name: '',
-            email: email,
-            phoneNumber: null,
-            profileImageUrl: null,
-            systemRole: role,
-          ),
-        ),
-      );
+      await _completeAuthenticatedSession();
     } catch (e) {
-      debugPrint('Login error: $e');
+      if (kDebugMode) {
+        debugPrint('Login error: $e');
+      }
       emit(AuthFailure(_extractMessage(e)));
     }
+  }
+
+  Future<void> signInWithGoogle() async {
+    emit(
+      AuthFailure(
+        'Sign in with Google is coming soon.',
+      ),
+    );
   }
 
   Future<void> signup({
@@ -112,24 +149,12 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      print('SAVING ROLE: $systemRole');
-
       await _tokenStorage.saveUserRole(systemRole);
-
-      emit(
-        AuthSuccess(
-          user: UserModel(
-            id: '',
-            name: name,
-            email: email,
-            phoneNumber: null,
-            profileImageUrl: null,
-            systemRole: systemRole,
-          ),
-        ),
-      );
+      await _completeAuthenticatedSession();
     } catch (e) {
-      debugPrint('Signup error: $e');
+      if (kDebugMode) {
+        debugPrint('Signup error: $e');
+      }
       emit(AuthFailure(_extractMessage(e)));
     }
   }
@@ -161,21 +186,7 @@ class AuthCubit extends Cubit<AuthState> {
         newPassword: newPassword,
       );
 
-      final role = await _tokenStorage.getUserRole();
-
-
-      emit(
-        AuthSuccess(
-          user: UserModel(
-            id: '',
-            name: '',
-            email: '',
-            phoneNumber: null,
-            profileImageUrl: null,
-            systemRole: role ?? '',
-          ),
-        ),
-      );
+      await _completeAuthenticatedSession();
     } catch (e) {
       emit(AuthFailure(_extractMessage(e)));
     }
@@ -185,11 +196,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthLoading());
 
     try {
-      final user = await _authRepository.getCurrentUser();
-
-      await _tokenStorage.saveUserRole(user.systemRole);
-
-      emit(AuthSuccess(user: user));
+      await _completeAuthenticatedSession();
     } catch (e) {
       emit(AuthFailure(_extractMessage(e)));
     }
@@ -221,7 +228,9 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       return await _authRepository.checkEmailDuplication(email);
     } catch (e) {
-      debugPrint('Email check error: $e');
+      if (kDebugMode) {
+        debugPrint('Email check error: $e');
+      }
       return false;
     }
   }
@@ -244,7 +253,9 @@ class AuthCubit extends Cubit<AuthState> {
 
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
-      debugPrint('FCM token error: $e');
+      if (kDebugMode) {
+        debugPrint('FCM token error: $e');
+      }
       return null;
     }
   }
