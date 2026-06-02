@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// Email verification screen shown after signup.
+///
+/// Backend email-code verification is not integrated yet; this page is kept
+/// honest and transitions users with a clear "coming soon" message.
 class SignupVerificationEmailPage extends StatefulWidget {
   final String email;
 
@@ -42,7 +47,14 @@ class _SignupVerificationEmailPageState
   }
 
   void _continue() {
-    context.go('/signup/success');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Email verification is coming soon. You can continue to use your account now.',
+        ),
+      ),
+    );
+    context.go(AppRoutes.signupSuccess);
   }
 
   @override
