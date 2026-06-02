@@ -6,6 +6,7 @@ import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
+/// Authenticated password change form.
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({
     super.key,
