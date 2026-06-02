@@ -8,6 +8,10 @@ import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/auth/data/services/profile_image_storage_service.dart';
 
+/// Edit account profile screen.
+///
+/// Fetches current user through [AuthCubit] and persists profile updates,
+/// including optional profile image upload.
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
