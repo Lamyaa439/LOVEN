@@ -1,11 +1,12 @@
 /// Centralized route path constants used by [AppRouter].
 ///
-/// Keep this file as the single source of truth for all route strings.
+/// [splash] is the canonical boot route; [splashLegacy] redirects to it.
 class AppRoutes {
   AppRoutes._();
 
   // Core app entry
   static const String splash = '/splash';
+  /// Legacy boot path — kept for deep links; router redirects to [splash].
   static const String splashLegacy = '/splash_screen';
   static const String onboarding = '/onboarding';
   static const String home = '/';
@@ -34,6 +35,8 @@ class AppRoutes {
   // Orders / commerce
   static const String cart = '/cart';
   static const String confirmOrder = '/confirm-order';
+  /// Prefix for all order sub-routes (used by auth guards).
+  static const String ordersPrefix = '/orders/';
   static const String ordersDetails = '/orders/details';
   static const String ordersIncoming = '/orders/incoming';
   static const String ordersHistory = '/orders/history';
