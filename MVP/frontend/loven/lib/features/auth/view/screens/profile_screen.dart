@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 import '../../../../features/auth/controller/cubit/auth_cubit.dart';
 import '../../../../features/auth/controller/cubit/auth_state.dart';
 
+/// Account/profile landing screen for authenticated and guest users.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -45,31 +47,31 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
                     subtitle: 'Update your personal information',
-                    onTap: () => context.push('/profile/edit'),
+                    onTap: () => context.push(AppRoutes.profileEdit),
                   ),
                   _ProfileTile(
                     icon: Icons.shopping_bag_outlined,
                     title: 'Order History',
                     subtitle: 'View your previous orders',
-                    onTap: () => context.push('/orders/history'),
+                    onTap: () => context.push(AppRoutes.ordersHistory),
                   ),
                   _ProfileTile(
                     icon: Icons.location_on_outlined,
                     title: 'Address',
                     subtitle: 'Manage your delivery location',
-                    onTap: () => context.push('/location'),
+                    onTap: () => context.push(AppRoutes.location),
                   ),
                   _ProfileTile(
                     icon: Icons.lock_outline,
                     title: 'Change Password',
                     subtitle: 'Update your account password',
-                    onTap: () => context.push('/change-password'),
+                    onTap: () => context.push(AppRoutes.changePassword),
                   ),
                   _ProfileTile(
                     icon: Icons.feedback_outlined,
                     title: 'Feedback',
                     subtitle: 'Send us your thoughts',
-                    onTap: () => context.push('/feedback'),
+                    onTap: () => context.push(AppRoutes.feedback),
                   ),
 
                   const SizedBox(height: 24),
@@ -80,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Sign out of your account',
                     isDanger: true,
                     onTap: () {
-                      context.go('/login');
+                      context.go(AppRoutes.login);
                     },
                   ),
                 ],
@@ -302,7 +304,7 @@ class _GuestProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.push('/auth'),
+              onPressed: () => context.push(AppRoutes.auth),
               child: const Text('Sign Up / Login'),
             ),
           ],
