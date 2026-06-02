@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
 import '../../controller/cubit/auth_cubit.dart';
@@ -213,7 +214,7 @@ class _SignupPageState
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/');
+      context.go(AppRoutes.home);
     }
   }
 
@@ -237,15 +238,11 @@ class _SignupPageState
               .showSnackBar(
             const SnackBar(
               content: Text(
-                'Account created successfully',
+                'Account created. Email verification is coming soon.',
               ),
             ),
           );
-
-          context.go(
-            '/signup/verify-email',
-            extra: _emailController.text.trim(),
-          );
+          context.go(AppRoutes.signupSuccess);
         }
 
         if (state is AuthFailure) {
@@ -632,7 +629,7 @@ class _SignupPageState
                               ? null
                               : () {
                                   context.go(
-                                    '/login',
+                                    AppRoutes.login,
                                   );
                                 },
                           child: Text(
