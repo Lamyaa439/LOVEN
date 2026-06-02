@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// Signup completion screen shown after account creation.
 class SignupSuccessPage extends StatelessWidget {
   const SignupSuccessPage({super.key});
 
@@ -51,7 +53,7 @@ class SignupSuccessPage extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.go('/');
+                    context.go(AppRoutes.home);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
