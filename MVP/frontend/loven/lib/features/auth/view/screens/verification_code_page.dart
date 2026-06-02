@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// Verification-code UI for the future forgot-password backend flow.
+///
+/// The backend verification endpoint is not wired yet, so continue actions show
+/// a clear "coming soon" message instead of pretending to verify.
 class VerificationCodePage extends StatefulWidget {
   final String email;
 
@@ -42,8 +46,12 @@ class _VerificationCodePageState
   }
 
   void _continue() {
-    context.push(
-      '/forgot-password/new-password',
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Verification flow is not available yet. Backend integration is coming soon.',
+        ),
+      ),
     );
   }
 
