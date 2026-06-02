@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/router/splash_min_duration_notifier.dart';
+import 'package:loven/core/storage/app_preferences.dart';
 
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -50,15 +52,9 @@ import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
 
 /// Application router configuration for the Loven app.
 ///
-/// This file defines all app navigation routes using `go_router`,
-/// applies auth-based redirection, and wires route-level dependencies
-/// such as feature cubits and repositories.
-///
-/// Notes:
-/// - Route paths are centralized in `AppRoutes`.
-/// - Protected routes are guarded for guest users.
-/// - Selected routes validate `state.extra` and fall back safely
-///   instead of crashing on invalid navigation arguments.
+/// Defines routes via `go_router`, wires feature dependencies, and owns
+/// startup redirect policy (splash → home / onboarding / guest home) using
+/// [AuthCubit] session state and [AppPreferences.hasCompletedOnboarding].
 
 
 Widget _invalidRouteExtraFallback({
@@ -69,6 +65,53 @@ Widget _invalidRouteExtraFallback({
     appBar: AppBar(title: Text(title)),
     body: Center(child: Text(message)),
   );
+}
+
+/// Validates a required non-empty [String] passed via [GoRouterState.extra].
+Widget _routeWithRequiredStringExtra({
+  required GoRouterState state,
+  required String title,
+  required String missingMessage,
+  required Widget Function(String value) builder,
+}) {
+  final raw = state.extra;
+  if (raw is! String || raw.trim().isEmpty) {
+    return _invalidRouteExtraFallback(
+      title: title,
+      message: missingMessage,
+    );
+  }
+  return builder(raw.trim());
+}
+
+bool _isBootstrapping(AuthState state) =>
+    state is AuthInitial || state is AuthLoading;
+
+bool _isUnauthenticated(AuthState state) =>
+    state is AuthGuest || state is AuthFailure;
+
+/// Entry screens meant for guests only; authenticated users are sent home.
+bool _isGuestAuthEntryPath(String path) {
+  const guestAuthEntry = {
+    AppRoutes.login,
+    AppRoutes.auth,
+  };
+  return guestAuthEntry.contains(path);
+}
+
+/// Post-bootstrap destination from splash (auth + onboarding policy).
+String _resolvePostBootstrapLocation({
+  required AuthState authState,
+  required AppPreferences appPreferences,
+}) {
+  if (authState is AuthSuccess) {
+    return AppRoutes.home;
+  }
+  if (!appPreferences.hasCompletedOnboarding) {
+    return AppRoutes.onboarding;
+  }
+  // Returning guest: home uses [AuthGuest] for guest mode (no extra required).
+  return AppRoutes.home;
 }
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -110,7 +153,7 @@ bool _requiresAuthenticatedSession(String path) {
   const protectedPrefixes = [
     AppRoutes.cart,
     AppRoutes.admin,
-    '/orders/',
+    AppRoutes.ordersPrefix,
   ];
 
   for (final prefix in protectedPrefixes) {
@@ -124,6 +167,8 @@ bool _requiresAuthenticatedSession(String path) {
 
 class AppRouter {
   final AuthCubit authCubit;
+  final AppPreferences appPreferences;
+  final SplashMinDurationNotifier splashMinDurationNotifier;
 
   /// Shared profile repository — injected from [LovenApp] startup.
   final ArtistRepository artistRepository;
@@ -133,28 +178,82 @@ class AppRouter {
 
   AppRouter(
     this.authCubit, {
+    required this.appPreferences,
+    required this.splashMinDurationNotifier,
     required this.artistRepository,
     required this.verificationRequestRepository,
   });
 
   late final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.splashLegacy,
-    refreshListenable: GoRouterRefreshStream(authCubit.stream),
+    initialLocation: AppRoutes.splash,
+    refreshListenable: Listenable.merge([
+      GoRouterRefreshStream(authCubit.stream),
+      splashMinDurationNotifier,
+    ]),
     redirect: (context, state) {
       final authState = authCubit.state;
-      final isGuest = authState is AuthGuest;
       final path = state.matchedLocation;
 
-      if (isGuest && _requiresAuthenticatedSession(path)) {
+      // Legacy deep links → canonical splash route.
+      if (path == AppRoutes.splashLegacy) {
+        return AppRoutes.splash;
+      }
+
+      // Startup funnel: one-way exit from splash (never home/onboarding → splash).
+      if (path == AppRoutes.splash) {
+        if (_isBootstrapping(authState) ||
+            !splashMinDurationNotifier.isReady) {
+          return null;
+        }
+        final destination = _resolvePostBootstrapLocation(
+          authState: authState,
+          appPreferences: appPreferences,
+        );
+        // Destination is always home or onboarding — avoids a splash redirect loop.
+        return destination;
+      }
+
+      // Session restore in progress — send protected deep links to splash only.
+      if (_isBootstrapping(authState)) {
+        if (_requiresAuthenticatedSession(path) &&
+            path != AppRoutes.splash) {
+          return AppRoutes.splash;
+        }
+        return null;
+      }
+
+      if (_isUnauthenticated(authState) &&
+          _requiresAuthenticatedSession(path)) {
         return AppRoutes.auth;
+      }
+
+      // Onboarding only for first-time users without a session.
+      if (_isUnauthenticated(authState) &&
+          appPreferences.hasCompletedOnboarding &&
+          path == AppRoutes.onboarding) {
+        return AppRoutes.home;
+      }
+
+      if (authState is AuthSuccess && path == AppRoutes.onboarding) {
+        return AppRoutes.home;
+      }
+
+      // Logged-in users should not re-enter guest login/signup entry screens.
+      if (authState is AuthSuccess && _isGuestAuthEntryPath(path)) {
+        return AppRoutes.home;
       }
 
       return null;
     },
     routes: [
       GoRoute(
-        path: AppRoutes.splashLegacy,
+        path: AppRoutes.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+      // Transitional deep-link alias only — not a startup owner; global redirect applies.
+      GoRoute(
+        path: AppRoutes.splashLegacy,
+        redirect: (context, state) => AppRoutes.splash,
       ),
       GoRoute(
         path: AppRoutes.onboarding,
@@ -164,6 +263,7 @@ class AppRouter {
         path: AppRoutes.home,
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
+          // Guest home after onboarding: [AuthGuest] sets isGuest without extra.
           final isGuest =
               extra?['isGuest'] as bool? ?? authCubit.state is AuthGuest;
 
@@ -244,8 +344,12 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.forgotPasswordCode,
         builder: (context, state) {
-          final email = state.extra as String? ?? '';
-          return VerificationCodePage(email: email);
+          return _routeWithRequiredStringExtra(
+            state: state,
+            title: 'Verification Code',
+            missingMessage: 'Email is required to verify your code.',
+            builder: (email) => VerificationCodePage(email: email),
+          );
         },
       ),
       GoRoute(
@@ -377,8 +481,12 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.signupVerifyEmail,
         builder: (context, state) {
-          final email = state.extra as String? ?? '';
-          return SignupVerificationEmailPage(email: email);
+          return _routeWithRequiredStringExtra(
+            state: state,
+            title: 'Verify Email',
+            missingMessage: 'Email is required to continue signup verification.',
+            builder: (email) => SignupVerificationEmailPage(email: email),
+          );
         },
       ),
       GoRoute(
