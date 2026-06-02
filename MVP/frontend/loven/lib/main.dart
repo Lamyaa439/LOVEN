@@ -1,3 +1,4 @@
+// Application entry point: Firebase/env setup, DI, and MaterialApp.router.
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,16 +7,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
 import 'core/res/theme/app_theme.dart';
+import 'core/theme/theme_bloc.dart';
 import 'core/router/app_router.dart';
+import 'core/router/splash_min_duration_notifier.dart';
 import 'core/network/api_constants.dart';
 import 'core/storage/token_storage.dart';
+import 'core/storage/app_preferences.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
 import 'features/auth/controller/cubit/auth_cubit.dart';
 import 'features/home/controller/bloc/home_bloc.dart';
 import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
-import 'features/artist_profile/controller/artist_profile_cubit.dart';
 import 'features/artist_profile/data/artist_repository.dart';
 
 import 'features/cart/data/repositories/cart_repository.dart';
@@ -39,54 +42,52 @@ import 'features/favorites/data/repositories/favorites_repository.dart';
 import 'features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'features/verification_request/data/repositories/verification_request_repository.dart';
 
-class ThemeBloc extends Cubit<ThemeMode> {
-  ThemeBloc() : super(ThemeMode.light);
-
-  void toggleTheme() {
-    emit(
-      state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
-    );
-  }
-}
+// Re-export so legacy `import '.../main.dart'` for [ThemeBloc] keeps working
+// until navigation is updated (Developer B).
+export 'core/theme/theme_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // Safe fallback — see ApiClient.defaultBaseUrl / resolveBaseUrl().
+  }
 
-  // Initialize Firebase configuration before running the app
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const LovenApp());
+  final appPreferences = AppPreferences();
+  await appPreferences.init();
+
+  runApp(LovenApp(appPreferences: appPreferences));
 }
 
 class LovenApp extends StatefulWidget {
-  const LovenApp({super.key});
+  final AppPreferences appPreferences;
+
+  const LovenApp({
+    required this.appPreferences,
+    super.key,
+  });
 
   @override
   State<LovenApp> createState() => _LovenAppState();
 }
 
 class _LovenAppState extends State<LovenApp> {
-  // Shared singletons created once and injected down the dependency chain.
   final TokenStorage _tokenStorage = TokenStorage();
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
-
-  /// Shared artwork data layer — injected into [HomeBloc] and [ArtworkCubit]
-  /// so both features use one [ApiClient] instance.
   late final ArtworkRepository _artworkRepository;
-
-  /// Order checkout and listing — shares the app-wide [ApiClient].
   late final OrderRepository _orderRepository;
-
-  /// Artist profile and profile-scoped artwork access.
   late final ArtistRepository _artistRepository;
   late final FavoritesRepository _favoritesRepository;
   late final VerificationRequestRepository _verificationRequestRepository;
   late final AuthCubit _authCubit;
+  late final SplashMinDurationNotifier _splashMinDurationNotifier;
   late final AppRouter _appRouter;
 
   @override
@@ -99,7 +100,7 @@ class _LovenAppState extends State<LovenApp> {
       apiClient: _apiClient,
       tokenStorage: _tokenStorage,
     );
-    // Single repository instance wired to the shared ApiClient.
+
     _artworkRepository = ArtworkRepository(apiClient: _apiClient);
     _orderRepository = OrderRepository(apiClient: _apiClient);
     _artistRepository = ArtistRepository(apiClient: _apiClient);
@@ -107,12 +108,25 @@ class _LovenAppState extends State<LovenApp> {
     _verificationRequestRepository = VerificationRequestRepository(
       apiClient: _apiClient,
     );
+
     _authCubit = AuthCubit(
       authRepository: _authRepository,
       tokenStorage: _tokenStorage,
-    )..checkAuthStatus();
+    );
+
+    _splashMinDurationNotifier = SplashMinDurationNotifier();
+
+    _apiClient.attachSessionExpiredHandler(
+      () => _authCubit.handleSessionExpired(),
+    );
+
+    // Single session bootstrap — routing waits via [AppRouter] redirect.
+    _authCubit.restoreSession();
+
     _appRouter = AppRouter(
       _authCubit,
+      appPreferences: widget.appPreferences,
+      splashMinDurationNotifier: _splashMinDurationNotifier,
       artistRepository: _artistRepository,
       verificationRequestRepository: _verificationRequestRepository,
     );
@@ -121,106 +135,97 @@ class _LovenAppState extends State<LovenApp> {
   @override
   void dispose() {
     _authCubit.close();
+    _splashMinDurationNotifier.dispose();
     super.dispose();
   }
 
   @override
-Widget build(BuildContext context) {
-  return MultiRepositoryProvider(
-    providers: [
-      RepositoryProvider<ArtistRepository>.value(
-        value: _artistRepository,
-      ),
-      RepositoryProvider<AuthRepository>.value(
-        value: _authRepository,
-      ),
-    ],
-    child: MultiBlocProvider(
+  Widget build(BuildContext context) {
+    return MultiRepositoryProvider(
       providers: [
-        BlocProvider.value(value: _authCubit),
-
-        BlocProvider(create: (context) => NavigationBarCubit()),
+        RepositoryProvider<AppPreferences>.value(
+          value: widget.appPreferences,
+        ),
+        RepositoryProvider<SplashMinDurationNotifier>.value(
+          value: _splashMinDurationNotifier,
+        ),
         RepositoryProvider<ArtistRepository>.value(
           value: _artistRepository,
         ),
-        // HomeBloc receives the shared repository for marketplace data.
-        BlocProvider(
-          create: (context) => HomeBloc(
-            artworkRepository: _artworkRepository,
-          )..add(FetchHomeData()),
-        ),
-        BlocProvider(create: (context) => ThemeBloc()),
-        // Note: ArtistProfileCubit and VerificationRequestCubit were removed
-        // from global providers. They are now scoped directly in app_router.dart.
-        BlocProvider(
-          create: (context) => CartCubit(
-            CartRepository(apiClient: _apiClient),
-          ),
-        ),
-
-        BlocProvider(
-          create: (context) => ArtworkCubit(
-            _artworkRepository,
-          ),
-        ),
-
-        BlocProvider(
-          create: (context) => OrderCubit(
-            _orderRepository,
-          ),
-        ),
-
-        BlocProvider(
-          create: (context) => FeedbackCubit(
-            FeedbackRepository(
-              apiClient: _apiClient,
-            ),
-          ),
-        ),
-
-        BlocProvider(
-          create: (context) => ReportCubit(
-            ReportRepository(
-              apiClient: _apiClient,
-            ),
-          ),
-        ),
-
-        // FIXED: removed automatic loadFavorites()
-        BlocProvider(
-          create: (_) => FavoritesCubit(
-            _favoritesRepository,
-          ),
-        ),
-
-        BlocProvider(
-          create: (_) => VerificationRequestCubit(
-            _verificationRequestRepository,
-          ),
+        RepositoryProvider<AuthRepository>.value(
+          value: _authRepository,
         ),
       ],
-      child: BlocBuilder<ThemeBloc, ThemeMode>(
-        builder: (context, themeMode) {
-          return MaterialApp.router(
-            title: 'LOVEN',
-            debugShowCheckedModeBanner: false,
-            routerConfig: _appRouter.router,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale('en', 'US'),
-              Locale('ar', 'SA'),
-            ],
-          );
-        },
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _authCubit),
+          BlocProvider(create: (context) => NavigationBarCubit()),
+          BlocProvider(
+            create: (context) => HomeBloc(
+              artworkRepository: _artworkRepository,
+            )..add(FetchHomeData()),
+          ),
+          BlocProvider(create: (context) => ThemeBloc()),
+          BlocProvider(
+            create: (context) => CartCubit(
+              CartRepository(apiClient: _apiClient),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ArtworkCubit(
+              _artworkRepository,
+            ),
+          ),
+          BlocProvider(
+            create: (context) => OrderCubit(
+              _orderRepository,
+            ),
+          ),
+          BlocProvider(
+            create: (context) => FeedbackCubit(
+              FeedbackRepository(
+                apiClient: _apiClient,
+              ),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ReportCubit(
+              ReportRepository(
+                apiClient: _apiClient,
+              ),
+            ),
+          ),
+          BlocProvider(
+            create: (_) => FavoritesCubit(_favoritesRepository),
+          ),
+          BlocProvider(
+            create: (_) => VerificationRequestCubit(
+              _verificationRequestRepository,
+            ),
+          ),
+        ],
+        child: BlocBuilder<ThemeBloc, ThemeMode>(
+          builder: (context, themeMode) {
+            return MaterialApp.router(
+              title: 'LOVEN',
+              debugShowCheckedModeBanner: false,
+              routerConfig: _appRouter.router,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('en', 'US'),
+                Locale('ar', 'SA'),
+              ],
+            );
+          },
+        ),
       ),
-    ),
     );
   }
 }
