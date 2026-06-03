@@ -96,3 +96,15 @@ class UserRepository(SQLAlchemyRepository):
             user.auth_provider = "google"
             db.session.commit()
             return user
+        
+    def delete(self, user_id):
+        """
+        Permanently deletes a user from the database.
+        """
+        user = self.get_by_id(user_id)
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return True
+        return False
+    

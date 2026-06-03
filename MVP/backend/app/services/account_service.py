@@ -31,6 +31,14 @@ class AccountService:
             raise ValueError("User not found")
 
         return self._serialize_user(user)
+    
+    def delete_current_account(self, user_id):
+
+        user = self.user_repo.get_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        self.user_repo.delete(user_id)
 
     def _serialize_user(self, user):
         return {

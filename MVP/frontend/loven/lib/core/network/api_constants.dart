@@ -6,9 +6,9 @@ import 'package:loven/core/storage/token_storage.dart';
 
 /// ========================================================================
 /// API Client Configuration & Endpoints
-/// 
+///
 /// This file contains the core API networking layer using Dio.
-/// It implements Clean Architecture principles by separating the 
+/// It implements Clean Architecture principles by separating the
 /// endpoints (ApiEndpoints) from the networking logic (ApiClient).
 /// Base URLs are securely loaded from environment variables (.env).
 ///
@@ -18,7 +18,6 @@ import 'package:loven/core/storage/token_storage.dart';
 /// request. Public endpoints (login, register) simply have no stored
 /// token, so the header is skipped — no per-route opt-out needed.
 /// ========================================================================
-
 
 /// Holds URI paths passed to [ApiClient] (Dio). Every path is **relative to**
 /// [ApiClient]'s `baseUrl`, which must be the API root (e.g. `http://host/api/v1`
@@ -52,7 +51,8 @@ class ApiConstants {
   static const String logout = '/logout';
   static const String changePassword = '/change-password';
   static const String currentUser = '/account/me';
-  
+  static const String deleteAccount = '/account/me';
+
   // =====================================================
   // Artist profiles (root-mounted: /api/v1/artist-profiles/…)
   // =====================================================
@@ -135,8 +135,7 @@ class ApiConstants {
   static const String favoriteCheck = '/favorites/check';
 
   /// POST/DELETE — `{favorites}{artworkId}`.
-  static String favoriteByArtworkId(String artworkId) =>
-      '$favorites$artworkId';
+  static String favoriteByArtworkId(String artworkId) => '$favorites$artworkId';
 
   // =====================================================
   // Verification requests (root-mounted on /api/v1)
@@ -144,13 +143,12 @@ class ApiConstants {
 
   static const String verificationRequests = '/verification-requests';
 
-static const String adminVerificationRequests =
-    '/verification-requests';
+  static const String adminVerificationRequests = '/verification-requests';
 
-static String verificationRequestStatus(
-  String requestId,
-) =>
-    '/verification-requests/$requestId/status';
+  static String verificationRequestStatus(
+    String requestId,
+  ) =>
+      '/verification-requests/$requestId/status';
 
   // =====================================================
   // Payments (feature prefix: /api/v1/payments/…)
@@ -267,7 +265,8 @@ class ApiClient {
   }
 
   /// Generic GET request method with centralized error handling
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(String path,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
       return response;
@@ -323,5 +322,5 @@ class ApiClient {
       }
     }
     return "Network error occurred. Please try again later.";
-    }
+  }
 }

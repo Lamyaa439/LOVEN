@@ -32,7 +32,6 @@ class ProfileScreen extends StatelessWidget {
                     role: user?.systemRole ?? 'customer',
                   ),
                   const SizedBox(height: 24),
-
                   Text(
                     'My Account',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -40,7 +39,6 @@ class ProfileScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 12),
-
                   _ProfileTile(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
@@ -71,9 +69,7 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Send us your thoughts',
                     onTap: () => context.push('/feedback'),
                   ),
-
                   const SizedBox(height: 24),
-
                   _ProfileTile(
                     icon: Icons.logout,
                     title: 'Logout',
@@ -82,6 +78,13 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () {
                       context.go('/login');
                     },
+                  ),
+                  _ProfileTile(
+                    icon: Icons.delete_outline,
+                    title: 'Delete Account',
+                    subtitle: 'Permanently remove your account',
+                    isDanger: true,
+                    onTap: () => _showDeleteConfirmation(context),
                   ),
                 ],
               ),
@@ -95,6 +98,52 @@ class ProfileScreen extends StatelessWidget {
       },
     );
   }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Account"),
+          content: const Text(
+              "Are you sure? This action is permanent and cannot be undone."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(context); // Close the dialog first
+
+                // --- INTEGRATION POINT ---
+                // Replace 'UserRepository' with your actual repository class name
+                // or use context.read<AuthCubit>().deleteAccount();
+                try {
+                  await context.read<UserRepository>().deleteUserAccount();
+                  // After successful deletion, navigate to login
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                } catch (e) {
+                  // Handle potential errors here
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting account: $e')),
+                  );
+                }
+              },
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class UserRepository {
+  Future<void> deleteUserAccount() async {}
 }
 
 class _ProfileHeader extends StatelessWidget {
