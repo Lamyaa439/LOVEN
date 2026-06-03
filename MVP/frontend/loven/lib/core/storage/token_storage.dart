@@ -1,10 +1,11 @@
-/// Secure persistence for JWT session tokens.
+/// Handles secure persistence of auth/session tokens and lightweight role cache.
 ///
-/// Access and refresh tokens are stored separately so [ApiClient] can attach
-/// the short-lived access JWT on every request while [AuthRepository] keeps
-/// the refresh JWT for silent renewal via `POST /refresh`.
-import 'dart:convert';
-
+/// Network-first / black-box model: this layer only stores and retrieves tokens.
+/// It does not decode JWTs or judge expiry — validity is determined by the API
+/// ([ApiClient] 401 handling and refresh interceptors).
+///
+/// Access and refresh JWTs are stored separately for interceptors and
+/// [AuthRepository] refresh flows. Role is a non-secret session hint only.
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class TokenStorage {
@@ -18,43 +19,10 @@ class TokenStorage {
   // Session helpers
   // =====================================================
 
+  /// True when a non-empty access token is present (no client-side expiry check).
   Future<bool> hasValidSession() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
-  }
-
-  Future<bool> isAccessTokenExpired() async {
-    final token = await getAccessToken();
-    if (token == null || token.isEmpty) return true;
-    return _isJwtExpired(token);
-  }
-
-  bool _isJwtExpired(String jwt) {
-    try {
-      final parts = jwt.split('.');
-      if (parts.length < 2) return true;
-
-      var payload = parts[1].replaceAll('-', '+').replaceAll('_', '/');
-      switch (payload.length % 4) {
-        case 1:
-          payload += '===';
-        case 2:
-          payload += '==';
-        case 3:
-          payload += '=';
-      }
-
-      final decoded = utf8.decode(base64.decode(payload));
-      final claims = json.decode(decoded) as Map<String, dynamic>;
-      final exp = claims['exp'];
-
-      if (exp is! num) return false;
-
-      final expiry = DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000);
-      return DateTime.now().isAfter(expiry);
-    } catch (_) {
-      return true;
-    }
   }
 
   // =====================================================
@@ -130,7 +98,10 @@ class TokenStorage {
   // Clear All
   // =====================================================
 
+/// Clears explicitly only the auth/session keys.
   Future<void> clearAllTokens() async {
-    await _storage.deleteAll();
+    await _storage.delete(key: accessTokenKey);
+    await _storage.delete(key: refreshTokenKey);
+    await _storage.delete(key: userRoleKey);
   }
 }
