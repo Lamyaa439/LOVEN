@@ -11,7 +11,6 @@
 ///
 /// Flask sends `price` and `shipping_fee` as **strings** (Python Decimal),
 /// so [fromJson] uses [_parseDecimal] instead of a raw cast.
-import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 class ArtworkModel {
   final String id;

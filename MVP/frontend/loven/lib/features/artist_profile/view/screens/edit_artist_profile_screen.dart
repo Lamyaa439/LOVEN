@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/res/theme/app_colors.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
 import '../../model/artist_model.dart';
@@ -26,7 +27,9 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   late final TextEditingController _bioController;
   late final TextEditingController _shippingPolicyController;
 
-  final List<String> _cities = [
+  bool _didSubmit = false;
+
+  final List<String> _cities = const [
     'Riyadh',
     'Jeddah',
     'Mecca',
@@ -51,10 +54,8 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
 
     _displayNameController =
         TextEditingController(text: widget.artist.displayName);
-    _cityController =
-        TextEditingController(text: widget.artist.city ?? '');
-    _bioController =
-        TextEditingController(text: widget.artist.bio ?? '');
+    _cityController = TextEditingController(text: widget.artist.city ?? '');
+    _bioController = TextEditingController(text: widget.artist.bio ?? '');
     _shippingPolicyController =
         TextEditingController(text: widget.artist.shippingPolicy ?? '');
   }
@@ -68,30 +69,94 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> _save() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    await context.read<ArtistProfileCubit>().updateProfileInfo(
-          displayName: _displayNameController.text.trim(),
-          city: _cityController.text.trim(),
-          bio: _bioController.text.trim(),
-          shippingPolicy: _shippingPolicyController.text.trim(),
-        );
+  await context.read<ArtistProfileCubit>().updateProfileInfo(
+        displayName: _displayNameController.text.trim(),
+        city: _cityController.text.trim(),
+        bio: _bioController.text.trim(),
+        shippingPolicy: _shippingPolicyController.text.trim(),
+      );
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    final state = context.read<ArtistProfileCubit>().state;
+  final state = context.read<ArtistProfileCubit>().state;
 
-    if (state.status == ArtistProfileStatus.success) {
-      Navigator.of(context).pop(true);
-    }
+  if (state.status == ArtistProfileStatus.success) {
+    Navigator.of(context).pop(true);
+  }
+}
+
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+    bool alignLabelWithHint = false,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      prefixIcon: Icon(icon, size: 18),
+      alignLabelWithHint: alignLabelWithHint,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(
+          color: AppColors.primaryBlue,
+          width: 1.3,
+        ),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.red.shade400,
+        ),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: Colors.red.shade400,
+          width: 1.3,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ArtistProfileCubit, ArtistProfileState>(
+    return BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
       listener: (context, state) {
+        if (state.status == ArtistProfileStatus.success && _didSubmit) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully'),
+            ),
+          );
+
+          Navigator.of(context).pop(true);
+        }
+
         if (state.status == ArtistProfileStatus.error) {
+          setState(() {
+            _didSubmit = false;
+          });
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'Could not update profile'),
@@ -99,96 +164,359 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
           );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Edit Artist Profile'),
-          centerTitle: true,
-        ),
-        body: BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
-          builder: (context, state) {
-            final isLoading = state.status == ArtistProfileStatus.loading;
+      builder: (context, state) {
+        final isLoading = state.status == ArtistProfileStatus.loading;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F7F8),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFFF8F7F8),
+            elevation: 0,
+            centerTitle: true,
+            title: Text(
+              'Edit Profile',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: FilledButton(
+                  onPressed: isLoading ? null : _save,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    minimumSize: const Size(0, 36),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: Text(isLoading ? 'Saving...' : 'Save'),
+                ),
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
               child: Form(
                 key: _formKey,
                 child: Column(
                   children: [
-                    TextFormField(
-                      controller: _displayNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Display name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Display name is required';
-                        }
-                        return null;
-                      },
+                    _CoverSection(
+                      artist: widget.artist,
                     ),
-
-                    const SizedBox(height: 12),
-
-                    DropdownButtonFormField<String>(
-                      initialValue: _cityController.text.isEmpty
-                          ? null
-                          : _cityController.text,
-                      decoration: const InputDecoration(
-                        labelText: 'City',
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                      ),
-                      items: _cities.map((city) {
-                        return DropdownMenuItem(
-                          value: city,
-                          child: Text(city),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        _cityController.text = value ?? '';
-                      },
+                    const SizedBox(height: 26),
+                    _AvatarSection(
+                      artist: widget.artist,
                     ),
+                    const SizedBox(height: 30),
 
-                    const SizedBox(height: 12),
-
-                    TextFormField(
-                      controller: _bioController,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText: 'Bio',
-                        prefixIcon: Icon(Icons.notes_outlined),
-                        alignLabelWithHint: true,
+                    EditProfileField(
+                      label: 'Display Name',
+                      child: TextFormField(
+                        controller: _displayNameController,
+                        decoration: _inputDecoration(
+                          hint: 'Display name',
+                          icon: Icons.person_outline,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Display name is required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
 
-                    const SizedBox(height: 12),
-
-                    TextFormField(
-                      controller: _shippingPolicyController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Shipping policy',
-                        prefixIcon: Icon(Icons.local_shipping_outlined),
-                        alignLabelWithHint: true,
+                    EditProfileField(
+                      label: 'Location',
+                      child: DropdownButtonFormField<String>(
+                        value: _cityController.text.isEmpty
+                            ? null
+                            : _cityController.text,
+                        decoration: _inputDecoration(
+                          hint: 'Select city',
+                          icon: Icons.location_on_outlined,
+                        ),
+                        items: _cities.map((city) {
+                          return DropdownMenuItem(
+                            value: city,
+                            child: Text(city),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          _cityController.text = value ?? '';
+                        },
                       ),
                     ),
 
-                    const SizedBox(height: 24),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _save,
-                        child: Text(isLoading ? 'Saving...' : 'Save Changes'),
+                    EditProfileField(
+                      label: 'Artist Category',
+                      child: TextFormField(
+                        initialValue: 'Digital Artist / Illustrator',
+                        decoration: _inputDecoration(
+                          hint: 'Artist category',
+                          icon: Icons.palette_outlined,
+                        ),
                       ),
+                    ),
+
+                    EditProfileField(
+                      label: 'Bio',
+                      child: TextFormField(
+                        controller: _bioController,
+                        maxLines: 7,
+                        maxLength: 500,
+                        decoration: _inputDecoration(
+                          hint: 'Write a short artist bio',
+                          icon: Icons.notes_outlined,
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                    ),
+
+                    EditProfileField(
+                      label: 'Shipping Policy',
+                      child: TextFormField(
+                        controller: _shippingPolicyController,
+                        maxLines: 3,
+                        decoration: _inputDecoration(
+                          hint: 'Describe shipping availability and timing',
+                          icon: Icons.local_shipping_outlined,
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    _AccountSection(
+                      onSignOut: () {},
                     ),
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CoverSection extends StatelessWidget {
+  const _CoverSection({
+    required this.artist,
+  });
+
+  final ArtistModel artist;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 132,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.primaryPurple,
+            AppColors.deepPurple,
+            AppColors.primaryBlue,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -18,
+            top: -12,
+            child: Icon(
+              Icons.auto_awesome,
+              size: 118,
+              color: Colors.white.withValues(alpha: 0.12),
+            ),
+          ),
+          Positioned(
+            left: -16,
+            bottom: -20,
+            child: Icon(
+              Icons.brush_outlined,
+              size: 112,
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+          ),
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: FilledButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.image_outlined, size: 15),
+              label: const Text('Change Cover'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.88),
+                foregroundColor: Colors.black87,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvatarSection extends StatelessWidget {
+  const _AvatarSection({
+    required this.artist,
+  });
+
+  final ArtistModel artist;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImage =
+        artist.profileImageUrl != null && artist.profileImageUrl!.isNotEmpty;
+
+    return Center(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CircleAvatar(
+            radius: 42,
+            backgroundColor: AppColors.primaryPurple,
+            backgroundImage:
+                hasImage ? NetworkImage(artist.profileImageUrl!) : null,
+            child: hasImage
+                ? null
+                : Text(
+                    artist.displayName.isNotEmpty
+                        ? artist.displayName[0].toUpperCase()
+                        : '?',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.primaryBlue,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+          ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: CircleAvatar(
+              radius: 15,
+              backgroundColor: AppColors.primaryBlue,
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.white,
+                size: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class EditProfileField extends StatelessWidget {
+  const EditProfileField({
+    super.key,
+    required this.label,
+    required this.child,
+  });
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 0.45,
+                ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountSection extends StatelessWidget {
+  const _AccountSection({
+    required this.onSignOut,
+  });
+
+  final VoidCallback onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ACCOUNT',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                letterSpacing: 0.45,
+              ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: TextButton.icon(
+            onPressed: onSignOut,
+            icon: const Icon(Icons.logout, size: 17),
+            label: const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Sign Out'),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
+              backgroundColor: Colors.red.withValues(alpha: 0.055),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 14,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
