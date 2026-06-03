@@ -1,16 +1,16 @@
 // Application entry point: Firebase/env setup, DI, and MaterialApp.router.
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'firebase_options.dart';
-import 'core/res/theme/app_theme.dart';
+import 'core/config/app_env.dart';
+import 'core/theme/app_theme.dart';
 import 'core/theme/theme_bloc.dart';
 import 'core/router/app_router.dart';
 import 'core/router/splash_min_duration_notifier.dart';
-import 'core/network/api_constants.dart';
+import 'core/network/api_client.dart';
 import 'core/storage/token_storage.dart';
 import 'core/storage/app_preferences.dart';
 import 'features/auth/data/repositories/auth_repository.dart';
@@ -49,11 +49,7 @@ export 'core/theme/theme_bloc.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (_) {
-    // Safe fallback — see ApiClient.defaultBaseUrl / resolveBaseUrl().
-  }
+  await AppEnv.load();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -111,7 +107,6 @@ class _LovenAppState extends State<LovenApp> {
 
     _authCubit = AuthCubit(
       authRepository: _authRepository,
-      tokenStorage: _tokenStorage,
     );
 
     _splashMinDurationNotifier = SplashMinDurationNotifier();
