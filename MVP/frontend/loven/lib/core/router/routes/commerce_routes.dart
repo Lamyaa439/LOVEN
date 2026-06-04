@@ -5,7 +5,6 @@ import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
-import 'package:loven/features/auth/view/screens/profile_screen.dart';
 import 'package:loven/features/cart/view/screens/confirm_order_screen.dart';
 import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
 import 'package:loven/features/location/view/screens/address_form_screen.dart';
@@ -21,10 +20,6 @@ import 'package:loven/features/verification_request/view/screens/verification_re
 /// Account hub, orders, cart, checkout, and related signed-in flows.
 List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
   return [
-    GoRoute(
-      path: AppRoutes.profile,
-      builder: (context, state) => const ProfileScreen(),
-    ),
     GoRoute(
       path: AppRoutes.notifications,
       builder: (context, state) => const NotificationsScreen(),
