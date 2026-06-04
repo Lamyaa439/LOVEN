@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -96,7 +96,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
                 onPressed: () {
-                  context.push('/settings');
+                  context.push(AppRoutes.settings);
                 },
               ),
           ],
@@ -280,7 +280,7 @@ class _SuccessContent extends StatelessWidget {
                                   isPrimary: false,
                                   onPressed: () async {
                                     final updated = await context.push(
-                                      '/artist-profile/edit',
+                                      AppRoutes.artistProfileEdit,
                                       extra: artist,
                                     );
 
@@ -300,7 +300,7 @@ class _SuccessContent extends StatelessWidget {
                                   isPrimary: true,
                                   onPressed: () async {
                                     final created = await context.push(
-                                      '/artworks/create',
+                                      AppRoutes.artworksCreate,
                                     );
 
                                     if (created == true && context.mounted) {
