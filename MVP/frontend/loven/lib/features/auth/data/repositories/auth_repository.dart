@@ -7,7 +7,8 @@
 /// - Accepts [ApiClient] and [TokenStorage] via constructor injection.
 /// - Delegates HTTP and error extraction to [ApiClient]; this repository
 ///   does not catch or translate exceptions except for best-effort logout.
-/// - Login/register persist both JWT tokens via [_persistSessionTokens].
+/// - Login/register persist JWT tokens only via [_persistSessionTokens].
+/// - User role comes from `GET /account/me` ([UserModel.systemRole]), not storage.
 /// - Account reads/writes use `GET/PATCH /account/me` ([ApiConstants.currentUser]).
 /// ========================================================================
 
