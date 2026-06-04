@@ -1,7 +1,12 @@
-// Centralized HTTP client configuration for repositories and data sources.
+// Centralized HTTP transport: auth headers, 401 refresh, and session expiry notification.
 //
-// Uses AppEnv for base URL/timeouts, TokenStorage for auth headers,
-// and AppException for failures. Endpoint paths live in ApiEndpoints.
+// **Session ownership:**
+// - [TokenStorage]: persists JWT access/refresh tokens only.
+// - [ApiClient]: sole owner of access-token refresh (`POST /refresh` on 401).
+// - [AuthRepository]: login/register/logout and profile calls; no refresh implementation.
+// - [AuthCubit]: orchestrates boot [restoreSession] and auth state emissions.
+//
+// Wire [attachSessionExpiredHandler] to [AuthCubit.handleSessionExpired] from [main].
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -60,21 +65,18 @@ class ApiClient {
   /// Resolved API root used by this client instance.
   final String baseUrl;
 
-  // إذا انتهت الجلسة وفشل تجديد التوكن يطرد المستخدم إلى صفحة تسجيل الدخول 
   VoidCallback? _onSessionExpired;
 
-  // يمنع طلب توكن آخر في نفس اللحظة
+  /// Coalesces concurrent refresh attempts into one in-flight request.
   Future<void>? _refreshInFlight;
 
-
-  ///السطرين اللي تحت هذي حل مؤقت تحتاج تعديل بعدين  
   /// @deprecated Use [AppEnv.defaultBaseUrl].
   static const String defaultBaseUrl = AppEnv.defaultBaseUrl;
 
   /// @deprecated Use [AppEnv.resolveBaseUrl].
   static String resolveBaseUrl() => AppEnv.resolveBaseUrl();
 
-  /// Called when refresh fails after a 401 — wire [AuthCubit.handleSessionExpired] here.
+  /// Called when refresh fails after a 401 — wire [AuthCubit.handleSessionExpired].
   void attachSessionExpiredHandler(VoidCallback onSessionExpired) {
     _onSessionExpired = onSessionExpired;
   }
@@ -83,38 +85,33 @@ class ApiClient {
     _onSessionExpired?.call();
   }
 
-  // دالة تجديد التوكن
+  /// Exchanges the stored refresh JWT for a new access token (`POST /refresh`).
   Future<void> _refreshAccessToken() async {
-    // نطلع الريفرش توكن
     final refreshToken = await _tokenStorage.getRefreshToken();
 
-    // إذا كان الريفرش توكن مفقود او فارغ نرمي خطأ
     if (refreshToken == null || refreshToken.isEmpty) {
       throw AppException('No refresh token available');
     }
-    // هنا نرسل الريفرش توكن للسيرفر عشان يرسل لنا ريفرش توكن جديد
+
     final response = await postWithBearerToken(
       ApiEndpoints.refresh,
       bearerToken: refreshToken,
-      data: {}, // مانرسل بيانات
+      data: {},
     );
 
-    // نتأكد إن السيرفر رد علينا ببيانات صحيحة
     final data = response.data;
     if (data is! Map) {
       throw AppException('Invalid refresh response');
     }
-    // نطلع الريفرش توكن الجديد من رد السيرفر
+
     final accessToken = data['access_token']?.toString();
-    // إذا السيرفر ما ارسل توكن جديد نرمي خطأ 
     if (accessToken == null || accessToken.isEmpty) {
       throw AppException('Server did not return an access token');
     }
-    // نحفظ الريفرش توكن الجديد
+
     await _tokenStorage.saveAccessToken(accessToken);
   }
 
-  // هذي الدالة تضع طلبات تجديد التوكن في طابور عشان ما ينرسلون مره وحدة للسيرفر
   Future<void> _coalescedRefresh() {
     _refreshInFlight ??= _refreshAccessToken().whenComplete(() {
       _refreshInFlight = null;
@@ -182,7 +179,7 @@ class ApiClient {
   }
 }
 
-// إضافة التوكن للطلبات اللي تنرسل للسيرفر (الباك)
+/// Attaches stored access JWT to outgoing requests when not already set.
 class _AuthRequestInterceptor extends Interceptor {
   _AuthRequestInterceptor(this._tokenStorage);
 
@@ -208,6 +205,7 @@ class _AuthRequestInterceptor extends Interceptor {
   }
 }
 
+/// On 401 (non-auth routes): refresh access token, retry once, or clear session.
 class _SessionInterceptor extends Interceptor {
   _SessionInterceptor({
     required Dio dio,
