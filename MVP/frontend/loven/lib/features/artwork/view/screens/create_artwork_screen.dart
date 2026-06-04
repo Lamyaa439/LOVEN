@@ -76,7 +76,7 @@ class _CreateArtworkScreenState
 
     final authState = context.read<AuthCubit>().state;
 
-    if (authState is! AuthSuccess || authState.user == null) {
+    if (!authStateHasSession(authState)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please login again before uploading artwork'),
@@ -93,7 +93,7 @@ class _CreateArtworkScreenState
       final imageUrl =
           await _storageService.uploadArtworkImage(
         imageFile: _selectedImage!,
-        artistId: authState.user!.id,
+        artistId: authStateSessionUser(authState)!.id,
       );
 
       if (!mounted) return;

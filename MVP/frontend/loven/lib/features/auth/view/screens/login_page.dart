@@ -9,8 +9,8 @@ import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
 /// Login screen for email/password auth.
 ///
-/// Navigation decisions are derived from [AuthSuccess.user] emitted by
-/// [AuthCubit], not from token parsing inside the UI layer.
+/// Post-login navigation is owned by [resolveRedirect] in the app router,
+/// not by this screen.
 class LoginPage extends StatefulWidget {
   final bool fromGuest;
 
@@ -46,17 +46,6 @@ class _LoginPageState extends State<LoginPage> {
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
-  }
-
-  void _goToLoggedInHome(AuthSuccess state) {
-    final role = state.user?.systemRole;
-    if (!mounted) return;
-
-    if (role == 'admin') {
-      context.go(AppRoutes.admin);
-    } else {
-      context.go(AppRoutes.home);
-    }
   }
 
   InputDecoration _inputDecoration({
@@ -98,10 +87,6 @@ class _LoginPageState extends State<LoginPage> {
 
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthSuccess) {
-          _goToLoggedInHome(state);
-        }
-
         if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

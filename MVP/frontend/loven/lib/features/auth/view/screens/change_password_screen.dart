@@ -83,13 +83,12 @@ class _ChangePasswordScreenState
           context.pop();
         }
 
-        if (state is AuthFailure) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
-            SnackBar(
-              content:
-                  Text(state.message),
-            ),
+        if (state is AuthFailure || state is AuthOperationFailure) {
+          final message = state is AuthFailure
+              ? state.message
+              : (state as AuthOperationFailure).message;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message)),
           );
         }
       },
