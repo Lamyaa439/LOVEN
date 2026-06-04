@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -73,7 +74,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
         ),
       );
 
-      context.go('/auth');
+      context.go(AppRoutes.auth);
       return;
     }
 
@@ -283,7 +284,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
               onPressed: () {
                 if (widget.isGuest) {
                   Navigator.pop(context);
-                  context.push('/auth');
+                  context.push(AppRoutes.auth);
                   return;
                 }
 
@@ -468,7 +469,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
           child: TextButton(
             onPressed: () {
               Navigator.pop(context);
-              context.go('/cart');
+              context.go(AppRoutes.cart);
             },
             style: TextButton.styleFrom(
               backgroundColor: theme.colorScheme.surface,
