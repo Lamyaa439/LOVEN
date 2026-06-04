@@ -3,8 +3,8 @@
 **Project path:** `MVP/frontend/loven` (Flutter package name: `loven`).
 
 This README is a **structured file and folder map** for the LOVEN MVP Flutter frontend. The codebase went through **phased architecture cleanup** (thin entry, `lib/app/` composition, modular router, frozen redirect policy, auth/account split, `AppRoutes` navigation). Use this document to find **ownership and responsibilities** quickly — not as full product or API documentation.
----
 
+---
 ## High-level structure
 
 ```
