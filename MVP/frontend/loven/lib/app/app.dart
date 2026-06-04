@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:loven/app/dependencies.dart';
 import 'package:loven/core/res/theme/app_theme.dart';
 import 'package:loven/core/storage/app_preferences.dart';
@@ -54,9 +55,6 @@ class _LovenAppState extends State<LovenApp> {
         RepositoryProvider<AppPreferences>.value(
           value: _deps.appPreferences,
         ),
-        RepositoryProvider<SplashMinDurationNotifier>.value(
-          value: _deps.splashMinDurationNotifier,
-        ),
         RepositoryProvider<ArtistRepository>.value(
           value: _deps.artistRepository,
         ),
@@ -64,8 +62,10 @@ class _LovenAppState extends State<LovenApp> {
           value: _deps.authRepository,
         ),
       ],
-      child: MultiBlocProvider(
-        providers: [
+      child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
+        value: _deps.splashMinDurationNotifier,
+        child: MultiBlocProvider(
+          providers: [
           BlocProvider.value(value: _deps.authCubit),
           BlocProvider(create: (context) => NavigationBarCubit()),
           BlocProvider(
@@ -97,27 +97,28 @@ class _LovenAppState extends State<LovenApp> {
               _deps.verificationRequestRepository,
             ),
           ),
-        ],
-        child: BlocBuilder<ThemeBloc, ThemeMode>(
-          builder: (context, themeMode) {
-            return MaterialApp.router(
-              title: 'LOVEN',
-              debugShowCheckedModeBanner: false,
-              routerConfig: _deps.appRouter.router,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: themeMode,
-              localizationsDelegates: const [
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              supportedLocales: const [
-                Locale('en', 'US'),
-                Locale('ar', 'SA'),
-              ],
-            );
-          },
+          ],
+          child: BlocBuilder<ThemeBloc, ThemeMode>(
+            builder: (context, themeMode) {
+              return MaterialApp.router(
+                title: 'LOVEN',
+                debugShowCheckedModeBanner: false,
+                routerConfig: _deps.appRouter.router,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeMode,
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [
+                  Locale('en', 'US'),
+                  Locale('ar', 'SA'),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
