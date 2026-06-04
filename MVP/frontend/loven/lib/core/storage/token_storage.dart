@@ -1,33 +1,32 @@
-/// Handles secure persistence of auth/session tokens and lightweight role cache.
-///
-/// Network-first / black-box model: this layer only stores and retrieves tokens.
-/// It does not decode JWTs or judge expiry — validity is determined by the API
-/// ([ApiClient] 401 handling and refresh interceptors).
-///
-/// Access and refresh JWTs are stored separately for interceptors and
-/// [AuthRepository] refresh flows. Role is a non-secret session hint only.
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+/// Secure persistence for JWT session credentials only.
+///
+/// **Ownership:**
+/// - Access and refresh tokens ([accessTokenKey], [refreshTokenKey])
+/// - [hasValidSession] — non-empty access token present (no client-side expiry)
+/// - [clearAllTokens] — wipes token keys and any legacy secure-storage entries
+///
+/// **Does not store user role.** Role lives on [UserModel.systemRole] inside
+/// [AuthSuccess] (see `auth_state.dart` and [authStateSessionUser]). Routing and
+/// authorization must use auth state, not this class.
+///
+/// **Network-first model:** this layer does not decode JWTs or judge expiry.
+/// Validity is determined by the API ([ApiClient] 401 handling and refresh).
 class TokenStorage {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
-  static const String userRoleKey = 'user_role';
 
-  // =====================================================
-  // Session helpers
-  // =====================================================
+  /// Former role-cache key; purged on [clearAllTokens] for upgraded installs.
+  static const String _legacyUserRoleKey = 'user_role';
 
   /// True when a non-empty access token is present (no client-side expiry check).
   Future<bool> hasValidSession() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
-
-  // =====================================================
-  // Access Token
-  // =====================================================
 
   Future<void> saveAccessToken(String token) async {
     await _storage.write(
@@ -48,10 +47,6 @@ class TokenStorage {
     );
   }
 
-  // =====================================================
-  // Refresh Token
-  // =====================================================
-
   Future<void> saveRefreshToken(String token) async {
     await _storage.write(
       key: refreshTokenKey,
@@ -71,37 +66,10 @@ class TokenStorage {
     );
   }
 
-  // =====================================================
-  // User Role
-  // =====================================================
-
-  Future<void> saveUserRole(String role) async {
-    await _storage.write(
-      key: userRoleKey,
-      value: role,
-    );
-  }
-
-  Future<String?> getUserRole() async {
-    return await _storage.read(
-      key: userRoleKey,
-    );
-  }
-
-  Future<void> clearUserRole() async {
-    await _storage.delete(
-      key: userRoleKey,
-    );
-  }
-
-  // =====================================================
-  // Clear All
-  // =====================================================
-
-/// Clears explicitly only the auth/session keys.
+  /// Clears JWT credentials and legacy `user_role` secure-storage if present.
   Future<void> clearAllTokens() async {
     await _storage.delete(key: accessTokenKey);
     await _storage.delete(key: refreshTokenKey);
-    await _storage.delete(key: userRoleKey);
+    await _storage.delete(key: _legacyUserRoleKey);
   }
 }
