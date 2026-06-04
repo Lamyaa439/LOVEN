@@ -1,8 +1,14 @@
-// Pure redirect policy for [AppRouter] — no widgets, no side effects.
+// Frozen redirect policy for [AppRouter] — pure, side-effect free.
 //
-// Returns the path to navigate to, or `null` to stay on the current location.
-// Route classification is delegated to [AppRoutes]; session rules use
-// [authStateHasSession]. See the contract matrix at the bottom of this file.
+// **Single entry:** [resolveRedirect] — returns the next path or `null` to stay.
+//
+// **Stable dependencies only:**
+// - [AuthState] + [authStateHasSession] / [authStateSessionUser]
+// - [AppPreferences.hasCompletedOnboarding]
+// - [SplashMinDurationNotifier.isReady]
+// - [AppRoutes] guard registry (no path literals in this file)
+//
+// **Do not add** widgets, cubits, or route builders here.
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/storage/app_preferences.dart';
@@ -11,6 +17,7 @@ import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 /// Resolves the next route for [GoRouter.redirect] from session and app state.
 ///
 /// [matchedLocation] is [GoRouterState.matchedLocation] (full path match).
+/// Evaluation order matches the frozen matrix below (first non-null wins).
 String? resolveRedirect({
   required AuthState authState,
   required AppPreferences appPreferences,
@@ -19,54 +26,124 @@ String? resolveRedirect({
 }) {
   final path = matchedLocation;
 
+  return _redirectLegacySplashAlias(path) ??
+      _redirectWhileOnSplash(
+        path: path,
+        authState: authState,
+        appPreferences: appPreferences,
+        splashMinDuration: splashMinDuration,
+      ) ??
+      _redirectWhileBootstrapping(path: path, authState: authState) ??
+      _redirectGuestFromProtectedRoute(path: path, authState: authState) ??
+      _redirectGuestPastOnboarding(
+        path: path,
+        authState: authState,
+        appPreferences: appPreferences,
+      ) ??
+      _redirectAuthenticatedFromOnboarding(path: path, authState: authState) ??
+      _redirectAuthenticatedFromAuthEntry(path: path, authState: authState);
+}
+
+// -----------------------------------------------------------------------------
+// Rule helpers (evaluated in [resolveRedirect] order)
+// -----------------------------------------------------------------------------
+
+String? _redirectLegacySplashAlias(String path) {
   if (path == AppRoutes.splashLegacy) {
     return AppRoutes.splash;
   }
-
-  if (path == AppRoutes.splash) {
-    if (_isBootstrapping(authState) || !splashMinDuration.isReady) {
-      return null;
-    }
-    return _resolvePostBootstrapLocation(
-      authState: authState,
-      appPreferences: appPreferences,
-    );
-  }
-
-  if (_isBootstrapping(authState)) {
-    if (AppRoutes.requiresAuthenticatedSession(path) &&
-        path != AppRoutes.splash) {
-      return AppRoutes.splash;
-    }
-    return null;
-  }
-
-  if (_isGuestSession(authState) &&
-      AppRoutes.requiresAuthenticatedSession(path)) {
-    return AppRoutes.auth;
-  }
-
-  if (_isGuestSession(authState) &&
-      appPreferences.hasCompletedOnboarding &&
-      path == AppRoutes.onboarding) {
-    return AppRoutes.home;
-  }
-
-  if (authStateHasSession(authState) && path == AppRoutes.onboarding) {
-    return _resolveAuthenticatedLanding(authState);
-  }
-
-  if (authStateHasSession(authState) &&
-      AppRoutes.isUnauthenticatedAuthEntryPath(path)) {
-    return _resolveAuthenticatedLanding(authState);
-  }
-
   return null;
 }
+
+String? _redirectWhileOnSplash({
+  required String path,
+  required AuthState authState,
+  required AppPreferences appPreferences,
+  required SplashMinDurationNotifier splashMinDuration,
+}) {
+  if (path != AppRoutes.splash) {
+    return null;
+  }
+  if (_isBootstrapping(authState) || !splashMinDuration.isReady) {
+    return null;
+  }
+  return _resolvePostBootstrapLocation(
+    authState: authState,
+    appPreferences: appPreferences,
+  );
+}
+
+String? _redirectWhileBootstrapping({
+  required String path,
+  required AuthState authState,
+}) {
+  if (!_isBootstrapping(authState)) {
+    return null;
+  }
+  if (AppRoutes.requiresAuthenticatedSession(path) && path != AppRoutes.splash) {
+    return AppRoutes.splash;
+  }
+  return null;
+}
+
+String? _redirectGuestFromProtectedRoute({
+  required String path,
+  required AuthState authState,
+}) {
+  if (!_isGuestSession(authState)) {
+    return null;
+  }
+  if (!AppRoutes.requiresAuthenticatedSession(path)) {
+    return null;
+  }
+  return AppRoutes.auth;
+}
+
+String? _redirectGuestPastOnboarding({
+  required String path,
+  required AuthState authState,
+  required AppPreferences appPreferences,
+}) {
+  if (!_isGuestSession(authState)) {
+    return null;
+  }
+  if (!appPreferences.hasCompletedOnboarding || path != AppRoutes.onboarding) {
+    return null;
+  }
+  return AppRoutes.home;
+}
+
+String? _redirectAuthenticatedFromOnboarding({
+  required String path,
+  required AuthState authState,
+}) {
+  if (!authStateHasSession(authState) || path != AppRoutes.onboarding) {
+    return null;
+  }
+  return _resolveAuthenticatedLanding(authState);
+}
+
+String? _redirectAuthenticatedFromAuthEntry({
+  required String path,
+  required AuthState authState,
+}) {
+  if (!authStateHasSession(authState)) {
+    return null;
+  }
+  if (!AppRoutes.isUnauthenticatedAuthEntryPath(path)) {
+    return null;
+  }
+  return _resolveAuthenticatedLanding(authState);
+}
+
+// -----------------------------------------------------------------------------
+// Session / landing helpers
+// -----------------------------------------------------------------------------
 
 bool _isBootstrapping(AuthState state) =>
     state is AuthInitial || state is AuthLoading;
 
+/// Explicit guest browse mode — not [AuthFailure] or [AuthOperationFailure].
 bool _isGuestSession(AuthState state) => state is AuthGuest;
 
 String _resolveAuthenticatedLanding(AuthState authState) {
@@ -91,25 +168,25 @@ String _resolvePostBootstrapLocation({
 }
 
 // -----------------------------------------------------------------------------
-// Redirect contract matrix (evaluated in order; first match wins)
+// Frozen redirect matrix (first matching rule in [resolveRedirect] wins)
 // -----------------------------------------------------------------------------
 //
-// | Location / condition                                      | Redirect target        |
-// |-----------------------------------------------------------|------------------------|
-// | Any: path == splashLegacy                                 | splash                 |
-// | On splash: bootstrapping OR splash min duration !ready    | null (stay)            |
-// | On splash: ready + has session                            | admin or home (role)   |
-// | On splash: ready + guest + !onboarding completed          | onboarding             |
-// | On splash: ready + guest + onboarding completed           | home (guest browse)    |
-// | Bootstrapping + session-required path (not splash)        | splash                 |
-// | Bootstrapping + other paths                               | null (stay)            |
-// | AuthGuest + session-required path                         | auth                   |
-// | AuthGuest + onboarding + onboarding done                  | home                   |
-// | Has session + onboarding                                  | admin or home (role)   |
-// | Has session + auth entry ([AppRoutes.isUnauthenticatedAuthEntryPath]) | admin or home |
-// | All other cases                                           | null (stay)            |
+// | # | Condition                                              | Result              |
+// |---|--------------------------------------------------------|---------------------|
+// | 1 | path == splashLegacy                                   | splash              |
+// | 2 | path == splash AND (bootstrapping OR !splash ready)    | null (stay)         |
+// | 3 | path == splash AND ready                               | post-bootstrap (*)  |
+// | 4 | bootstrapping AND session-required AND path != splash  | splash              |
+// | 5 | bootstrapping AND other                                | null (stay)         |
+// | 6 | AuthGuest AND session-required                         | auth                |
+// | 7 | AuthGuest AND onboarding done AND path == onboarding   | home                |
+// | 8 | has session AND path == onboarding                     | admin or home (†)   |
+// | 9 | has session AND auth-entry path                        | admin or home (†)     |
+// |10 | otherwise                                              | null (stay)         |
 //
-// Session-required paths: [AppRoutes.requiresAuthenticatedSession] (registry).
-// Guest-accessible account hub: [AppRoutes.profile] only ([isGuestAccessiblePath]).
-// Public recovery: [AppRoutes.isPasswordRecoveryPath] (not session-gated).
-// Auth entry: [AppRoutes.isUnauthenticatedAuthEntryPath] (includes /signup/*).
+// (*) Post-bootstrap: session → (†); guest + !onboarding → onboarding;
+//     guest + onboarding done → home.
+// (†) Admin when [authStateSessionUser].systemRole == 'admin', else home.
+//
+// Not redirected here (registry decides): [AppRoutes.profile] (guest hub),
+// public discovery, [AppRoutes.isPasswordRecoveryPath], [AuthFailure] screens.
