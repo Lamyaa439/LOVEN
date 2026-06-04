@@ -14,6 +14,7 @@ dependencies:
 
   # --- State Mangement ---
   flutter_bloc: ^9.1.1
+  provider: ^6.1.5
   equatable: ^2.0.5
 
   # -- Networking & Backend connection ---
