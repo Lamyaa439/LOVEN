@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_state.dart';
@@ -115,7 +116,7 @@ class _ArtistListTile extends StatelessWidget {
       onTap: () {
         if (artistId.isEmpty) return;
 
-        context.push('/artist/$artistId');
+        context.push(AppRoutes.artistPath(artistId));
       },
       child: Container(
         padding: const EdgeInsets.all(14),
