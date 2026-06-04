@@ -9,7 +9,7 @@ import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
 
-import '../../../../main.dart';
+import 'package:loven/core/theme/theme_bloc.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
 import '../widget/navigation_widget.dart';
 
