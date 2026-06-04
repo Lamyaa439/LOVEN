@@ -3,7 +3,10 @@ import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/data/models/user_model.dart';
 
-/// Data-access layer for auth credentials, session tokens, and account profile.
+/// Data-access layer for auth credentials and session tokens.
+///
+/// `GET/PATCH /account/me` remain here for session hydration; account UI lives
+/// under `features/account/`.
 ///
 /// **Session ownership:**
 /// - Persists JWTs on login/register; clears on [logout] / [clearLocalSession].
