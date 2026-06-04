@@ -9,6 +9,7 @@ import '../../controller/cubit/cart_state.dart';
 import '../../data/models/cart_model.dart';
 import '../widgets/cart_item_widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -70,7 +71,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
           );
           
-          context.go('/');
+          context.go(AppRoutes.home);
         }
 
         if (state is OrderError) {
