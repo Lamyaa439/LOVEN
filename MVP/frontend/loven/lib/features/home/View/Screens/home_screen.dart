@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 import '../../controller/bloc/home_bloc.dart';
 import '../../controller/bloc/home_state.dart';
@@ -22,7 +23,7 @@ class HomeScreen extends StatelessWidget {
   });
 
   void _goToSignup(BuildContext context) {
-    context.push('/signup?fromGuest=true');
+    context.push(AppRoutes.signupFromGuest());
   }
 
   Future<void> _addArtworkToCart({
@@ -121,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                       context: context,
                       title: 'Featured Artworks',
                       onSeeAll: () {
-                        context.push('/artworks-list/featured');
+                        context.push(AppRoutes.artworksListPath('featured'));
                       },
                     ),
                     const SizedBox(height: 12),
@@ -134,7 +135,7 @@ class HomeScreen extends StatelessWidget {
                       context: context,
                       title: 'New Arrivals',
                       onSeeAll: () {
-                        context.push('/artworks-list/new-arrivals');
+                        context.push(AppRoutes.artworksListPath('new-arrivals'));
                       },
                     ),
                     const SizedBox(height: 12),
@@ -187,7 +188,7 @@ class HomeScreen extends StatelessWidget {
           ),
           IconButton(
             onPressed: () {
-              context.push('/notifications');
+              context.push(AppRoutes.notifications);
             },
             icon: Icon(
               Icons.notifications_none_rounded,
@@ -345,7 +346,7 @@ class HomeScreen extends StatelessWidget {
                   isGuest || context.read<AuthCubit>().state is AuthGuest;
 
               if (isActuallyGuest) {
-                context.push('/auth');
+                context.push(AppRoutes.auth);
                 return;
               }
 
@@ -384,7 +385,7 @@ class HomeScreen extends StatelessWidget {
           context: context,
           title: 'Artists',
           onSeeAll: () {
-            context.push('/artists');
+            context.push(AppRoutes.artists);
           },
         ),
         const SizedBox(height: 8),
@@ -405,7 +406,7 @@ class HomeScreen extends StatelessWidget {
                     return;
                   }
 
-                  context.push('/artist/$artistId');
+                  context.push(AppRoutes.artistPath(artistId));
                 },
                 child: Container(
                   width: 92,
