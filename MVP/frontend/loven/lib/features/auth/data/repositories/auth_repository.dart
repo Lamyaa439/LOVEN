@@ -1,21 +1,18 @@
-/// ========================================================================
-/// Authentication Repository
-///
-/// Data-access layer for auth session lifecycle and account profile calls.
-///
-/// Architectural decisions:
-/// - Accepts [ApiClient] and [TokenStorage] via constructor injection.
-/// - Delegates HTTP and error extraction to [ApiClient]; this repository
-///   does not catch or translate exceptions except for best-effort logout.
-/// - Login/register persist JWT tokens only via [_persistSessionTokens].
-/// - User role comes from `GET /account/me` ([UserModel.systemRole]), not storage.
-/// - Account reads/writes use `GET/PATCH /account/me` ([ApiConstants.currentUser]).
-/// ========================================================================
-
+import 'package:loven/core/error/app_exception.dart';
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/data/models/user_model.dart';
 
+/// Data-access layer for auth credentials, session tokens, and account profile.
+///
+/// **Session ownership:**
+/// - Persists JWTs on login/register; clears on [logout] / [clearLocalSession].
+/// - [isLoggedIn] — local access token present (no expiry check).
+/// - [restoreAuthenticatedUser] — boot profile load (`GET /account/me`); used by
+///   [AuthCubit.restoreSession] after [isLoggedIn] is true.
+/// - Does **not** refresh tokens — [ApiClient] interceptors own `POST /refresh`.
+///
+/// **Errors:** throws [AppException] for validation and propagated HTTP failures.
 class AuthRepository {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
@@ -30,23 +27,36 @@ class AuthRepository {
     return Map<String, dynamic>.from(data as Map);
   }
 
-  /// Persists access and refresh tokens returned by login/register.
   Future<void> _persistSessionTokens(Map<String, dynamic> data) async {
     final accessToken = data['access_token'] as String?;
     final refreshToken = data['refresh_token'] as String?;
 
     if (accessToken == null || accessToken.isEmpty) {
-      throw Exception('Server did not return an access token');
+      throw const AppException('Server did not return an access token');
     }
     if (refreshToken == null || refreshToken.isEmpty) {
-      throw Exception('Server did not return a refresh token');
+      throw const AppException('Server did not return a refresh token');
     }
 
     await _tokenStorage.saveAccessToken(accessToken);
     await _tokenStorage.saveRefreshToken(refreshToken);
   }
 
-  /// Authenticates an existing user and persists JWT session tokens.
+  /// True when a non-empty access token is stored locally.
+  Future<bool> isLoggedIn() => _tokenStorage.hasValidSession();
+
+  /// Clears local JWT credentials (e.g. logout fallback or failed restore).
+  Future<void> clearLocalSession() => _tokenStorage.clearAllTokens();
+
+  /// Loads the authenticated profile during boot restore.
+  ///
+  /// Call only when [isLoggedIn] is true. Expired access tokens are refreshed by
+  /// [ApiClient] before this throws; irrecoverable auth failures clear tokens via
+  /// the session-expired handler.
+  Future<UserModel> restoreAuthenticatedUser() async {
+    return getCurrentUser();
+  }
+
   Future<void> login({
     required String email,
     required String password,
@@ -64,7 +74,6 @@ class AuthRepository {
     await _persistSessionTokens(_asMap(response.data));
   }
 
-  /// Registers a new user account and persists JWT session tokens.
   Future<void> register({
     required String name,
     required String email,
@@ -87,8 +96,6 @@ class AuthRepository {
   }
 
   /// Invalidates the session on the backend and clears local tokens.
-  ///
-  /// Network failures are swallowed — local cleanup always proceeds.
   Future<void> logout() async {
     try {
       await _apiClient.post(ApiConstants.logout, data: {});
@@ -96,34 +103,9 @@ class AuthRepository {
       // Best-effort server call.
     }
 
-    await _tokenStorage.clearAllTokens();
+    await clearLocalSession();
   }
 
-  /// Exchanges the stored refresh JWT for a new access token (`POST /refresh`).
-  Future<void> refreshAccessToken() async {
-    final refreshToken = await _tokenStorage.getRefreshToken();
-
-    if (refreshToken == null || refreshToken.isEmpty) {
-      throw Exception('No refresh token available');
-    }
-
-    final response = await _apiClient.postWithBearerToken(
-      ApiConstants.refresh,
-      bearerToken: refreshToken,
-      data: {},
-    );
-
-    final data = _asMap(response.data);
-    final accessToken = data['access_token'] as String?;
-
-    if (accessToken == null || accessToken.isEmpty) {
-      throw Exception('Server did not return an access token');
-    }
-
-    await _tokenStorage.saveAccessToken(accessToken);
-  }
-
-  /// Updates the authenticated user's password (`PATCH /change-password`).
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -137,14 +119,12 @@ class AuthRepository {
     );
   }
 
-  /// Fetches the authenticated user's account profile (`GET /account/me`).
   Future<UserModel> getCurrentUser() async {
     final response = await _apiClient.get(ApiConstants.currentUser);
 
     return UserModel.fromJson(_asMap(response.data));
   }
 
-  /// Updates the authenticated user's account profile (`PATCH /account/me`).
   Future<UserModel> updateProfile({
     required String name,
     required String email,
@@ -162,13 +142,6 @@ class AuthRepository {
     return UserModel.fromJson(_asMap(response.data));
   }
 
-  /// Returns whether a non-empty access token is stored locally.
-  Future<bool> isLoggedIn() => _tokenStorage.hasValidSession();
-
-  /// Checks whether [email] is already registered.
-  ///
-  /// TODO: Wire to a backend endpoint once available. Returns `false` as a
-  /// safe default so signup validation is never blocked by a missing route.
   Future<bool> checkEmailDuplication(String email) async {
     return false;
   }
