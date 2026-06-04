@@ -1,8 +1,8 @@
 // Pure redirect policy for [AppRouter] — no widgets, no side effects.
 //
 // Returns the path to navigate to, or `null` to stay on the current location.
-// Guard path lists live in [AppRoutes]; session rules use [authStateHasSession].
-// See the contract matrix at the bottom of this file.
+// Route classification is delegated to [AppRoutes]; session rules use
+// [authStateHasSession]. See the contract matrix at the bottom of this file.
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/storage/app_preferences.dart';
@@ -67,8 +67,6 @@ String? resolveRedirect({
 bool _isBootstrapping(AuthState state) =>
     state is AuthInitial || state is AuthLoading;
 
-/// True only for explicit guest/signed-out session — not [AuthFailure] or
-/// [AuthOperationFailure] (transient credential/profile errors).
 bool _isGuestSession(AuthState state) => state is AuthGuest;
 
 String _resolveAuthenticatedLanding(AuthState authState) {
@@ -105,15 +103,13 @@ String _resolvePostBootstrapLocation({
 // | On splash: ready + guest + onboarding completed           | home (guest browse)    |
 // | Bootstrapping + session-required path (not splash)        | splash                 |
 // | Bootstrapping + other paths                               | null (stay)            |
-// | AuthGuest + session-required path                         | auth (signup entry)    |
+// | AuthGuest + session-required path                         | auth                   |
 // | AuthGuest + onboarding + onboarding done                  | home                   |
 // | Has session + onboarding                                  | admin or home (role)   |
-// | Has session + login / auth / signup /signup/*             | admin or home (role)   |
-// | AuthFailure / AuthOperationFailure (no sessionUser)       | null (stay on screen)  |
-// | AuthOperationFailure (with sessionUser) on protected path | null (stay)            |
+// | Has session + auth entry ([AppRoutes.isUnauthenticatedAuthEntryPath]) | admin or home |
 // | All other cases                                           | null (stay)            |
 //
-// Notes:
-// - [AuthFailure] does NOT clear session routing; only [AuthGuest] triggers auth guards.
-// - Protected paths: [AppRoutes.requiresAuthenticatedSession] (registry in app_routes).
-// - Auth entry paths: [AppRoutes.isUnauthenticatedAuthEntryPath] includes [signup].
+// Session-required paths: [AppRoutes.requiresAuthenticatedSession] (registry).
+// Guest-accessible account hub: [AppRoutes.profile] only ([isGuestAccessiblePath]).
+// Public recovery: [AppRoutes.isPasswordRecoveryPath] (not session-gated).
+// Auth entry: [AppRoutes.isUnauthenticatedAuthEntryPath] (includes /signup/*).
