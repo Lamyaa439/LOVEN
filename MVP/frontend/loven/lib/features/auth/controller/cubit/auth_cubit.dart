@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/auth/data/models/user_model.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -23,7 +24,7 @@ class AuthCubit extends Cubit<AuthState> {
     required TokenStorage tokenStorage,
   })  : _authRepository = authRepository,
         _tokenStorage = tokenStorage,
-        super(AuthInitial());
+        super(const AuthInitial());
 
   /// Boot-time session restore — single source of truth for auth bootstrap.
   ///
@@ -41,11 +42,11 @@ class AuthCubit extends Cubit<AuthState> {
     final token = await _tokenStorage.getAccessToken();
 
     if (token == null || token.isEmpty) {
-      emit(AuthGuest());
+      emit(const AuthGuest());
       return;
     }
 
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       await _completeAuthenticatedSession();
@@ -58,7 +59,7 @@ class AuthCubit extends Cubit<AuthState> {
           debugPrint('Session restore failed: $e');
         }
         await _tokenStorage.clearAllTokens();
-        emit(AuthGuest());
+        emit(const AuthGuest());
       }
     }
   }
@@ -68,6 +69,17 @@ class AuthCubit extends Cubit<AuthState> {
     final user = await _authRepository.getCurrentUser();
     await _tokenStorage.saveUserRole(user.systemRole);
     emit(AuthSuccess(user: user));
+  }
+
+  UserModel? get _sessionUser {
+    final current = state;
+    if (current is AuthSuccess) {
+      return current.user;
+    }
+    if (current is AuthOperationFailure) {
+      return current.sessionUser;
+    }
+    return null;
   }
 
   /// Invoked by [ApiClient] when refresh fails after a 401.
@@ -81,20 +93,20 @@ class AuthCubit extends Cubit<AuthState> {
     // Defensive clear: ApiClient already clears tokens on refresh failure,
     // but this keeps cubit behavior safe if the callback is reused elsewhere.
     await _tokenStorage.clearAllTokens();
-    emit(AuthGuest());
+    emit(const AuthGuest());
   }
 
   Future<void> continueAsGuest() async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       await FirebaseAuth.instance.signInAnonymously();
-      emit(AuthGuest());
+      emit(const AuthGuest());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Guest sign-in error: $e');
       }
-      emit(AuthFailure('Could not enter guest mode.'));
+      emit(const AuthFailure('Could not enter guest mode.'));
     }
   }
 
@@ -103,7 +115,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
     String? systemRole,
   }) async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       final fcmToken = await _getFcmTokenSafely();
@@ -125,7 +137,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> signInWithGoogle() async {
     emit(
-      AuthFailure(
+      const AuthFailure(
         'Sign in with Google is coming soon.',
       ),
     );
@@ -137,7 +149,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
     required String systemRole,
   }) async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       final fcmToken = await _getFcmTokenSafely();
@@ -161,17 +173,17 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       await _authRepository.logout();
       await FirebaseAuth.instance.signOut();
       await _tokenStorage.clearUserRole();
-      emit(AuthGuest());
+      emit(const AuthGuest());
     } catch (_) {
       await FirebaseAuth.instance.signOut();
       await _tokenStorage.clearUserRole();
-      emit(AuthGuest());
+      emit(const AuthGuest());
     }
   }
 
@@ -179,7 +191,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String currentPassword,
     required String newPassword,
   }) async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       await _authRepository.changePassword(
@@ -189,17 +201,17 @@ class AuthCubit extends Cubit<AuthState> {
 
       await _completeAuthenticatedSession();
     } catch (e) {
-      emit(AuthFailure(_extractMessage(e)));
+      emit(_operationFailure(_extractMessage(e)));
     }
   }
 
   Future<void> loadCurrentUser() async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       await _completeAuthenticatedSession();
     } catch (e) {
-      emit(AuthFailure(_extractMessage(e)));
+      emit(_operationFailure(_extractMessage(e)));
     }
   }
 
@@ -208,7 +220,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     String? profileImageUrl,
   }) async {
-    emit(AuthLoading());
+    emit(const AuthLoading());
 
     try {
       final user = await _authRepository.updateProfile(
@@ -221,8 +233,20 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(AuthSuccess(user: user));
     } catch (e) {
-      emit(AuthFailure(_extractMessage(e)));
+      emit(_operationFailure(_extractMessage(e)));
     }
+  }
+
+  /// Credential-flow errors vs session-preserving operation errors.
+  AuthState _operationFailure(String message) {
+    final sessionUser = _sessionUser;
+    if (sessionUser != null) {
+      return AuthOperationFailure(
+        message: message,
+        sessionUser: sessionUser,
+      );
+    }
+    return AuthFailure(message);
   }
 
   Future<bool> checkEmailExists(String email) async {
