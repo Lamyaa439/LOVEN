@@ -3,45 +3,43 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/core/error/app_exception.dart';
 import 'package:loven/features/auth/data/models/user_model.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
-/// Auth/session source of truth for the app.
+/// Auth/session orchestration for the app UI and router.
 ///
-/// This cubit owns session bootstrap, login/register/logout, and account profile
-/// hydration so UI/screens do not need to infer auth state from raw tokens.
+/// **Session ownership:**
+/// - [restoreSession] — single boot entry (from [main]); emits [AuthState] only.
+/// - [AuthRepository] — token presence ([isLoggedIn]), profile load, credentials.
+/// - [ApiClient] — JWT refresh on 401; calls [handleSessionExpired] when refresh fails.
+///
+/// This cubit does not read [TokenStorage] or call refresh endpoints directly.
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
-  final TokenStorage _tokenStorage;
 
   /// Ensures [restoreSession] runs at most once per app launch.
   Future<void>? _bootstrapFuture;
 
   AuthCubit({
     required AuthRepository authRepository,
-    required TokenStorage tokenStorage,
   })  : _authRepository = authRepository,
-        _tokenStorage = tokenStorage,
         super(const AuthInitial());
 
-  /// Boot-time session restore — single source of truth for auth bootstrap.
+  /// Boot-time session restore — invoke once per app launch from [main].
   ///
-  /// Invoke only from [LovenApp.initState] (one call site per app launch).
   /// [SplashScreen] must not call this; routing waits on [AuthCubit.stream].
   Future<void> restoreSession() {
     _bootstrapFuture ??= _restoreSession();
     return _bootstrapFuture!;
   }
 
-  /// @deprecated Use [restoreSession] — kept for any stale call sites.
+  /// @deprecated Use [restoreSession].
   Future<void> checkAuthStatus() => restoreSession();
 
   Future<void> _restoreSession() async {
-    final token = await _tokenStorage.getAccessToken();
-
-    if (token == null || token.isEmpty) {
+    if (!await _authRepository.isLoggedIn()) {
       emit(const AuthGuest());
       return;
     }
@@ -49,24 +47,18 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthLoading());
 
     try {
-      await _completeAuthenticatedSession();
-    } catch (_) {
-      try {
-        await _authRepository.refreshAccessToken();
-        await _completeAuthenticatedSession();
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('Session restore failed: $e');
-        }
-        await _tokenStorage.clearAllTokens();
-        emit(const AuthGuest());
+      final user = await _authRepository.restoreAuthenticatedUser();
+      emit(AuthSuccess(user: user));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Session restore failed: $e');
       }
+      await _authRepository.clearLocalSession();
+      emit(const AuthGuest());
     }
   }
 
-  /// Loads account profile into [AuthSuccess.user] after login/register/restore.
-  ///
-  /// [UserModel.systemRole] is the sole role source for routing/UI after emit.
+  /// Hydrates [AuthSuccess] after login, register, or profile-changing operations.
   Future<void> _completeAuthenticatedSession() async {
     final user = await _authRepository.getCurrentUser();
     emit(AuthSuccess(user: user));
@@ -91,9 +83,7 @@ class AuthCubit extends Cubit<AuthState> {
       // Best-effort Firebase cleanup.
     }
 
-    // Defensive clear: ApiClient already clears tokens on refresh failure,
-    // but this keeps cubit behavior safe if the callback is reused elsewhere.
-    await _tokenStorage.clearAllTokens();
+    await _authRepository.clearLocalSession();
     emit(const AuthGuest());
   }
 
@@ -180,7 +170,7 @@ class AuthCubit extends Cubit<AuthState> {
       await FirebaseAuth.instance.signOut();
       emit(const AuthGuest());
     } catch (_) {
-      await _tokenStorage.clearAllTokens();
+      await _authRepository.clearLocalSession();
       await FirebaseAuth.instance.signOut();
       emit(const AuthGuest());
     }
@@ -234,7 +224,6 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Credential-flow errors vs session-preserving operation errors.
   AuthState _operationFailure(String message) {
     final sessionUser = _sessionUser;
     if (sessionUser != null) {
@@ -283,6 +272,10 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   String _extractMessage(Object error) {
+    if (error is AppException) {
+      return error.message;
+    }
+
     final raw = error.toString();
     const prefix = 'Exception: ';
 
