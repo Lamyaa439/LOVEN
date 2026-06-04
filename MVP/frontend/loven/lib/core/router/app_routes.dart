@@ -50,7 +50,7 @@ abstract final class AppRoutes {
   // Account — hub, settings, notifications
   // ---------------------------------------------------------------------------
 
-  /// Account hub — guest and signed-in ([ProfileScreen]); not session-gated.
+  /// Account hub — guest and signed-in ([AccountScreen]); not session-gated.
   static const String profile = '/profile';
   static const String profileEdit = '/profile/edit';
   static const String settings = '/settings';
@@ -94,6 +94,18 @@ abstract final class AppRoutes {
   static const String feedback = '/feedback';
   static const String location = '/location';
   static const String locationAddressForm = '/location/address-form';
+
+  // ---------------------------------------------------------------------------
+  // Path builders (parameterized navigation — same values as route table)
+  // ---------------------------------------------------------------------------
+
+  static String artistPath(String artistId) => '/artist/$artistId';
+
+  static String artworksListPath(String type) => '/artworks-list/$type';
+
+  /// Sign-up with guest funnel query (matches [signup] route builder).
+  static String signupFromGuest({bool fromGuest = true}) =>
+      fromGuest ? '$signup?fromGuest=true' : signup;
 
   // ---------------------------------------------------------------------------
   // Route guard registry
