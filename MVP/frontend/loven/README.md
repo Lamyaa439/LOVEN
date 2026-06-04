@@ -3,6 +3,48 @@
 **Project path:** `MVP/frontend/loven` (Flutter package name: `loven`).
 
 This README is a **structured file and folder map** for the LOVEN MVP Flutter frontend. The codebase went through **phased architecture cleanup** (thin entry, `lib/app/` composition, modular router, frozen redirect policy, auth/account split, `AppRoutes` navigation). Use this document to find **ownership and responsibilities** quickly — not as full product or API documentation.
+---
+
+## High-level structure
+
+```
+loven/
+├── lib/
+│   ├── main.dart                 # Entry: bootstrap + runApp
+│   ├── firebase_options.dart     # Generated Firebase config
+│   ├── app/                      # Bootstrap, DI graph, root widget
+│   ├── core/                     # Shared infrastructure
+│   │   ├── config/               # Env / base URL
+│   │   ├── error/                # AppException, Result (optional pattern)
+│   │   ├── network/              # ApiClient, ApiEndpoints
+│   │   ├── storage/              # Tokens, app flags
+│   │   ├── router/               # GoRouter, routes, redirect policy
+│   │   ├── res/theme/            # Colors, ThemeData
+│   │   └── theme/                # ThemeBloc
+│   └── features/                 # Product features (data / controller / view)
+│       ├── auth/                 # Session, credentials, password flows
+│       ├── account/              # Account hub & edit profile UI
+│       ├── splash/               # Splash + onboarding
+│       ├── navigation/           # Bottom shell
+│       ├── home/                 # Home, discovery lists, settings tab
+│       ├── admin/                # Admin dashboards
+│       ├── artist_profile/       # Artist storefront
+│       ├── artwork/              # Artwork catalog / create
+│       ├── cart/                 # Cart & checkout
+│       ├── order/                # Orders
+│       ├── location/             # Addresses
+│       ├── favorites/            # Favorites tab
+│       ├── feedback/             # Feedback
+│       ├── report/               # Reports (repo; admin-related)
+│       ├── notifications/        # Notifications screen
+│       └── verification_request/ # Artist verification flow
+├── test/                         # Unit tests (auth state, redirect policy)
+├── assets/                       # .env, images, fonts (see pubspec.yaml)
+├── pubspec.yaml
+└── firebase.json                 # Firebase project wiring
+```
+
+Excluded from this map: `build/`, `.dart_tool/`, `ios/Pods/`, `android/build/`, platform runner boilerplate, `widgetbook/` (design sandbox).
 
 ---
 
