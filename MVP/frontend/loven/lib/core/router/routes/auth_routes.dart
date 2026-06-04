@@ -3,7 +3,6 @@ import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/auth/view/screens/change_password_screen.dart';
-import 'package:loven/features/auth/view/screens/edit_profile_screen.dart';
 import 'package:loven/features/auth/view/screens/forgot_password_page.dart';
 import 'package:loven/features/auth/view/screens/login_page.dart';
 import 'package:loven/features/auth/view/screens/new_password_page.dart';
@@ -13,7 +12,7 @@ import 'package:loven/features/auth/view/screens/signup_success_page.dart';
 import 'package:loven/features/auth/view/screens/signup_verification_email_page.dart';
 import 'package:loven/features/auth/view/screens/verification_code_page.dart';
 
-/// Credential, recovery, password change, profile edit, and sign-up flow routes.
+/// Credential, recovery, password change, and sign-up flow routes.
 List<RouteBase> buildAuthRoutesPrimary(AppRouterDeps deps) {
   return [
     GoRoute(
@@ -50,15 +49,6 @@ List<RouteBase> buildAuthRoutesPrimary(AppRouterDeps deps) {
     GoRoute(
       path: AppRoutes.changePassword,
       builder: (context, state) => const ChangePasswordScreen(),
-    ),
-  ];
-}
-
-List<RouteBase> buildAuthRoutesProfile(AppRouterDeps deps) {
-  return [
-    GoRoute(
-      path: AppRoutes.profileEdit,
-      builder: (context, state) => const EditProfileScreen(),
     ),
   ];
 }
