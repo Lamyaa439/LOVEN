@@ -1,20 +1,18 @@
-/// هذا الملف يحتوي على مسارات صفحات التطبيق بس 
-/// نخزن هنا كل عناوين شاشات التطبيق في مكان واحد كثوابت عشان مانكتبها يدوياً
-/// 
-// Constants-only registry of application route paths.
+// Constants-only registry of application route paths and guard classification.
 //
-// Used by [AppRouter], redirect policy, and feature navigation. This file must
-// not import widgets, define redirects, or encode guard logic — paths only.
+// **Ownership (frozen contract):**
+// - Path constants for [AppRouter], features, and [redirect_policy]
+// - [isUnauthenticatedAuthEntryPath] — login/sign-up entry (signed-in users leave)
+// - [requiresAuthenticatedSession] — LOVEN JWT session required
 //
+// This file must not import widgets, build routes, or emit redirects.
 // [splash] is the canonical boot route; [splashLegacy] is a deep-link alias.
-
 abstract final class AppRoutes {
   AppRoutes._();
 
   // ---------------------------------------------------------------------------
   // Startup
   // ---------------------------------------------------------------------------
-  // Boot funnel, shell entry, and legacy aliases.
 
   static const String splash = '/splash';
 
@@ -26,14 +24,12 @@ abstract final class AppRoutes {
   // ---------------------------------------------------------------------------
   // Onboarding
   // ---------------------------------------------------------------------------
-  // // First-launch onboarding flow.
 
   static const String onboarding = '/onboarding';
 
   // ---------------------------------------------------------------------------
-  // Auth
+  // Auth — credentials, recovery, password change
   // ---------------------------------------------------------------------------
-  // Sign-in, sign-up, password recovery, and authenticated password change.
 
   static const String auth = '/auth';
   static const String login = '/login';
@@ -47,13 +43,14 @@ abstract final class AppRoutes {
       '/forgot-password/new-password';
   static const String forgotPasswordSuccess = '/forgot-password/success';
 
+  /// Authenticated password change (session required).
   static const String changePassword = '/change-password';
 
   // ---------------------------------------------------------------------------
-  // Account
+  // Account — hub, settings, notifications
   // ---------------------------------------------------------------------------
-  // Authenticated user account hub, settings, and in-app notifications.
 
+  /// Account hub — guest and signed-in ([ProfileScreen]); not session-gated.
   static const String profile = '/profile';
   static const String profileEdit = '/profile/edit';
   static const String settings = '/settings';
@@ -63,7 +60,6 @@ abstract final class AppRoutes {
   // ---------------------------------------------------------------------------
   // Admin
   // ---------------------------------------------------------------------------
-  // System administrator dashboards and moderation tools.
 
   static const String admin = '/admin';
   static const String adminVerificationRequests =
@@ -71,27 +67,24 @@ abstract final class AppRoutes {
   static const String adminReports = '/admin/reports';
 
   // ---------------------------------------------------------------------------
-  // Discovery
+  // Discovery — public browsing (guests allowed)
   // ---------------------------------------------------------------------------
-  // Public and signed-in browsing: artist listings, profiles, and artworks.
 
   static const String artists = '/artists';
   static const String artistById = '/artist/:artistId';
   static const String artworksListByType = '/artworks-list/:type';
 
-  /// Signed-in artist's own storefront profile (not the account hub at [profile]).
+  /// Signed-in artist storefront (not the account hub at [profile]).
   static const String myProfile = '/my-profile';
   static const String artistProfileEdit = '/artist-profile/edit';
 
   // ---------------------------------------------------------------------------
-  // Protected
+  // Commerce & fulfillment — session required
   // ---------------------------------------------------------------------------
-  // Routes that require an authenticated session (see router guard policy).
 
   static const String cart = '/cart';
   static const String confirmOrder = '/confirm-order';
 
-  /// Prefix for all order sub-routes (used by session guards).
   static const String ordersPrefix = '/orders/';
   static const String ordersDetails = '/orders/details';
   static const String ordersIncoming = '/orders/incoming';
@@ -105,40 +98,62 @@ abstract final class AppRoutes {
   // ---------------------------------------------------------------------------
   // Route guard registry
   // ---------------------------------------------------------------------------
-  // Single source of truth for redirect_policy and future route modules.
-  // Add new protected or auth-entry paths here — not in redirect_policy.dart.
+  // Single source of truth for [redirect_policy]. Add new paths here first.
 
-  /// Sign-in / sign-up entry screens for users without a LOVEN session.
+  /// Login / sign-up entry screens — signed-in users are redirected away.
   static const Set<String> unauthenticatedAuthEntryPaths = {
     auth,
     login,
     signup,
   };
 
-  /// Nested sign-up steps (verify-email, etc.) — not for signed-in users.
+  /// Nested sign-up steps ([signupVerifyEmail], [signupSuccess], …).
   static const String signupRoutePrefix = '/signup/';
 
-  /// Exact paths that require an authenticated session.
-  static const Set<String> sessionRequiredExactPaths = {
-    myProfile,
-    settings,
-    verificationRequest,
-    artworksCreate,
-    changePassword,
-    confirmOrder,
-    profileEdit,
-    artistProfileEdit,
-    feedback,
+  /// Password recovery — public; no session required (not auth-entry redirects).
+  static const Set<String> passwordRecoveryExactPaths = {
+    forgotPassword,
+    forgotPasswordCode,
+    forgotPasswordNewPassword,
+    forgotPasswordSuccess,
   };
 
-  /// Path prefixes that require an authenticated session.
+  /// Account hub reachable without a LOVEN JWT ([AuthGuest] profile UI).
+  static const Set<String> guestAccessibleExactPaths = {
+    profile,
+  };
+
+  /// Exact paths that require [authStateHasSession].
+  static const Set<String> sessionRequiredExactPaths = {
+    // Account (signed-in only)
+    profileEdit,
+    settings,
+    notifications,
+    verificationRequest,
+    changePassword,
+    // Artist storefront & catalog management
+    myProfile,
+    artistProfileEdit,
+    artworksCreate,
+    // Commerce & fulfillment
+    confirmOrder,
+    location,
+    locationAddressForm,
+    feedback,
+    // Order detail/history (prefix covers other `/orders/*` routes)
+    ordersDetails,
+    ordersIncoming,
+    ordersHistory,
+  };
+
+  /// Path prefixes that require [authStateHasSession].
   static const List<String> sessionRequiredPrefixes = [
     cart,
     admin,
     ordersPrefix,
   ];
 
-  /// True when [path] is only for guests (login, signup, sign-up sub-routes).
+  /// True when [path] is login/sign-up entry (including [signupRoutePrefix]).
   static bool isUnauthenticatedAuthEntryPath(String path) {
     if (unauthenticatedAuthEntryPaths.contains(path)) {
       return true;
@@ -146,10 +161,28 @@ abstract final class AppRoutes {
     return path.startsWith(signupRoutePrefix);
   }
 
+  /// True when [path] is part of the forgot-password flow (always public).
+  static bool isPasswordRecoveryPath(String path) {
+    if (passwordRecoveryExactPaths.contains(path)) {
+      return true;
+    }
+    return path.startsWith('$forgotPassword/');
+  }
+
+  /// True when [path] is the guest account hub ([profile] only today).
+  static bool isGuestAccessiblePath(String path) {
+    return guestAccessibleExactPaths.contains(path);
+  }
+
   /// True when [path] requires [authStateHasSession].
   ///
-  /// Public artist browsing ([artists], [artistById]) stays open to guests.
+  /// Public: [home], [onboarding], [artists], [artistById], [artworksListByType],
+  /// [profile] (guest hub), and [isPasswordRecoveryPath] routes.
+  /// Admin routes require session via [admin] prefix (role checks are separate).
   static bool requiresAuthenticatedSession(String path) {
+    if (isGuestAccessiblePath(path) || isPasswordRecoveryPath(path)) {
+      return false;
+    }
     if (sessionRequiredExactPaths.contains(path)) {
       return true;
     }
