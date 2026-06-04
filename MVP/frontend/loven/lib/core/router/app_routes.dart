@@ -101,4 +101,63 @@ abstract final class AppRoutes {
   static const String feedback = '/feedback';
   static const String location = '/location';
   static const String locationAddressForm = '/location/address-form';
+
+  // ---------------------------------------------------------------------------
+  // Route guard registry
+  // ---------------------------------------------------------------------------
+  // Single source of truth for redirect_policy and future route modules.
+  // Add new protected or auth-entry paths here — not in redirect_policy.dart.
+
+  /// Sign-in / sign-up entry screens for users without a LOVEN session.
+  static const Set<String> unauthenticatedAuthEntryPaths = {
+    auth,
+    login,
+    signup,
+  };
+
+  /// Nested sign-up steps (verify-email, etc.) — not for signed-in users.
+  static const String signupRoutePrefix = '/signup/';
+
+  /// Exact paths that require an authenticated session.
+  static const Set<String> sessionRequiredExactPaths = {
+    myProfile,
+    settings,
+    verificationRequest,
+    artworksCreate,
+    changePassword,
+    confirmOrder,
+    profileEdit,
+    artistProfileEdit,
+    feedback,
+  };
+
+  /// Path prefixes that require an authenticated session.
+  static const List<String> sessionRequiredPrefixes = [
+    cart,
+    admin,
+    ordersPrefix,
+  ];
+
+  /// True when [path] is only for guests (login, signup, sign-up sub-routes).
+  static bool isUnauthenticatedAuthEntryPath(String path) {
+    if (unauthenticatedAuthEntryPaths.contains(path)) {
+      return true;
+    }
+    return path.startsWith(signupRoutePrefix);
+  }
+
+  /// True when [path] requires [authStateHasSession].
+  ///
+  /// Public artist browsing ([artists], [artistById]) stays open to guests.
+  static bool requiresAuthenticatedSession(String path) {
+    if (sessionRequiredExactPaths.contains(path)) {
+      return true;
+    }
+    for (final prefix in sessionRequiredPrefixes) {
+      if (path.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
