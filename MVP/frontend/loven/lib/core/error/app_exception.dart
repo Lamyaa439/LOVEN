@@ -1,8 +1,15 @@
 import 'package:dio/dio.dart';
 
-/// Unified application-level exceptions used across repositories and services.
+/// Canonical application exception for repositories, services, and UI error text.
 ///
-/// Implements [Exception] so existing `catch (e)` / `toString()` flows keep working.
+/// **Ownership (frozen contract):**
+/// - User-facing [message] (also returned by [toString])
+/// - Optional HTTP [statusCode] and underlying [cause]
+/// - Dio → [AppException] mapping via [fromDio]
+///
+/// Repositories should surface failures as [AppException] (not raw [Exception] or
+/// [DioException]) so cubits/screens handle one type. Implements [Exception] so
+/// existing `catch (e)` flows keep working.
 class AppException implements Exception {
   const AppException(
     this.message, {
@@ -18,6 +25,9 @@ class AppException implements Exception {
   String toString() => message;
 
   /// Maps a [DioException] to a user-facing [AppException].
+  ///
+  /// Backend error bodies may use `error` or `message` keys (both are checked).
+  /// When neither is present, [fallback] is used.
   factory AppException.fromDio(
     DioException error, {
     String fallback = 'Network error occurred. Please try again later.',
@@ -25,9 +35,6 @@ class AppException implements Exception {
     final statusCode = error.response?.statusCode;
     final data = error.response?.data;
 
-    // Backendهنا عشان نستقبل الاخطاء من ال
-    // message ومرة يرسله داخل  errorمره يرسل الخطأ داخل مفتاح  Backendال
-    // طبعاً سوينا كذا بالغلط نحتاج نعدله في الباك بعدين
     if (data is Map) {
       if (data.containsKey('error')) {
         return AppException(
