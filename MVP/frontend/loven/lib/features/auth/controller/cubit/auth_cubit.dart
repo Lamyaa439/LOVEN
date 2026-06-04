@@ -65,9 +65,10 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   /// Loads account profile into [AuthSuccess.user] after login/register/restore.
+  ///
+  /// [UserModel.systemRole] is the sole role source for routing/UI after emit.
   Future<void> _completeAuthenticatedSession() async {
     final user = await _authRepository.getCurrentUser();
-    await _tokenStorage.saveUserRole(user.systemRole);
     emit(AuthSuccess(user: user));
   }
 
@@ -162,7 +163,6 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      await _tokenStorage.saveUserRole(systemRole);
       await _completeAuthenticatedSession();
     } catch (e) {
       if (kDebugMode) {
@@ -178,11 +178,10 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       await _authRepository.logout();
       await FirebaseAuth.instance.signOut();
-      await _tokenStorage.clearUserRole();
       emit(const AuthGuest());
     } catch (_) {
+      await _tokenStorage.clearAllTokens();
       await FirebaseAuth.instance.signOut();
-      await _tokenStorage.clearUserRole();
       emit(const AuthGuest());
     }
   }
@@ -228,8 +227,6 @@ class AuthCubit extends Cubit<AuthState> {
         email: email,
         profileImageUrl: profileImageUrl,
       );
-
-      await _tokenStorage.saveUserRole(user.systemRole);
 
       emit(AuthSuccess(user: user));
     } catch (e) {
