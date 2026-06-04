@@ -10,6 +10,9 @@ import 'auth_state.dart';
 
 /// Auth/session orchestration for the app UI and router.
 ///
+/// Account hub screens live in `features/account/`; this cubit still exposes
+/// [updateProfile] and [loadCurrentUser] for session identity updates.
+///
 /// **Session ownership:**
 /// - [restoreSession] — single boot entry (from [main]); emits [AuthState] only.
 /// - [AuthRepository] — token presence ([isLoggedIn]), profile load, credentials.
