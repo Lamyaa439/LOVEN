@@ -1,13 +1,27 @@
 import 'package:loven/features/auth/data/models/user_model.dart';
 
-/// Application auth/session states consumed by the router and auth-aware UI.
+/// Router and UI session contract for [AuthCubit] emissions.
 ///
-/// Session vs error:
-/// - [AuthGuest] — no LOVEN JWT session (browse as guest or signed out).
-/// - [AuthSuccess] — authenticated; [user] is always present.
-/// - [AuthFailure] — credential/sign-up flow failed; **no** active session.
-/// - [AuthOperationFailure] — action failed while a session may still exist;
-///   router treats [sessionUser] like [AuthSuccess] for guards.
+/// **Ownership (frozen contract):**
+/// - Discriminated auth/session states below
+/// - [authStateHasSession] — whether redirect guards treat the user as signed in
+/// - [authStateSessionUser] — profile for signed-in routing (when applicable)
+///
+/// **Guest vs role:** [AuthGuest] means no LOVEN JWT session. `customer` /
+/// `artist` / `admin` live on [UserModel.systemRole] inside [AuthSuccess], not
+/// as separate auth states. Role is never read from [TokenStorage] — use
+/// [authStateSessionUser] for routing and authorization checks.
+///
+/// Session matrix (redirect policy and guards):
+///
+/// | State                 | authStateHasSession | authStateSessionUser |
+/// |-----------------------|--------------------|----------------------|
+/// | AuthInitial           | false              | null                 |
+/// | AuthLoading           | false              | null                 |
+/// | AuthGuest             | false              | null                 |
+/// | AuthFailure           | false              | null                 |
+/// | AuthSuccess           | true               | user                 |
+/// | AuthOperationFailure  | sessionUser != null| sessionUser          |
 abstract class AuthState {
   const AuthState();
 }
@@ -34,10 +48,10 @@ class AuthGuest extends AuthState {
   const AuthGuest();
 }
 
-/// Login/register/guest-entry failure when there is no authenticated session.
+/// Login/register failure when there is no authenticated session.
 ///
-/// Do not use for change-password or profile errors while tokens remain valid;
-/// use [AuthOperationFailure] instead so the router does not treat this as guest.
+/// Router must not treat this as [AuthGuest]. Use [AuthOperationFailure] for
+/// change-password, profile, or other errors while tokens remain valid.
 class AuthFailure extends AuthState {
   const AuthFailure(this.message);
 
@@ -46,8 +60,8 @@ class AuthFailure extends AuthState {
 
 /// Recoverable failure during an authenticated (or in-flight) operation.
 ///
-/// When [sessionUser] is non-null, redirect policy keeps treating the user as
-/// signed in even though UI should surface [message].
+/// When [sessionUser] is non-null, redirect policy keeps the user signed in
+/// while UI surfaces [message].
 class AuthOperationFailure extends AuthState {
   const AuthOperationFailure({
     required this.message,
@@ -61,6 +75,8 @@ class AuthOperationFailure extends AuthState {
 }
 
 /// Whether [state] represents an authenticated session for routing guards.
+///
+/// Prefer this over checking concrete types in router code.
 bool authStateHasSession(AuthState state) {
   return switch (state) {
     AuthSuccess() => true,
@@ -69,7 +85,7 @@ bool authStateHasSession(AuthState state) {
   };
 }
 
-/// Account profile when [state] carries an authenticated session.
+/// Account profile when [state] carries an authenticated session; else null.
 UserModel? authStateSessionUser(AuthState state) {
   return switch (state) {
     AuthSuccess(:final user) => user,
