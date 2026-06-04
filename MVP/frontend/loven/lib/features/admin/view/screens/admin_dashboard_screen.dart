@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -16,13 +17,7 @@ class AdminDashboardScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await context.read<AuthCubit>().logout();
-
-              if (context.mounted) {
-                context.go('/auth');
-              }
-            },
+            onPressed: () => context.read<AuthCubit>().logout(),
           ),
         ],
       ),
@@ -34,7 +29,7 @@ class AdminDashboardScreen extends StatelessWidget {
             title: 'Verification Requests',
             subtitle: 'Review artist verification submissions',
             onTap: () {
-              context.push('/admin/verification-requests');
+              context.push(AppRoutes.adminVerificationRequests);
             },
           ),
           const SizedBox(height: 12),
@@ -43,7 +38,7 @@ class AdminDashboardScreen extends StatelessWidget {
             title: 'Reports',
             subtitle: 'Review reported users or artworks',
             onTap: () {
-              context.push('/admin/reports');
+              context.push(AppRoutes.adminReports);
             },
           ),
         ],
