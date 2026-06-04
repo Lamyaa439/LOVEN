@@ -768,4 +768,3 @@ Unit tests for frozen contracts (not feature UI).
 
 ---
 
-*Map last aligned with post–Phase 7 cleanup (modular router, auth/account split, `AppRoutes` navigation, thin `main.dart`).*
