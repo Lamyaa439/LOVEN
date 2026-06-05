@@ -4,42 +4,36 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/error/app_exception.dart';
+import 'package:loven/features/auth/data/models/auth_error_codes.dart';
 import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
+import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 import 'auth_state.dart';
 
-/// Auth/session orchestration for the app UI and router.
-///
-/// Account hub screens live in `features/account/`; this cubit still exposes
-/// [updateProfile] and [loadCurrentUser] for session identity updates.
+/// LOVEN session orchestration — JWT state only; Firebase owns credentials.
 ///
 /// **Session ownership:**
-/// - [restoreSession] — single boot entry (from [main]); emits [AuthState] only.
-/// - [AuthRepository] — token presence ([isLoggedIn]), profile load, credentials.
-/// - [ApiClient] — JWT refresh on 401; calls [handleSessionExpired] when refresh fails.
-///
-/// This cubit does not read [TokenStorage] or call refresh endpoints directly.
+/// - [restoreSession] — boot entry; reads stored LOVEN JWT via [AuthRepository].
+/// - [loginWithFirebase] / [signupWithFirebase] — Firebase credential flows.
+/// - [ApiClient] — JWT refresh; calls [handleSessionExpired] when refresh fails.
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  final FirebaseAuthService _firebaseAuthService;
 
-  /// Ensures [restoreSession] runs at most once per app launch.
   Future<void>? _bootstrapFuture;
 
   AuthCubit({
     required AuthRepository authRepository,
+    FirebaseAuthService? firebaseAuthService,
   })  : _authRepository = authRepository,
+        _firebaseAuthService = firebaseAuthService ?? FirebaseAuthService(),
         super(const AuthInitial());
 
   /// Boot-time session restore — invoke once per app launch from [main].
-  ///
-  /// [SplashScreen] must not call this; routing waits on [AuthCubit.stream].
   Future<void> restoreSession() {
     _bootstrapFuture ??= _restoreSession();
     return _bootstrapFuture!;
   }
-
-  /// @deprecated Use [restoreSession].
-  Future<void> checkAuthStatus() => restoreSession();
 
   Future<void> _restoreSession() async {
     if (!await _authRepository.isLoggedIn()) {
@@ -61,13 +55,12 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Hydrates [AuthSuccess] after login, register, or profile-changing operations.
   Future<void> _completeAuthenticatedSession() async {
     final user = await _authRepository.getCurrentUser();
     emit(AuthSuccess(user: user));
   }
 
-  UserModel? get _sessionUser {
+  AuthUser? get _sessionUser {
     final current = state;
     if (current is AuthSuccess) {
       return current.user;
@@ -78,10 +71,9 @@ class AuthCubit extends Cubit<AuthState> {
     return null;
   }
 
-  /// Invoked by [ApiClient] when refresh fails after a 401.
   Future<void> handleSessionExpired() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      await _firebaseAuthService.signOut();
     } catch (_) {
       // Best-effort Firebase cleanup.
     }
@@ -90,38 +82,60 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthGuest());
   }
 
+  /// Guest browsing — LOVEN unauthenticated state only; no Firebase credentials.
+  ///
+  /// Best-effort [FirebaseAuthService.signOut] clears a stale Firebase session
+  /// from a partial login/signup without creating an anonymous Firebase user.
   Future<void> continueAsGuest() async {
-    emit(const AuthLoading());
-
     try {
-      await FirebaseAuth.instance.signInAnonymously();
-      emit(const AuthGuest());
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Guest sign-in error: $e');
-      }
-      emit(const AuthFailure('Could not enter guest mode.'));
+      await _firebaseAuthService.signOut();
+    } catch (_) {
+      // Guest mode does not depend on Firebase; ignore cleanup failures.
     }
+    emit(const AuthGuest());
   }
 
-  Future<void> login({
+  /// Firebase sign-in → verification check → LOVEN JWT exchange → [AuthSuccess].
+  Future<void> loginWithFirebase({
     required String email,
     required String password,
-    String? systemRole,
   }) async {
     emit(const AuthLoading());
 
     try {
-      final fcmToken = await _getFcmTokenSafely();
-
-      await _authRepository.login(
+      await _firebaseAuthService.signIn(
         email: email,
         password: password,
-        fcmToken: fcmToken,
       );
 
+      final user = await _firebaseAuthService.reloadUser();
+      if (!(user?.emailVerified ?? false)) {
+        await _firebaseAuthService.signOut();
+        emit(const AuthFailure(
+          'Please verify your email. Check your inbox for the verification link.',
+        ));
+        return;
+      }
+
+      final idToken = await _firebaseAuthService.getIdToken();
+      final fcmToken = await _getFcmTokenSafely();
+
+      try {
+        await _authRepository.loginWithFirebase(
+          idToken: idToken,
+          fcmToken: fcmToken,
+        );
+      } on EmailNotVerifiedException catch (e) {
+        await _firebaseAuthService.signOut();
+        emit(AuthFailure(e.message));
+        return;
+      }
+
       await _completeAuthenticatedSession();
+    } on FirebaseAuthException catch (e) {
+      emit(AuthFailure(_mapFirebaseAuthError(e)));
     } catch (e) {
+      await _firebaseAuthService.signOut();
       if (kDebugMode) {
         debugPrint('Login error: $e');
       }
@@ -129,15 +143,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> signInWithGoogle() async {
-    emit(
-      const AuthFailure(
-        'Sign in with Google is coming soon.',
-      ),
-    );
-  }
-
-  Future<void> signup({
+  /// Firebase signup + LOVEN register-sync without issuing a LOVEN session.
+  ///
+  /// Returns email for verification navigation; re-emits [AuthGuest] on success.
+  Future<String?> signupWithFirebase({
     required String name,
     required String email,
     required String password,
@@ -146,60 +155,93 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthLoading());
 
     try {
-      final fcmToken = await _getFcmTokenSafely();
-
-      await _authRepository.register(
-        name: name,
+      await _firebaseAuthService.signUp(
         email: email,
         password: password,
+      );
+      await _firebaseAuthService.sendEmailVerification();
+
+      final idToken = await _firebaseAuthService.getIdToken();
+      final fcmToken = await _getFcmTokenSafely();
+
+      final result = await _authRepository.registerSync(
+        idToken: idToken,
+        name: name,
         systemRole: systemRole,
         fcmToken: fcmToken,
       );
 
-      await _completeAuthenticatedSession();
+      emit(const AuthGuest());
+      return result.email.isNotEmpty ? result.email : email;
+    } on FirebaseAuthException catch (e) {
+      emit(AuthFailure(_mapFirebaseAuthError(e)));
+      return null;
     } catch (e) {
+      await _firebaseAuthService.signOut();
       if (kDebugMode) {
         debugPrint('Signup error: $e');
       }
       emit(AuthFailure(_extractMessage(e)));
+      return null;
     }
   }
 
-  Future<void> logout() async {
-    emit(const AuthLoading());
+  Future<void> resendVerificationEmail() async {
+    try {
+      await _firebaseAuthService.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      throw AppException(_mapFirebaseAuthError(e));
+    }
+  }
 
+  Future<bool> checkEmailVerified() async {
+    final user = await _firebaseAuthService.reloadUser();
+    return user?.emailVerified ?? false;
+  }
+
+  Future<void> signOutFirebaseOnly() => _firebaseAuthService.signOut();
+
+  Future<void> logout() async {
     try {
       await _authRepository.logout();
-      await FirebaseAuth.instance.signOut();
+      await _firebaseAuthService.signOut();
       emit(const AuthGuest());
     } catch (_) {
       await _authRepository.clearLocalSession();
-      await FirebaseAuth.instance.signOut();
+      await _firebaseAuthService.signOut();
       emit(const AuthGuest());
     }
   }
 
+  /// Updates password via Firebase (re-auth + [FirebaseAuthService.changePassword]).
+  ///
+  /// LOVEN JWT session is unchanged; emits [AuthSuccess] on success for UI feedback.
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
-    emit(const AuthLoading());
+    final sessionUser = _sessionUser;
+    if (sessionUser == null) {
+      emit(const AuthFailure('You must be signed in to change your password.'));
+      return;
+    }
 
     try {
-      await _authRepository.changePassword(
+      await _firebaseAuthService.changePassword(
+        email: sessionUser.email,
         currentPassword: currentPassword,
         newPassword: newPassword,
       );
 
-      await _completeAuthenticatedSession();
+      emit(AuthSuccess(user: sessionUser));
+    } on FirebaseAuthException catch (e) {
+      emit(_operationFailure(_mapFirebaseAuthError(e)));
     } catch (e) {
       emit(_operationFailure(_extractMessage(e)));
     }
   }
 
   Future<void> loadCurrentUser() async {
-    emit(const AuthLoading());
-
     try {
       await _completeAuthenticatedSession();
     } catch (e) {
@@ -212,8 +254,6 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     String? profileImageUrl,
   }) async {
-    emit(const AuthLoading());
-
     try {
       final user = await _authRepository.updateProfile(
         name: name,
@@ -287,5 +327,29 @@ class AuthCubit extends Cubit<AuthState> {
     }
 
     return raw;
+  }
+
+  String _mapFirebaseAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'weak-password':
+        return 'Password is too weak. Use at least 8 characters.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'user-not-found':
+        return 'No account found for this email.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'requires-recent-login':
+        return 'Please sign in again, then retry changing your password.';
+      default:
+        return error.message ?? 'Authentication failed. Please try again.';
+    }
   }
 }

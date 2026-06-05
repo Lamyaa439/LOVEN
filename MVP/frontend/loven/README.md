@@ -223,14 +223,14 @@ Product features. Typical layout: `controller/` (or `controller/cubit/`), `data/
 
 | File | What it contains | What it does | Status | Notes |
 |------|------------------|--------------|--------|-------|
-| `auth_state.dart` | `AuthState`, helpers | Session types (`AuthInitial`, `AuthGuest`, `AuthSuccess`, …); `authStateHasSession`, `authStateSessionUser` | **Stable** | Router contract; role on `UserModel.systemRole` |
+| `auth_state.dart` | `AuthState`, helpers | Session types (`AuthInitial`, `AuthGuest`, `AuthSuccess`, …); `authStateHasSession`, `authStateSessionUser` | **Stable** | Router contract; role on `AuthUser.systemRole` |
 | `auth_cubit.dart` | `AuthCubit` | Restore, login, logout, guest mode, profile hydrate/update, FCM hooks | **Sensitive** | No direct `TokenStorage`; still owns profile API via repository |
 
 #### `lib/features/auth/data/`
 
 | File | What it contains | What it does | Status | Notes |
 |------|------------------|--------------|--------|-------|
-| `models/user_model.dart` | `UserModel` | User DTO incl. `systemRole` | **Stable** | Canonical role in session state |
+| `models/auth_user.dart` | `AuthUser` | Session identity DTO incl. `systemRole`, `profileImageUrl` | **Stable** | Parsed from `GET /account/me` |
 
 #### `lib/features/auth/data/repositories/`
 
@@ -683,7 +683,7 @@ Unit tests for frozen contracts (not feature UI).
 
 - Thin `main.dart`; composition in `lib/app/`
 - Single JWT refresh owner (`ApiClient`); session restore via `AuthRepository` + one `AuthCubit.restoreSession()` in `dependencies.dart`
-- Role on `UserModel.systemRole` / `authStateSessionUser()` — **not** in `TokenStorage`
+- Role on `AuthUser.systemRole` / `authStateSessionUser()` — **not** in `TokenStorage`
 - Frozen-style contracts: `AppEnv`, `ApiEndpoints`, `TokenStorage`, `AppPreferences`, `auth_state` helpers
 - `AppRoutes` registry + tested `redirect_policy.dart`
 - Modular router (`core/router/routes/*.dart`); slim `app_router.dart`

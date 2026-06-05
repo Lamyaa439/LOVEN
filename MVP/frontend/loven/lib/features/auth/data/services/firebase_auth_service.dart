@@ -87,19 +87,34 @@ class FirebaseAuthService {
   /// Signs out the Firebase session (LOVEN JWT is separate).
   Future<void> signOut() => _firebaseAuth.signOut();
 
-  /// Updates the signed-in Firebase user's password.
+  /// Re-authenticates then updates password for the signed-in email/password user.
   ///
-  /// TODO(future-phase): Wire [ChangePasswordScreen] to this instead of
-  /// `PATCH /change-password` for email/password users. Requires a recent
-  /// Firebase credential (re-auth with current password may be needed).
-  Future<void> updatePassword({required String newPassword}) async {
-    final user = _firebaseAuth.currentUser;
+  /// If no Firebase session exists (LOVEN JWT-only restore), signs in with the
+  /// current password first, then updates — Firebase owns credential storage.
+  Future<void> changePassword({
+    required String email,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    var user = _firebaseAuth.currentUser;
+
+    if (user == null) {
+      await signIn(email: email, password: currentPassword);
+      user = _firebaseAuth.currentUser;
+    }
+
     if (user == null) {
       throw FirebaseAuthException(
         code: 'no-current-user',
-        message: 'No signed-in Firebase user.',
+        message: 'Could not establish a Firebase session to change password.',
       );
     }
+
+    final credential = EmailAuthProvider.credential(
+      email: email.trim(),
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
     await user.updatePassword(newPassword);
   }
 }

@@ -26,11 +26,25 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
   final _imagePicker = ImagePicker();
   final _storageService = ProfileImageStorageService();
   bool initialized = false;
+  bool _isLoadingInitial = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<AuthCubit>().loadCurrentUser();
+    final state = context.read<AuthCubit>().state;
+    if (state is AuthSuccess) {
+      initialized = true;
+      nameController.text = state.user.name;
+      emailController.text = state.user.email;
+      return;
+    }
+
+    _isLoadingInitial = true;
+    context.read<AuthCubit>().loadCurrentUser().whenComplete(() {
+      if (mounted) {
+        setState(() => _isLoadingInitial = false);
+      }
+    });
   }
 
   @override
@@ -89,7 +103,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
           }
         },
         builder: (context, state) {
-          if (state is AuthLoading && !initialized) {
+          if (_isLoadingInitial && !initialized) {
             return const Center(
               child: CircularProgressIndicator(),
             );

@@ -23,7 +23,7 @@ abstract final class ApiEndpoints {
   static const String firebaseLogin = '/auth/firebase/login';
   static const String refresh = '/refresh';
   static const String logout = '/logout';
-  static const String changePassword = '/change-password'; // TODO: deprecate for Firebase users
+  static const String changePassword = '/change-password'; // Backend legacy — unused by Flutter
   static const String currentUser = '/account/me';
 
   // ---------------------------------------------------------------------------

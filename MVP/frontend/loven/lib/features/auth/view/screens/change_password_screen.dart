@@ -6,12 +6,10 @@ import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
-/// Authenticated password change form.
+/// Authenticated password change — Firebase owns credentials for email/password users.
 ///
-/// TODO(future-phase): For email/password users, call
-/// [FirebaseAuthService.updatePassword] (with Firebase re-authentication)
-/// instead of [AuthCubit.changePassword] → `PATCH /change-password`.
-/// LOVEN backend no longer owns passwords for Firebase email users.
+/// Calls [AuthCubit.changePassword] which re-authenticates via Firebase then
+/// updates the password. LOVEN backend is not involved.
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({
     super.key,
@@ -39,6 +37,7 @@ class _ChangePasswordScreenState
   bool obscureCurrent = true;
   bool obscureNew = true;
   bool obscureConfirm = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -48,23 +47,23 @@ class _ChangePasswordScreenState
     super.dispose();
   }
 
-  void _submit() {
-    if (!_formKey.currentState!
-        .validate()) {
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate() || _isSubmitting) {
       return;
     }
 
-    context
-        .read<AuthCubit>()
-        .changePassword(
-          currentPassword:
-              currentPasswordController
-                  .text
-                  .trim(),
-          newPassword:
-              newPasswordController.text
-                  .trim(),
-        );
+    setState(() => _isSubmitting = true);
+
+    try {
+      await context.read<AuthCubit>().changePassword(
+            currentPassword: currentPasswordController.text.trim(),
+            newPassword: newPasswordController.text.trim(),
+          );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -98,8 +97,7 @@ class _ChangePasswordScreenState
         }
       },
       builder: (context, state) {
-        final isLoading =
-            state is AuthLoading;
+        final isLoading = _isSubmitting;
 
         return Scaffold(
           backgroundColor:

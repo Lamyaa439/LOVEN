@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// - [hasValidSession] — non-empty access token present (no client-side expiry)
 /// - [clearAllTokens] — wipes token keys and any legacy secure-storage entries
 ///
-/// **Does not store user role.** Role lives on [UserModel.systemRole] inside
+/// **Does not store user role.** Role lives on [AuthUser.systemRole] inside
 /// [AuthSuccess] (see `auth_state.dart` and [authStateSessionUser]). Routing and
 /// authorization must use auth state, not this class.
 ///

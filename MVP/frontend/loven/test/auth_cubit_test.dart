@@ -4,7 +4,7 @@ import 'package:loven/features/auth/data/models/auth_user.dart';
 
 void main() {
   group('AuthState', () {
-    final user = UserModel(
+    final user = AuthUser(
       id: '1',
       name: 'Test',
       email: 'test@example.com',

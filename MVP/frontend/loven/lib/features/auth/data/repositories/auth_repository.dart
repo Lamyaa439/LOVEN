@@ -53,7 +53,7 @@ class AuthRepository {
   Future<void> clearLocalSession() => _tokenStorage.clearAllTokens();
 
   /// Loads the authenticated profile during boot restore.
-  Future<UserModel> restoreAuthenticatedUser() async {
+  Future<AuthUser> restoreAuthenticatedUser() async {
     return getCurrentUser();
   }
 
@@ -151,28 +151,13 @@ class AuthRepository {
     await clearLocalSession();
   }
 
-  /// TODO(future-phase): Remove when [ChangePasswordScreen] uses
-  /// [FirebaseAuthService.updatePassword] for email/password users.
-  Future<void> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    await _apiClient.patch(
-      ApiConstants.changePassword,
-      data: {
-        'current_password': currentPassword,
-        'new_password': newPassword,
-      },
-    );
-  }
-
-  Future<UserModel> getCurrentUser() async {
+  Future<AuthUser> getCurrentUser() async {
     final response = await _apiClient.get(ApiConstants.currentUser);
 
-    return UserModel.fromJson(_asMap(response.data));
+    return AuthUser.fromJson(_asMap(response.data));
   }
 
-  Future<UserModel> updateProfile({
+  Future<AuthUser> updateProfile({
     required String name,
     required String email,
     String? profileImageUrl,
@@ -186,7 +171,7 @@ class AuthRepository {
       },
     );
 
-    return UserModel.fromJson(_asMap(response.data));
+    return AuthUser.fromJson(_asMap(response.data));
   }
 
   Future<bool> checkEmailDuplication(String email) async {

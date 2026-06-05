@@ -10,14 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final customer = UserModel(
+  final customer = AuthUser(
     id: '1',
     name: 'Customer',
     email: 'user@example.com',
     systemRole: 'customer',
   );
 
-  final admin = UserModel(
+  final admin = AuthUser(
     id: '2',
     name: 'Admin',
     email: 'admin@example.com',

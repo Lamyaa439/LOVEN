@@ -169,7 +169,7 @@ def create_app():
     # Payment routes
     app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
 
-    print(app.url_map)
+    # print(app.url_map)
 
     logger.debug("Registered routes: %s", app.url_map)
 

@@ -8,7 +8,7 @@ import 'package:loven/features/auth/data/models/auth_user.dart';
 /// - [authStateSessionUser] — profile for signed-in routing (when applicable)
 ///
 /// **Guest vs role:** [AuthGuest] means no LOVEN JWT session. `customer` /
-/// `artist` / `admin` live on [UserModel.systemRole] inside [AuthSuccess], not
+/// `artist` / `admin` live on [AuthUser.systemRole] inside [AuthSuccess], not
 /// as separate auth states. Role is never read from [TokenStorage] — use
 /// [authStateSessionUser] for routing and authorization checks.
 ///
@@ -40,7 +40,7 @@ class AuthLoading extends AuthState {
 class AuthSuccess extends AuthState {
   const AuthSuccess({required this.user});
 
-  final UserModel user;
+  final AuthUser user;
 }
 
 /// Guest or signed-out — no authenticated LOVEN account session.
@@ -71,7 +71,7 @@ class AuthOperationFailure extends AuthState {
   final String message;
 
   /// Non-null when JWT session is still valid after the failed operation.
-  final UserModel? sessionUser;
+  final AuthUser? sessionUser;
 }
 
 /// Whether [state] represents an authenticated session for routing guards.
@@ -86,7 +86,7 @@ bool authStateHasSession(AuthState state) {
 }
 
 /// Account profile when [state] carries an authenticated session; else null.
-UserModel? authStateSessionUser(AuthState state) {
+AuthUser? authStateSessionUser(AuthState state) {
   return switch (state) {
     AuthSuccess(:final user) => user,
     AuthOperationFailure(:final sessionUser) => sessionUser,
