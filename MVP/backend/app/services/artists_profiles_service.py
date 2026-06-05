@@ -29,7 +29,7 @@ user_repo = UserRepository()
 # The "_ARTIST_WRITABLE_FIELDS" variable is Private/Internal and Constant
 # that means we can NOT used it in another files
 _ARTIST_WRITABLE_FIELDS = frozenset(
-    {"display_name", "city", "bio", "shipping_policy"}
+    {"display_name", "city", "bio", "shipping_policy", "profile_image_url", "cover_image_url"}
 )
 
 # Private/Internal Constant 
@@ -72,11 +72,8 @@ def _profile_to_dict(profile):
         "display_name": profile.display_name,
         "city": profile.city,
         "bio": profile.bio,
-        "profile_image_url": (
-            getattr(profile.user, "profile_image_url", None)
-            if profile.user
-            else None
-        ),
+        "profile_image_url": profile.profile_image_url,
+        "cover_image_url": profile.cover_image_url,
         "is_verified": profile.is_verified,
         "shipping_policy": profile.shipping_policy,
         "created_at": profile.created_at.isoformat() if profile.created_at else None,
