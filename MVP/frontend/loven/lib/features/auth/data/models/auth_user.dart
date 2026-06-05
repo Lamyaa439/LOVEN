@@ -20,3 +20,6 @@ class AuthUser {
     );
   }
 }
+
+/// Session/profile alias used by [AuthState] and [AuthCubit].
+typedef UserModel = AuthUser;
