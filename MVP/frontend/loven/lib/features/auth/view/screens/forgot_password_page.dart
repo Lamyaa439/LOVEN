@@ -2,51 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 
-/// Password-reset entry screen.
+/// Password-reset entry screen — Firebase link-based only.
 ///
-/// Backend reset endpoints are not integrated yet, so this page now communicates
-/// availability honestly instead of simulating a complete reset flow.
+/// **Architectural rule:** Firebase owns reset emails and the in-link password form.
+/// LOVEN backend is not called; no LOVEN JWT is issued after reset (user signs in via M3).
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
   @override
-  State<ForgotPasswordPage> createState() =>
-      _ForgotPasswordPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _ForgotPasswordPageState
-    extends State<ForgotPasswordPage> {
-  final emailController =
-      TextEditingController();
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _firebaseAuthService = FirebaseAuthService();
 
-  final formKey =
-      GlobalKey<FormState>();
-
-  bool emailSent = false;
+  bool _emailSent = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
-    emailController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  void _submit() {
-    if (!formKey.currentState!.validate()) {
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate() || _isSubmitting || _emailSent) {
       return;
     }
 
-    setState(() {
-      emailSent = true;
-    });
+    setState(() => _isSubmitting = true);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Forgot password is coming soon. Backend integration is not ready yet.',
-        ),
-      ),
-    );
+    try {
+      await _firebaseAuthService.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+    } catch (_) {
+      // Always show generic success — do not reveal whether the email exists.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _emailSent = true;
+        });
+      }
+    }
   }
 
   @override
@@ -54,167 +58,110 @@ class _ForgotPasswordPageState
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor:
-          theme.scaffoldBackgroundColor,
-
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal: 24,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
-            key: formKey,
+            key: _formKey,
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-
                 IconButton(
-                  onPressed: () {
-                    context.pop();
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                  ),
+                  onPressed: _isSubmitting ? null : () => context.pop(),
+                  icon: const Icon(Icons.arrow_back),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   'Forgot Password',
-                  style: theme
-                      .textTheme.displayLarge
-                      ?.copyWith(
+                  style: theme.textTheme.displayLarge?.copyWith(
                     fontSize: 34,
-                    fontWeight:
-                        FontWeight.w800,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
-                  emailSent
-                      ? 'If an account exists, a reset link was sent.'
+                  _emailSent
+                      ? 'If an account exists, a link was sent.'
                       : 'Enter your email to receive a password reset link.',
-                  style: theme
-                      .textTheme.bodyMedium
-                      ?.copyWith(
-                    color: theme
-                        .colorScheme
-                        .onSurfaceVariant,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
-
                 const SizedBox(height: 26),
-
                 Text(
                   'Email',
-                  style: theme
-                      .textTheme.bodyMedium
-                      ?.copyWith(
-                    fontWeight:
-                        FontWeight.w700,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 TextFormField(
-                  controller:
-                      emailController,
-                  keyboardType:
-                      TextInputType
-                          .emailAddress,
-                  decoration:
-                      InputDecoration(
-                    hintText:
-                        'Your email',
-                    contentPadding:
-                        const EdgeInsets.symmetric(
+                  controller: _emailController,
+                  enabled: !_emailSent && !_isSubmitting,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'Your email',
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 14,
                     ),
                     filled: true,
-                    fillColor: theme
-                        .colorScheme
-                        .surface,
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        12,
-                      ),
-                      borderSide:
-                          BorderSide.none,
+                    fillColor: theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        12,
-                      ),
-                      borderSide:
-                          const BorderSide(
-                        color: AppColors
-                            .primaryBlue,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryBlue,
                         width: 1.3,
                       ),
                     ),
                   ),
                   validator: (value) {
-                    if (value == null ||
-                        value
-                            .trim()
-                            .isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email is required';
                     }
-
-                    if (!value
-                        .contains('@')) {
+                    if (!value.contains('@')) {
                       return 'Enter a valid email';
                     }
-
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _submit,
-                    style:
-                        ElevatedButton
-                            .styleFrom(
-                      backgroundColor:
-                          AppColors
-                              .primaryBlue,
-                      foregroundColor:
-                          Colors.white,
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius
-                                .circular(
-                          26,
-                        ),
+                    onPressed: _isSubmitting
+                        ? null
+                        : (_emailSent
+                            ? () => context.go(AppRoutes.login)
+                            : _submit),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26),
                       ),
                     ),
-                    child: Text(
-                      emailSent ? 'Coming Soon' : 'Send Reset Link',
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(_emailSent ? 'Back to Login' : 'Send Reset Link'),
                   ),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),

@@ -39,12 +39,16 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  /// Firebase sign-in → reload (emailVerified) → LOVEN JWT exchange.
+  ///
+  /// Navigation after success is owned by [resolveRedirect] once [AuthSuccess]
+  /// is emitted — this screen only surfaces [AuthFailure] snackbars.
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    context.read<AuthCubit>().login(
+    await context.read<AuthCubit>().loginWithFirebase(
           email: emailController.text.trim(),
-          password: passwordController.text.trim(),
+          password: passwordController.text,
         );
   }
 
@@ -316,66 +320,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 22),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(
-                            horizontal: 12,
-                          ),
-                          child: Text(
-                            'Or with',
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(
-                              color: theme.colorScheme
-                                  .onSurfaceVariant,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _SocialButton(
-                      icon: Icons.g_mobiledata,
-                      label: 'Sign in with Google',
-                      onTap: isLoading
-                          ? () {}
-                          : () {
-                              context.read<AuthCubit>().signInWithGoogle();
-                            },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    _SocialButton(
-                      icon: Icons.apple,
-                      label: 'Sign in with Apple',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Sign in with Apple is coming soon.',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
                     const SizedBox(height: 18),
                   ],
                 ),
@@ -404,48 +348,6 @@ class _FieldLabel extends StatelessWidget {
         style: theme.textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 13,
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: double.infinity,
-      height: 46,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 20),
-        label: Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: theme.colorScheme.onSurface,
-          side: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
         ),
       ),
     );

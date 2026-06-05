@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
-/// Signup completion screen shown after account creation.
+/// Post-login welcome screen (optional route after authenticated signup funnel).
+///
+/// Signup verification navigates to login — this screen is for post-session flows.
 class SignupSuccessPage extends StatelessWidget {
   const SignupSuccessPage({super.key});
 

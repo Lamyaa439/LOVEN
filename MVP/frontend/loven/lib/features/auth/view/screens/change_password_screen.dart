@@ -7,6 +7,11 @@ import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
 /// Authenticated password change form.
+///
+/// TODO(future-phase): For email/password users, call
+/// [FirebaseAuthService.updatePassword] (with Firebase re-authentication)
+/// instead of [AuthCubit.changePassword] → `PATCH /change-password`.
+/// LOVEN backend no longer owns passwords for Firebase email users.
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({
     super.key,
