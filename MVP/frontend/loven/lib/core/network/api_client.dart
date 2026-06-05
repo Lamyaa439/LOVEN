@@ -223,8 +223,8 @@ class _SessionInterceptor extends Interceptor {
   final void Function() _onSessionExpired;
 
   static const _publicAuthPaths = {
-    ApiEndpoints.login,
-    ApiEndpoints.register,
+    ApiEndpoints.firebaseRegisterSync,
+    ApiEndpoints.firebaseLogin,
     ApiEndpoints.refresh,
   };
 
