@@ -94,44 +94,74 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
   /// PATCHes editable profile fields, then merges the new [ArtistModel] into state.
   ///
   /// [artworks] are intentionally untouched so the grid does not flicker/reload.
-  Future<void> updateProfileInfo({
-    String? displayName,
-    String? bio,
-    String? city,
-    String? shippingPolicy,
-  }) async {
+Future<void> updateProfileInfo({
+  String? displayName,
+  String? bio,
+  String? city,
+  String? shippingPolicy,
+  String? profileImageUrl,
+  String? coverImageUrl,
+}) async {
+  final previousArtist = state.artist;
+
+  emit(
+    state.copyWith(
+      status: ArtistProfileStatus.loading,
+      clearErrorMessage: true,
+    ),
+  );
+
+  try {
+    final updatedArtist = await _repository.updateMyProfile(
+      displayName: displayName,
+      bio: bio,
+      city: city,
+      shippingPolicy: shippingPolicy,
+      profileImageUrl: profileImageUrl,
+      coverImageUrl: coverImageUrl,
+    );
+
+    final mergedArtist = ArtistModel(
+      id: updatedArtist.id.isNotEmpty
+          ? updatedArtist.id
+          : previousArtist?.id ?? '',
+      userId: updatedArtist.userId.isNotEmpty
+          ? updatedArtist.userId
+          : previousArtist?.userId ?? '',
+      displayName: updatedArtist.displayName.isNotEmpty
+          ? updatedArtist.displayName
+          : previousArtist?.displayName ?? '',
+      city: updatedArtist.city ?? previousArtist?.city,
+      bio: updatedArtist.bio ?? previousArtist?.bio,
+      profileImageUrl: updatedArtist.profileImageUrl ??
+          profileImageUrl ??
+          previousArtist?.profileImageUrl,
+      coverImageUrl: updatedArtist.coverImageUrl ??
+          coverImageUrl ??
+          previousArtist?.coverImageUrl,
+      isVerified: updatedArtist.isVerified,
+      shippingPolicy:
+          updatedArtist.shippingPolicy ?? previousArtist?.shippingPolicy,
+      createdAt: updatedArtist.createdAt ?? previousArtist?.createdAt,
+      updatedAt: updatedArtist.updatedAt ?? previousArtist?.updatedAt,
+    );
+
     emit(
       state.copyWith(
-        status: ArtistProfileStatus.loading,
+        status: ArtistProfileStatus.success,
+        artist: mergedArtist,
         clearErrorMessage: true,
       ),
     );
-
-    try {
-      final updatedArtist = await _repository.updateMyProfile(
-        displayName: displayName,
-        bio: bio,
-        city: city,
-        shippingPolicy: shippingPolicy,
-      );
-
-      emit(
-        state.copyWith(
-          status: ArtistProfileStatus.success,
-          artist: updatedArtist,
-          clearErrorMessage: true,
-        ),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: ArtistProfileStatus.error,
-          errorMessage: _safeErrorMessage(e),
-        ),
-      );
-    }
+  } catch (e) {
+    emit(
+      state.copyWith(
+        status: ArtistProfileStatus.error,
+        errorMessage: _safeErrorMessage(e),
+      ),
+    );
   }
-
+}
   /// Normalizes thrown objects to a user-visible string (Exception, HTTP errors, etc.).
   String _safeErrorMessage(Object error) {
     if (error is Exception) {

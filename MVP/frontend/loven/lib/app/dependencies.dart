@@ -1,0 +1,118 @@
+import 'package:loven/core/network/api_client.dart';
+import 'package:loven/core/router/app_router.dart';
+import 'package:loven/core/router/splash_min_duration_notifier.dart';
+import 'package:loven/core/storage/app_preferences.dart';
+import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/artist_profile/data/artist_repository.dart';
+import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/data/repositories/auth_repository.dart';
+import 'package:loven/features/cart/data/repositories/cart_repository.dart';
+import 'package:loven/features/favorites/data/repositories/favorites_repository.dart';
+import 'package:loven/features/feedback/data/repositories/feedback_repository.dart';
+import 'package:loven/features/order/data/repositories/order_repository.dart';
+import 'package:loven/features/report/data/repositories/report_repository.dart';
+import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
+
+/// App-wide singletons constructed once at startup.
+///
+/// **Ownership:** repositories, [ApiClient], [AuthCubit], [AppRouter], and
+/// session wiring. Does not build widgets — [LovenApp] consumes this graph.
+class AppDependencies {
+  AppDependencies._({
+    required this.appPreferences,
+    required this.tokenStorage,
+    required this.apiClient,
+    required this.authRepository,
+    required this.authCubit,
+    required this.artworkRepository,
+    required this.orderRepository,
+    required this.artistRepository,
+    required this.favoritesRepository,
+    required this.verificationRequestRepository,
+    required this.cartRepository,
+    required this.feedbackRepository,
+    required this.reportRepository,
+    required this.splashMinDurationNotifier,
+    required this.appRouter,
+  });
+
+  final AppPreferences appPreferences;
+  final TokenStorage tokenStorage;
+  final ApiClient apiClient;
+  final AuthRepository authRepository;
+  final AuthCubit authCubit;
+  final ArtworkRepository artworkRepository;
+  final OrderRepository orderRepository;
+  final ArtistRepository artistRepository;
+  final FavoritesRepository favoritesRepository;
+  final VerificationRequestRepository verificationRequestRepository;
+  final CartRepository cartRepository;
+  final FeedbackRepository feedbackRepository;
+  final ReportRepository reportRepository;
+  final SplashMinDurationNotifier splashMinDurationNotifier;
+  final AppRouter appRouter;
+
+  /// Builds the dependency graph and starts session restore (single call site).
+  factory AppDependencies.create(AppPreferences appPreferences) {
+    final tokenStorage = TokenStorage();
+    final apiClient = ApiClient(tokenStorage: tokenStorage);
+
+    final authRepository = AuthRepository(
+      apiClient: apiClient,
+      tokenStorage: tokenStorage,
+    );
+
+    final artworkRepository = ArtworkRepository(apiClient: apiClient);
+    final orderRepository = OrderRepository(apiClient: apiClient);
+    final artistRepository = ArtistRepository(apiClient: apiClient);
+    final favoritesRepository = FavoritesRepository(apiClient: apiClient);
+    final verificationRequestRepository = VerificationRequestRepository(
+      apiClient: apiClient,
+    );
+    final cartRepository = CartRepository(apiClient: apiClient);
+    final feedbackRepository = FeedbackRepository(apiClient: apiClient);
+    final reportRepository = ReportRepository(apiClient: apiClient);
+
+    final authCubit = AuthCubit(authRepository: authRepository);
+
+    final splashMinDurationNotifier = SplashMinDurationNotifier();
+
+    apiClient.attachSessionExpiredHandler(
+      () => authCubit.handleSessionExpired(),
+    );
+
+    authCubit.restoreSession();
+
+    final appRouter = AppRouter(
+      authCubit,
+      appPreferences: appPreferences,
+      splashMinDurationNotifier: splashMinDurationNotifier,
+      artistRepository: artistRepository,
+      verificationRequestRepository: verificationRequestRepository,
+    );
+
+    return AppDependencies._(
+      appPreferences: appPreferences,
+      tokenStorage: tokenStorage,
+      apiClient: apiClient,
+      authRepository: authRepository,
+      authCubit: authCubit,
+      artworkRepository: artworkRepository,
+      orderRepository: orderRepository,
+      artistRepository: artistRepository,
+      favoritesRepository: favoritesRepository,
+      verificationRequestRepository: verificationRequestRepository,
+      cartRepository: cartRepository,
+      feedbackRepository: feedbackRepository,
+      reportRepository: reportRepository,
+      splashMinDurationNotifier: splashMinDurationNotifier,
+      appRouter: appRouter,
+    );
+  }
+
+  void dispose() {
+    authCubit.close();
+    splashMinDurationNotifier.dispose();
+  }
+}

@@ -188,12 +188,22 @@ def delete_cloud_file(file_path: str) -> bool:
 # 3. Firebase token verification
 # ==========================================
 
-def verify_firebase_token(id_token: str) -> dict:
+def verify_firebase_id_token(id_token: str) -> dict:
+    """
+    Verify a Firebase Auth ID token via the Admin SDK.
+
+    Returns the decoded token claims dict (uid, email, email_verified, …).
+    Used by ``firebase_auth_service`` for LOVEN JWT exchange — not for FCM.
+    """
     if not _ensure_firebase():
         raise ValueError("Firebase unavailable")
 
     try:
-        decoded_token = auth.verify_id_token(id_token)
-        return decoded_token
-    except Exception:
-        raise ValueError("Invalid Firebase token")
+        return auth.verify_id_token(id_token)
+    except Exception as exc:
+        raise ValueError("Invalid Firebase token") from exc
+
+
+def verify_firebase_token(id_token: str) -> dict:
+    """Backward-compatible alias for :func:`verify_firebase_id_token`."""
+    return verify_firebase_id_token(id_token)

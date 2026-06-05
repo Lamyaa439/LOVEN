@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
+/// Post-login welcome screen (optional route after authenticated signup funnel).
+///
+/// Signup verification navigates to login — this screen is for post-session flows.
 class SignupSuccessPage extends StatelessWidget {
   const SignupSuccessPage({super.key});
 
@@ -51,7 +55,7 @@ class SignupSuccessPage extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.go('/');
+                    context.go(AppRoutes.home);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,

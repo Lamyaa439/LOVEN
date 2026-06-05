@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart'; // Ensure you created this file with the hex codes
+import 'app_colors.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Almarai', // Default for Arabic support
+      fontFamily: 'Almarai',
+      scaffoldBackgroundColor: Colors.white,
+
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryBlue,
         primary: AppColors.primaryBlue,
@@ -13,26 +15,20 @@ class AppTheme {
         surface: AppColors.backgroundGrey,
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: Colors.white,
 
-      // light global icon theme
       iconTheme: const IconThemeData(
         color: AppColors.primaryBlue,
         size: 24,
       ),
 
-      // light bottom navigation bar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primaryBlue,
         unselectedItemColor: Colors.black38,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-
-        // Clean icon sizing using correct parameter targets
         selectedIconTheme: IconThemeData(size: 24),
         unselectedIconTheme: IconThemeData(size: 24),
-
         selectedLabelStyle: TextStyle(
           fontFamily: 'Almarai',
           fontWeight: FontWeight.bold,
@@ -45,36 +41,42 @@ class AppTheme {
         ),
       ),
 
-      // Bilingual Configuration
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-            fontFamily: 'PT Serif',
-            fontFamilyFallback: ['Almarai'],
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-            color: Colors.black),
+          fontFamily: 'PT Serif',
+          fontFamilyFallback: ['Almarai'],
+          fontWeight: FontWeight.bold,
+          fontSize: 28,
+          color: Colors.black,
+        ),
         titleLarge: TextStyle(
           fontFamily: 'PT Serif',
           fontFamilyFallback: ['Almarai'],
           fontWeight: FontWeight.bold,
-          fontSize: 22,
+          fontSize: 20,
           color: Colors.black,
         ),
         titleMedium: TextStyle(
-            fontFamily: 'Almarai',
-            fontFamilyFallback: ['PT Serif'],
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Colors.black),
+          fontFamily: 'Almarai',
+          fontFamilyFallback: ['PT Serif'],
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: Colors.black,
+        ),
         bodyMedium: TextStyle(
           fontFamily: 'Almarai',
           fontFamilyFallback: ['PT Serif'],
-          fontSize: 16,
+          fontSize: 14,
           color: Colors.black87,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: 'Almarai',
+          fontFamilyFallback: ['PT Serif'],
+          fontSize: 12,
+          color: Colors.black54,
         ),
       ),
 
-      // elevated button theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
@@ -82,59 +84,66 @@ class AppTheme {
           disabledBackgroundColor: AppColors.backgroundGrey,
           disabledForegroundColor: Colors.black38,
           elevation: 0,
+          minimumSize: const Size(double.infinity, 48),
           padding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 24,
+            vertical: 12,
+            horizontal: 20,
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Almarai',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-      // Outlined button theme
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryBlue,
-          side: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
-          padding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 24,
-          ),
-          textStyle: const TextStyle(
-            fontFamily: 'Almarai',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-      // Text button style
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.deepPurple,
           textStyle: const TextStyle(
             fontFamily: 'Almarai',
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
-          padding: const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 16,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryBlue,
+          side: const BorderSide(
+            color: AppColors.primaryBlue,
+            width: 1.5,
+          ),
+          minimumSize: const Size(double.infinity, 48),
+          padding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 20,
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Almarai',
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.deepPurple,
+          padding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 12,
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Almarai',
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 10,
+        ),
         hintStyle: TextStyle(
           fontFamily: 'Almarai',
           fontSize: 14,
@@ -144,63 +153,70 @@ class AppTheme {
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.primaryBlue, width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.primaryBlue,
+            width: 1.5,
+          ),
         ),
         errorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.red.shade400),
         ),
         focusedErrorBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 1.5,
+          ),
         ),
       ),
+
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryBlue.withOpacity(0.15),
         selectedColor: AppColors.primaryBlue,
         labelStyle: const TextStyle(
           fontFamily: 'Almarai',
           fontWeight: FontWeight.bold,
+          fontSize: 13,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50), // Pill shape
+          borderRadius: BorderRadius.circular(50),
           side: BorderSide.none,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 6,
+        ),
       ),
     );
   }
 
-// THE DARK THEME SECTION
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Almarai',
       brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF18181B),
+
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
         seedColor: AppColors.primaryBlue,
         primary: AppColors.primaryPurple,
+        secondary: AppColors.deepPurple,
         surface: const Color(0xFF18181B),
       ),
-      scaffoldBackgroundColor: const Color(0xFF18181B),
 
-      // Dark theme icon
       iconTheme: const IconThemeData(
         color: AppColors.primaryPurple,
         size: 24,
       ),
 
-      // Dark bottom navigation bar theme
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF18181B),
         selectedItemColor: AppColors.primaryPurple,
         unselectedItemColor: Colors.white38,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-
-        // Clean icon sizing using correct parameter targets
         selectedIconTheme: IconThemeData(size: 24),
         unselectedIconTheme: IconThemeData(size: 24),
-
         selectedLabelStyle: TextStyle(
           fontFamily: 'Almarai',
           fontWeight: FontWeight.bold,
@@ -213,47 +229,93 @@ class AppTheme {
         ),
       ),
 
-      // Mirroring button implementations for Dark Mode
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: 'PT Serif',
+          fontFamilyFallback: ['Almarai'],
+          fontWeight: FontWeight.bold,
+          fontSize: 28,
+          color: Colors.white,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: 'PT Serif',
+          fontFamilyFallback: ['Almarai'],
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          color: Colors.white,
+        ),
+        titleMedium: TextStyle(
+          fontFamily: 'Almarai',
+          fontFamilyFallback: ['PT Serif'],
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: Colors.white,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: 'Almarai',
+          fontFamilyFallback: ['PT Serif'],
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+        bodySmall: TextStyle(
+          fontFamily: 'Almarai',
+          fontFamilyFallback: ['PT Serif'],
+          fontSize: 12,
+          color: Colors.white60,
+        ),
+      ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryPurple,
           foregroundColor: const Color(0xFF18181B),
           elevation: 0,
+          minimumSize: const Size(double.infinity, 48),
           padding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 24,
+            vertical: 12,
+            horizontal: 20,
           ),
           textStyle: const TextStyle(
             fontFamily: 'Almarai',
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 14,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryPurple,
-          side: const BorderSide(color: AppColors.primaryPurple, width: 1.5),
+          side: const BorderSide(
+            color: AppColors.primaryPurple,
+            width: 1.5,
+          ),
+          minimumSize: const Size(double.infinity, 48),
           padding: const EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: 24,
+            vertical: 12,
+            horizontal: 20,
           ),
           textStyle: const TextStyle(
             fontFamily: 'Almarai',
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 14,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryPurple,
+          padding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 12,
+          ),
           textStyle: const TextStyle(
             fontFamily: 'Almarai',
             fontWeight: FontWeight.bold,
@@ -261,9 +323,13 @@ class AppTheme {
           ),
         ),
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 10,
+        ),
         hintStyle: TextStyle(
           fontFamily: 'Almarai',
           fontSize: 14,
@@ -273,27 +339,38 @@ class AppTheme {
           borderSide: BorderSide(color: Colors.grey.shade700),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.primaryPurple, width: 1.5),
+          borderSide: BorderSide(
+            color: AppColors.primaryPurple,
+            width: 1.5,
+          ),
         ),
         errorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.red.shade400),
         ),
         focusedErrorBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 1.5,
+          ),
         ),
       ),
+
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryPurple.withOpacity(0.15),
         selectedColor: AppColors.primaryPurple,
         labelStyle: const TextStyle(
           fontFamily: 'Almarai',
           fontWeight: FontWeight.bold,
+          fontSize: 13,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50), // Pill shape
+          borderRadius: BorderRadius.circular(50),
           side: BorderSide.none,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 6,
+        ),
       ),
     );
   }

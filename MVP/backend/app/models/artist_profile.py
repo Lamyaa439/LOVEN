@@ -33,7 +33,8 @@ class ArtistProfile(BaseModel):
     display_name = db.Column(db.String(255), unique=True, nullable=False)
     city = db.Column(db.String(100), nullable=True)
     bio = db.Column(db.Text, nullable=True)
-    profile_image_url = db.Column(db.String(255), nullable=True)
+    profile_image_url = db.Column(db.String(2048), nullable=True)
+    cover_image_url = db.Column(db.String(2048), nullable=True)
 
     # Admin grants this flag after reviewing a verification_request
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
@@ -160,6 +161,7 @@ class ArtistProfile(BaseModel):
             "city": self.city,
             "bio": self.bio,
             "profile_image_url": self.profile_image_url,
+            "cover_image_url": self.cover_image_url,
             "is_verified": self.is_verified,
             "shipping_policy": self.shipping_policy,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -168,3 +170,24 @@ class ArtistProfile(BaseModel):
 
     def __repr__(self):
         return f"<ArtistProfile(display_name={self.display_name}, user_id={self.user_id})>"
+    
+    # ----------------- validate for cover_image_url -----------------
+    @validates("cover_image_url")
+    def validate_cover_image_url(self, key, value):
+        if value is None:
+            return None
+            
+        if not isinstance(value, str):
+            raise ValueError("Cover image URL must be text.")
+
+        clean_url = value.strip()
+        if clean_url == "":
+            return None
+
+        if not clean_url.lower().startswith(("https://", "http://")):
+            raise ValueError("Cover image URL must start with http:// or https://.")
+
+        if len(clean_url) > 2048:
+            raise ValueError("Cover image URL must be 2048 characters or fewer.")
+
+        return clean_url

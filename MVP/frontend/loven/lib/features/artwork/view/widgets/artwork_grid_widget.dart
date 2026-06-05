@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart';
+import 'package:loven/core/res/responsive/responsive_extensions.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
@@ -40,28 +41,38 @@ class ArtworkGridWidget extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: artworks.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.72,
-        ),
-        itemBuilder: (context, index) {
-          return _ArtworkCard(
-            artwork: artworks[index],
-            isGuest: isGuest,
-            canManage: canManage,
-            onDelete: onDelete,
-          );
-        },
+return Padding(
+  padding: EdgeInsets.symmetric(
+    horizontal: context.responsive(mobile: 12, tablet: 16),
+  ),
+  child: GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: artworks.length,
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: context.responsive(
+        mobile: 2,
+        tablet: 3,
+        desktop: 4,
+      ).toInt(),
+      crossAxisSpacing: context.responsive(mobile: 10, tablet: 12),
+      mainAxisSpacing: context.responsive(mobile: 10, tablet: 12),
+      childAspectRatio: context.responsive(
+        mobile: 0.78,
+        tablet: 0.72,
+        desktop: 0.76,
       ),
-    );
+    ),
+    itemBuilder: (context, index) {
+      return _ArtworkCard(
+        artwork: artworks[index],
+        isGuest: isGuest,
+        canManage: canManage,
+        onDelete: onDelete,
+      );
+    },
+  ),
+);
   }
 }
 
@@ -89,7 +100,7 @@ class _ArtworkCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isGuest) {
-          context.push('/auth');
+          context.push(AppRoutes.auth);
           return;
         }
 
@@ -202,7 +213,9 @@ class _ArtworkCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(
+  context.responsive(mobile: 8, tablet: 10),
+),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -211,7 +224,7 @@ class _ArtworkCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: 13,
+                      fontSize: context.responsive(mobile: 12, tablet: 13),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -220,7 +233,7 @@ class _ArtworkCard extends StatelessWidget {
                       artwork.price,
                     ),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
+                      fontSize: context.responsive(mobile: 11, tablet: 12),
                       fontWeight: FontWeight.w600,
                       color: AppColors.deepPurple,
                     ),

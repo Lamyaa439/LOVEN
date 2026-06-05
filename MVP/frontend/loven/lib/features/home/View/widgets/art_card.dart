@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -10,6 +10,7 @@ import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
+import 'package:loven/core/res/responsive/responsive_extensions.dart';
 
 class ArtCard extends StatelessWidget {
   final ArtworkModel artwork;
@@ -45,8 +46,10 @@ class ArtCard extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        width: 220,
-        margin: const EdgeInsets.only(right: 16),
+        width: context.responsive(mobile: 170, tablet: 200, desktop: 220),
+margin: EdgeInsets.only(
+  right: context.responsive(mobile: 12, tablet: 16),
+),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(18),
@@ -65,7 +68,7 @@ class ArtCard extends StatelessWidget {
                     child: Image.network(
                       artwork.artworkImageUrl ?? '',
                       fit: BoxFit.cover,
-                      height: 155,
+                      height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
                       width: double.infinity,
                       errorBuilder: (
                         context,
@@ -73,7 +76,7 @@ class ArtCard extends StatelessWidget {
                         stackTrace,
                       ) {
                         return Container(
-                          height: 155,
+                          height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
                           color: Colors.grey[300],
                           child: const Icon(
                             Icons.broken_image,
@@ -98,12 +101,12 @@ class ArtCard extends StatelessWidget {
                           final isFavorited = favoriteIds.contains(artwork.id);
 
                           return CircleAvatar(
-                            radius: 18,
+  radius: context.responsive(mobile: 15, tablet: 18),
                             backgroundColor: Colors.white.withOpacity(0.9),
                             child: IconButton(
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              iconSize: 20,
+                              iconSize: context.responsive(mobile: 17, tablet: 20),
                               icon: Icon(
                                 isFavorited
                                     ? Icons.favorite
@@ -114,7 +117,7 @@ class ArtCard extends StatelessWidget {
                                 final isActuallyGuest =
                               isGuest || context.read<AuthCubit>().state is AuthGuest;
                                 if (isActuallyGuest) {
-                                  context.push('/auth');
+                                  context.push(AppRoutes.auth);
                                 } else {
                                   context
                                       .read<FavoritesCubit>()
@@ -127,12 +130,12 @@ class ArtCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       CircleAvatar(
-                        radius: 18,
+  radius: context.responsive(mobile: 15, tablet: 18),
                         backgroundColor: Colors.white.withOpacity(0.9),
                         child: IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          iconSize: 20,
+                          iconSize: context.responsive(mobile: 17, tablet: 20),
                           icon: const Icon(
                             Icons.add_shopping_cart,
                             color: AppColors.primaryBlue,
@@ -141,7 +144,7 @@ class ArtCard extends StatelessWidget {
                               final isActuallyGuest =
                               isGuest || context.read<AuthCubit>().state is AuthGuest;
                             if (isActuallyGuest) {
-                              context.push('/auth');
+                              context.push(AppRoutes.auth);
                             } else {
                               onActionPressed();
                             }
@@ -154,7 +157,12 @@ class ArtCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              padding: EdgeInsets.fromLTRB(
+  context.responsive(mobile: 10, tablet: 12),
+  context.responsive(mobile: 8, tablet: 10),
+  context.responsive(mobile: 10, tablet: 12),
+  context.responsive(mobile: 10, tablet: 12),
+),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

@@ -1,23 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import '../../core/res/theme/app_colors.dart';
-import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
+/// Splash UI only; navigation is owned by [AppRouter] redirect policy.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() =>
-      _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState
-    extends State<SplashScreen>
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -47,29 +42,17 @@ class _SplashScreenState
       ),
     );
 
-    _executeSplashSequence();
+    _runMinimumSplashPresentation();
   }
 
-  Future<void> _executeSplashSequence() async {
+  /// Branded delay only — session restore runs in [LovenApp], routing in router.
+  Future<void> _runMinimumSplashPresentation() async {
     await _animationController.forward();
-
-    await Future.delayed(
-      const Duration(milliseconds: 500),
-    );
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
 
-    await context.read<AuthCubit>().checkAuthStatus();
-
-    if (!mounted) return;
-
-    final authState = context.read<AuthCubit>().state;
-
-if (authState is AuthSuccess) {
-  context.go('/');
-} else {
-  context.go('/onboarding');
-  }
+    context.read<SplashMinDurationNotifier>().markReady();
   }
 
   @override

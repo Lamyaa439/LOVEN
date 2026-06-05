@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/router/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
@@ -30,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.person_outline,
             title: 'Edit Profile',
             onTap: () {
-              context.push('/profile/edit');
+              context.push(AppRoutes.profileEdit);
             },
           ),
 
@@ -50,9 +51,9 @@ class SettingsScreen extends StatelessWidget {
                     title: 'Incoming Orders',
                     onTap: () {
                       context.push(
-                        '/orders/incoming',
-                      extra: artist.id,
-                    );
+                        AppRoutes.ordersIncoming,
+                        extra: artist.id,
+                      );
                   },
                 ),
                 
@@ -62,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.verified_outlined,
                   title: 'Request Verification',
                   onTap: () {
-                    context.push('/verification-request');
+                    context.push(AppRoutes.verificationRequest);
                   },
                 ),
               ],
@@ -75,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.location_on_outlined,
             title: 'Saved Addresses',
             onTap: () {
-              context.push('/location');
+              context.push(AppRoutes.location);
             },
           ),
           
@@ -98,7 +99,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.lock_outline,
             title: 'Change Password',
             onTap: () {
-              context.push('/change-password');
+              context.push(AppRoutes.changePassword);
             },
           ),
           
@@ -123,7 +124,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.shopping_bag_outlined,
             title: 'Order History',
             onTap: () {
-              context.push('/orders/history');
+              context.push(AppRoutes.ordersHistory);
             },
           ),
           
@@ -136,7 +137,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.feedback_outlined,
             title: 'Send Feedback',
             onTap: () {
-              context.push('/feedback');
+              context.push(AppRoutes.feedback);
             },
           ),
           
@@ -187,14 +188,8 @@ class SettingsScreen extends StatelessWidget {
                   );
                 },
               );
-              if (shouldLogout == true) {
-                await context
-                .read<AuthCubit>()
-                .logout();
-                
-                if (context.mounted) {
-                  context.go('/auth');
-                }
+              if (shouldLogout == true && context.mounted) {
+                await context.read<AuthCubit>().logout();
               }
             },
           ),

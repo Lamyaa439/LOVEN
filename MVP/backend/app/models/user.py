@@ -2,29 +2,34 @@ from app.extensions import db
 from app.models.base_model import BaseModel
 from sqlalchemy.orm import validates
 from app.core.security import hash_password, verify_password
-import re # used for Regular Expressions to validate complex string patterns (e.g., email format).
+import re
 from email_validator import validate_email as check_email_domain, EmailNotValidError
 
 """
-User Data Model Definition.
+User ORM — business identity for LOVEN.
 
-Acts as the Object-Relational Mapping (ORM) for the `users` table. 
-This file encapsulates the user data structure and enables the Flask application 
-to manage user entities through standard Pythonic interactions (CRUD) without 
-raw SQL queries.
+Email/password credentials live in Firebase Auth. This model stores the LOVEN
+business record (role, artist linkage, FCM) and optional ``firebase_uid``.
+Local ``password`` is nullable for Firebase-authenticated users.
 """
+
 
 class User(BaseModel):
     __tablename__ = "users"
 
-    # core identity information
+    # Core identity
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=True)
+
+    # Firebase Authentication linkage (credentials live in Firebase)
+    firebase_uid = db.Column(db.String(128), unique=True, nullable=True, index=True)
+    email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    auth_provider = db.Column(db.String(32), nullable=False, default="firebase")
 
     # Role-Based Access Control (RBAC)
     system_role = db.Column(db.String(50), default="customer")
-    fcm_token = db.Column(db.String(255), nullable=True) # Firebase Cloud Messaging Token
+    fcm_token = db.Column(db.String(255), nullable=True)
     profile_image_url = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -114,38 +119,23 @@ class User(BaseModel):
     @validates("password")
     def validate_and_hash_password(self, key, value):
         """
-        Validates the password strength and hashes it before storage.
-        Args:
-            value (str): The plain-text password provided by the user.
-        Returns:
-            str: the securely hashed password.
+        Hash plain-text passwords when present.
 
-        raises:
-            ValueError: if the password is missing or shorter than 8 char.
+        Firebase-authenticated users store ``password=None`` — credentials
+        are owned by Firebase Auth, not this column.
         """
-        if not value:
-            raise ValueError("Password is required.")
-        
-        # Avoid double-hashing:
-        # If the value starts with the bcrypt signature '$2b$' and has sufficient length,
-        # it means the password is already hashed (e.g., during a DB refresh). 
-        # We return it as-is to prevent hashing a hash.
+        if value is None or value == "":
+            return None
+
         if value.startswith(("$2a$", "$2b$", "$2y$")) and len(value) >= 50:
             return value
-        
-        # Password Complexity Regex:
-        # (?=.*[a-z]) : At least one lowercase letter
-        # (?=.*[A-Z]) : At least one uppercase letter
-        # (?=.*\d)    : At least one digit (number)
-        # (?=.*[\W_]) : At least one special character (non-word character or underscore)
-        # .{8,}       : Minimum length of 8 characters
+
         password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
         if not re.match(password_regex, value):
             raise ValueError(
                 "Password must be at least 8 characters long and include an uppercase letter, "
                 "a lowercase letter, a number, and a special character."
             )
-        # Encrypt the plain-text password using the security.py 
         return hash_password(value)
     
     def check_password(self, plain_password):
@@ -173,6 +163,13 @@ class User(BaseModel):
             "name": self.name,
             "email": self.email,
             "system_role": self.system_role,
+            "firebase_uid": self.firebase_uid,
+            "email_verified_at": (
+                self.email_verified_at.isoformat()
+                if self.email_verified_at
+                else None
+            ),
+            "auth_provider": self.auth_provider,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
