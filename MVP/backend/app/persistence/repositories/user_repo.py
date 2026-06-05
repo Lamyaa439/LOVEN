@@ -62,19 +62,61 @@ class UserRepository(SQLAlchemyRepository):
         db.session.flush()
         return user
 
-    def sync_email_verified_from_firebase(self, user: User, email_verified: bool) -> User:
+    def sync_email_verified_from_firebase(
+        self,
+        user: User,
+        email_verified: bool,
+        *,
+        commit: bool = True,
+    ) -> User:
         """Update ``email_verified_at`` when Firebase reports a verified email."""
         if email_verified and user.email_verified_at is None:
             user.email_verified_at = datetime.now(timezone.utc)
-        db.session.commit()
+
+        if commit:
+            db.session.commit()
+        else:
+            db.session.flush()
+
         return user
 
-    def link_firebase_uid(self, user: User, firebase_uid: str) -> User:
-        """Attach a Firebase ``uid`` to an existing LOVEN user (e.g. first login)."""
+    def link_firebase_uid(
+        self,
+        user: User,
+        firebase_uid: str,
+        *,
+        email_verified: bool = False,
+        commit: bool = True,
+    ) -> User:
+        """
+        Attach a Firebase ``uid`` to an existing LOVEN user (legacy email match).
+
+        Raises:
+            ValueError: When the uid is already linked to another account, or this
+                user is linked to a different Firebase uid.
+        """
+        if not firebase_uid:
+            raise ValueError("firebase_uid is required")
+
+        if user.firebase_uid and user.firebase_uid != firebase_uid:
+            raise ValueError("User is already linked to a different Firebase account")
+
+        existing_uid_owner = self.get_by_firebase_uid(firebase_uid)
+        if existing_uid_owner and existing_uid_owner.id != user.id:
+            raise ValueError("Firebase account is already linked to another user")
+
         user.firebase_uid = firebase_uid
-        if not user.auth_provider:
+        if not user.auth_provider or user.auth_provider in {"local", "legacy"}:
             user.auth_provider = "firebase"
-        db.session.commit()
+
+        if email_verified and user.email_verified_at is None:
+            user.email_verified_at = datetime.now(timezone.utc)
+
+        if commit:
+            db.session.commit()
+        else:
+            db.session.flush()
+
         return user
 
     def update_fcm_token(self, user_id, new_token):

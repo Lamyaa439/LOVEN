@@ -70,12 +70,41 @@ def register_sync(data: dict) -> tuple[dict, int]:
     except FirebaseAuthError as exc:
         return {"error": exc.message}, 401
 
-    if user_repo.get_by_firebase_uid(claims.firebase_uid):
+    existing_uid_user = user_repo.get_by_firebase_uid(claims.firebase_uid)
+    if existing_uid_user:
         return {"error": "User already exists"}, 409
 
     existing_email_user = user_repo.get_user_by_email(claims.email)
     if existing_email_user:
-        return {"error": "User already exists"}, 409
+        if existing_email_user.firebase_uid:
+            return {"error": "User already exists"}, 409
+
+        try:
+            user_repo.link_firebase_uid(
+                existing_email_user,
+                claims.firebase_uid,
+                email_verified=claims.email_verified,
+                commit=False,
+            )
+            if fcm_token:
+                existing_email_user.fcm_token = fcm_token
+            db.session.commit()
+            return {
+                "message": "Account linked. Please verify your email.",
+                "email": claims.email,
+                "verification_required": not claims.email_verified,
+                "user_id": str(existing_email_user.id),
+            }, 200
+        except ValueError as exc:
+            db.session.rollback()
+            return {"error": str(exc)}, 409
+        except IntegrityError:
+            db.session.rollback()
+            return {"error": "Registration failed due to a duplicate value"}, 409
+        except Exception:
+            logger.exception("Firebase register-sync legacy link failed")
+            db.session.rollback()
+            return {"error": "An internal error occurred during registration"}, 500
 
     email_verified_at = (
         datetime.now(timezone.utc) if claims.email_verified else None
@@ -144,7 +173,19 @@ def login_exchange(data: dict) -> tuple[dict, int]:
     if not user:
         user = user_repo.get_user_by_email(claims.email)
         if user:
-            user = user_repo.link_firebase_uid(user, claims.firebase_uid)
+            try:
+                user = user_repo.link_firebase_uid(
+                    user,
+                    claims.firebase_uid,
+                    email_verified=claims.email_verified,
+                    commit=False,
+                )
+            except ValueError as exc:
+                db.session.rollback()
+                return {"error": str(exc)}, 409
+            except IntegrityError:
+                db.session.rollback()
+                return {"error": "Login failed due to a duplicate value"}, 409
         else:
             return {
                 "error": "User not found",
@@ -154,9 +195,19 @@ def login_exchange(data: dict) -> tuple[dict, int]:
     if not user.is_active:
         return {"error": "Account is inactive"}, 403
 
-    user_repo.sync_email_verified_from_firebase(user, claims.email_verified)
+    user_repo.sync_email_verified_from_firebase(
+        user,
+        claims.email_verified,
+        commit=False,
+    )
 
     if fcm_token:
-        user_repo.update_fcm_token(user.id, fcm_token)
+        user.fcm_token = fcm_token
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return {"error": "Login failed due to a duplicate value"}, 409
 
     return _issue_loven_tokens(user), 200

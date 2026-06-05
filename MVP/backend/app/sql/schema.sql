@@ -15,11 +15,12 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL UNIQUE,
-    "password" VARCHAR(255) NOT NULL, -- Stored as a bcrypt hash
+    "password" VARCHAR(255), -- Nullable for Firebase-authenticated users; bcrypt hash when present
     "system_role" VARCHAR(50) DEFAULT 'customer' CHECK (system_role IN ('admin', 'customer', 'artist')),
     "fcm_token" VARCHAR(255), -- Firebase Cloud Messaging token
-    "firebase_uid" VARCHAR(128) UNIQUE,
-    "auth_provider" VARCHAR(32) DEFAULT 'email',
+    "firebase_uid" VARCHAR(128) UNIQUE, -- Firebase Auth uid (credentials live in Firebase)
+    "auth_provider" VARCHAR(32) NOT NULL DEFAULT 'firebase',
+    "email_verified_at" TIMESTAMPTZ, -- LOVEN business record of verified email timestamp
     "profile_image_url" TEXT,
     "is_active" BOOLEAN DEFAULT true,
     "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
