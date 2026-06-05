@@ -23,7 +23,7 @@ abstract final class AppEnv {
   /// Version-controlled fallback when [load] fails or `BASE_URL` is unset.
   ///
   /// Prefer setting `BASE_URL` in [envAssetPath] for team/staging hosts.
-  static const String defaultBaseUrl = 'http://34.224.37.128:5000/api/v1';
+  static const String defaultBaseUrl = 'http://34.224.37.128:5001/api/v1';
 
   /// Maximum wait for TCP connect before Dio reports a timeout.
   static const Duration connectTimeout = Duration(seconds: 15);
