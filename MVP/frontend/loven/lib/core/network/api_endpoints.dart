@@ -17,11 +17,13 @@ abstract final class ApiEndpoints {
   // Authentication (mounted on /api/v1)
   // ---------------------------------------------------------------------------
 
-  static const String register = '/register';
-  static const String login = '/login';
+  static const String register = '/register'; // Deprecated — backend returns 410
+  static const String login = '/login'; // Deprecated — backend returns 410
+  static const String firebaseRegisterSync = '/auth/firebase/register-sync';
+  static const String firebaseLogin = '/auth/firebase/login';
   static const String refresh = '/refresh';
   static const String logout = '/logout';
-  static const String changePassword = '/change-password';
+  static const String changePassword = '/change-password'; // TODO: deprecate for Firebase users
   static const String currentUser = '/account/me';
 
   // ---------------------------------------------------------------------------
