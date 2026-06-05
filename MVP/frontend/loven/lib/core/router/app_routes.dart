@@ -38,9 +38,6 @@ abstract final class AppRoutes {
   static const String signupSuccess = '/signup/success';
 
   static const String forgotPassword = '/forgot-password';
-  static const String forgotPasswordCode = '/forgot-password/code';
-  static const String forgotPasswordNewPassword =
-      '/forgot-password/new-password';
   static const String forgotPasswordSuccess = '/forgot-password/success';
 
   /// Authenticated password change (session required).
@@ -125,8 +122,6 @@ abstract final class AppRoutes {
   /// Password recovery — public; no session required (not auth-entry redirects).
   static const Set<String> passwordRecoveryExactPaths = {
     forgotPassword,
-    forgotPasswordCode,
-    forgotPasswordNewPassword,
     forgotPasswordSuccess,
   };
 
