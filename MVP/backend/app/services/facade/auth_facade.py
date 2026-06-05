@@ -1,61 +1,60 @@
 """
-Authentication Facade:
-acts as the Orchestrator. It delegates the core business logic to the auth_service,
-and coordinates with external services (like Firebase/Notifications)
-without cluttering the core service logic.
+Authentication facade — orchestrates auth flows for the API layer.
+
+Delegates Firebase sync/login to ``firebase_sync_service`` and keeps
+legacy helpers (logout, change-password) isolated from Firebase credential logic.
 """
 
-from app.external_services.firebase_service import send_welcome_notification
-from app.core.uuid_utils import as_uuid
-from app.persistence.repositories.user_repo import UserRepository
-from app.services.auth_service import change_password, login_user, register_user
 import logging
+
+from app.core.uuid_utils import as_uuid
+from app.external_services.firebase_service import send_welcome_notification
+from app.persistence.repositories.user_repo import UserRepository
+from app.services.auth_service import change_password
+from app.services.firebase_sync_service import login_exchange, register_sync
 
 user_repo = UserRepository()
 logger = logging.getLogger(__name__)
 
+_LEGACY_DEPRECATED = {
+    "error": "endpoint_deprecated",
+    "message": (
+        "Email/password auth uses Firebase Authentication. "
+        "Use POST /api/v1/auth/firebase/register-sync and "
+        "POST /api/v1/auth/firebase/login instead."
+    ),
+}
+
 
 class AuthFacade:
+    """Static entry points for auth routes — no business logic inline."""
+
+    @staticmethod
+    def register_firebase_sync(data: dict):
+        """
+        Sync LOVEN user after Firebase client signup.
+
+        Returns 201 without LOVEN JWT per frozen auth contract.
+        """
+        return register_sync(data)
+
+    @staticmethod
+    def login_firebase(data: dict):
+        """
+        Exchange verified Firebase ID token for LOVEN JWT session.
+        """
+        return login_exchange(data)
 
     @staticmethod
     def register(data: dict):
-        """
-        Manages the new user registration process.
-
-        User and artist profile are created atomically in register_user.
-        Welcome notification is sent only after a successful commit.
-        """
-        result, status_code = register_user(data)
-
-        if status_code != 201:
-            return result, status_code
-
-        user_name = data.get("name", "Dear artist")
-        fcm_token = data.get("fcm_token")
-
-        if fcm_token:
-            try:
-                send_welcome_notification(fcm_token, user_name)
-            except Exception as e:
-                logger.warning(
-                    "Failed to send welcome notification: %s", e
-                )
-
-        return result, status_code
+        """Deprecated — legacy bcrypt register. Use :meth:`register_firebase_sync`."""
+        return _LEGACY_DEPRECATED, 410
 
     @staticmethod
     def login(data: dict):
-        """
-        Manages the login process.
-        Args:
-            data (dict): Login details including the FCM token.
+        """Deprecated — legacy bcrypt login. Use :meth:`login_firebase`."""
+        return _LEGACY_DEPRECATED, 410
 
-        Returns:
-            tuple: (response data, HTTP status code)
-        """
-        result, status_code = login_user(data)
-        return result, status_code
-    
     @staticmethod
     def change_password(user_id: str, data: dict):
         return change_password(user_id, data)
@@ -63,13 +62,7 @@ class AuthFacade:
     @staticmethod
     def logout(user_id):
         """
-        Manages the logout process.
-        Clears the FCM token to prevent push notifications to a logged-out device.
-        Args:
-            user_id: Normalized user UUID string from JWT (via auth_utils).
-
-        Returns:
-            tuple: (response data, HTTP status code)
+        Clear FCM token for the device on LOVEN logout.
         """
         try:
             uid = as_uuid(user_id)
@@ -85,12 +78,14 @@ class AuthFacade:
                 return {"error": "User not found"}, 404
 
             return {
-                "message": "Logged out successfully and notifications disabled for this device."
+                "message": (
+                    "Logged out successfully and notifications disabled "
+                    "for this device."
+                )
             }, 200
         except Exception:
             logger.exception("Error during logout")
             return {"error": "An internal error occurred during logout"}, 500
-        
 
     def __init__(self, user_repo, jwt_service, firebase_auth_service):
         self.user_repo = user_repo
@@ -98,6 +93,7 @@ class AuthFacade:
         self.firebase_auth_service = firebase_auth_service
 
     def google_login(self, firebase_id_token: str):
+        """Instance OAuth path — not wired for Milestone 1 Firebase email auth."""
         decoded = self.firebase_auth_service.verify_id_token(firebase_id_token)
 
         firebase_uid = decoded.get("uid")

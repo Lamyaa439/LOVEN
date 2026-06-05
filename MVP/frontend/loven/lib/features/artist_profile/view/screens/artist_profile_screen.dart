@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/artist_profile/view/widgets/artist_portfolio_filter.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
@@ -95,7 +95,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
                 onPressed: () {
-                  context.push('/settings');
+                  context.push(AppRoutes.settings);
                 },
               ),
           ],

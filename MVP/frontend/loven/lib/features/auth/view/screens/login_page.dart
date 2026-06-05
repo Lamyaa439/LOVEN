@@ -1,14 +1,16 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
-import 'package:loven/core/storage/token_storage.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
+/// Login screen for email/password auth.
+///
+/// Post-login navigation is owned by [resolveRedirect] in the app router,
+/// not by this screen.
 class LoginPage extends StatefulWidget {
   final bool fromGuest;
 
@@ -37,46 +39,17 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  /// Firebase sign-in → reload (emailVerified) → LOVEN JWT exchange.
+  ///
+  /// Navigation after success is owned by [resolveRedirect] once [AuthSuccess]
+  /// is emitted — this screen only surfaces [AuthFailure] snackbars.
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    context.read<AuthCubit>().login(
+    await context.read<AuthCubit>().loginWithFirebase(
           email: emailController.text.trim(),
-          password: passwordController.text.trim(),
+          password: passwordController.text,
         );
-  }
-
-  Future<void> _goToLoggedInHome() async {
-    final token = await TokenStorage().getAccessToken();
-
-    String? role;
-
-    if (token != null && token.isNotEmpty) {
-      try {
-        final parts = token.split('.');
-
-        if (parts.length == 3) {
-          final payload = utf8.decode(
-            base64Url.decode(
-              base64Url.normalize(parts[1]),
-            ),
-          );
-
-          final data = jsonDecode(payload);
-          role = data['role']?.toString();
-        }
-      } catch (_) {
-        role = null;
-      }
-    }
-
-    if (!mounted) return;
-
-    if (role == 'admin') {
-      context.go('/admin');
-    } else {
-      context.go('/');
-    }
   }
 
   InputDecoration _inputDecoration({
@@ -118,10 +91,6 @@ class _LoginPageState extends State<LoginPage> {
 
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state is AuthSuccess) {
-          _goToLoggedInHome();
-        }
-
         if (state is AuthFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -158,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                               if (context.canPop()) {
                                 context.pop();
                               } else {
-                                context.go('/');
+                                context.go(AppRoutes.home);
                               }
                             },
                       icon: Icon(
@@ -268,9 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoading
                         ? null
                         : () {
-                          context.push(
-                            '/forgot-password',
-                          );
+                          context.push(AppRoutes.forgotPassword);
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -338,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
                               ? null
                               : () {
                                   context.pushReplacement(
-                                    '/auth',
+                                    AppRoutes.auth,
                                   );
                                 },
                           child: const Text(
@@ -351,56 +318,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ],
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(
-                            horizontal: 12,
-                          ),
-                          child: Text(
-                            'Or with',
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(
-                              color: theme.colorScheme
-                                  .onSurfaceVariant,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _SocialButton(
-                      icon: Icons.g_mobiledata,
-                      label: 'Sign in with Google',
-                      onTap: isLoading
-                      ? () {}
-                      : () {},
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    _SocialButton(
-                      icon: Icons.apple,
-                      label: 'Sign in with Apple',
-                      onTap: () {},
                     ),
 
                     const SizedBox(height: 18),
@@ -431,48 +348,6 @@ class _FieldLabel extends StatelessWidget {
         style: theme.textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 13,
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: double.infinity,
-      height: 46,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 20),
-        label: Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: theme.colorScheme.onSurface,
-          side: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
 
@@ -126,7 +127,7 @@ class _OrderCard extends StatelessWidget {
   borderRadius: BorderRadius.circular(18),
   onTap: () {
     context.push(
-      '/orders/details',
+      AppRoutes.ordersDetails,
       extra: order,
     );
   },

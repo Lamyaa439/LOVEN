@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
 class LocationScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _LocationScreenState extends State<LocationScreen> {
   }
 
   Future<void> _openAddressForm() async {
-    await context.push('/location/address-form');
+    await context.push(AppRoutes.locationAddressForm);
     await _loadAddress();
   }
 

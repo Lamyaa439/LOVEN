@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/core/res/responsive/responsive_extensions.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -99,7 +100,7 @@ class _ArtworkCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (isGuest) {
-          context.push('/auth');
+          context.push(AppRoutes.auth);
           return;
         }
 

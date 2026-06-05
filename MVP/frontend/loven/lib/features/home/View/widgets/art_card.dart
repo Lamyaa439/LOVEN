@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -117,7 +117,7 @@ margin: EdgeInsets.only(
                                 final isActuallyGuest =
                               isGuest || context.read<AuthCubit>().state is AuthGuest;
                                 if (isActuallyGuest) {
-                                  context.push('/auth');
+                                  context.push(AppRoutes.auth);
                                 } else {
                                   context
                                       .read<FavoritesCubit>()
@@ -144,7 +144,7 @@ margin: EdgeInsets.only(
                               final isActuallyGuest =
                               isGuest || context.read<AuthCubit>().state is AuthGuest;
                             if (isActuallyGuest) {
-                              context.push('/auth');
+                              context.push(AppRoutes.auth);
                             } else {
                               onActionPressed();
                             }

@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
-import '../../../../features/auth/controller/cubit/auth_cubit.dart';
-import '../../../../features/auth/controller/cubit/auth_state.dart';
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+/// Account hub for guests and signed-in users (`/profile`).
+///
+/// Authentication lifecycle is owned by [AuthCubit]; this screen only reads
+/// session state and delegates logout to [AuthCubit.logout].
+class AccountScreen extends StatelessWidget {
+  const AccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         if (state is AuthGuest) {
-          return const _GuestProfileView();
+          return const _GuestAccountView();
         }
 
         if (state is AuthSuccess) {
@@ -25,14 +29,13 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ProfileHeader(
-                    name: user?.name ?? 'Customer',
-                    email: user?.email ?? '',
-                    imageUrl: user?.profileImageUrl,
-                    role: user?.systemRole ?? 'customer',
+                  _AccountHeader(
+                    name: user.name,
+                    email: user.email,
+                    imageUrl: user.profileImageUrl,
+                    role: user.systemRole,
                   ),
                   const SizedBox(height: 24),
-
                   Text(
                     'My Account',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -40,48 +43,43 @@ class ProfileScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 12),
-
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
                     subtitle: 'Update your personal information',
-                    onTap: () => context.push('/profile/edit'),
+                    onTap: () => context.push(AppRoutes.profileEdit),
                   ),
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.shopping_bag_outlined,
                     title: 'Order History',
                     subtitle: 'View your previous orders',
-                    onTap: () => context.push('/orders/history'),
+                    onTap: () => context.push(AppRoutes.ordersHistory),
                   ),
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.location_on_outlined,
                     title: 'Address',
                     subtitle: 'Manage your delivery location',
-                    onTap: () => context.push('/location'),
+                    onTap: () => context.push(AppRoutes.location),
                   ),
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.lock_outline,
                     title: 'Change Password',
                     subtitle: 'Update your account password',
-                    onTap: () => context.push('/change-password'),
+                    onTap: () => context.push(AppRoutes.changePassword),
                   ),
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.feedback_outlined,
                     title: 'Feedback',
                     subtitle: 'Send us your thoughts',
-                    onTap: () => context.push('/feedback'),
+                    onTap: () => context.push(AppRoutes.feedback),
                   ),
-
                   const SizedBox(height: 24),
-
-                  _ProfileTile(
+                  _AccountTile(
                     icon: Icons.logout,
                     title: 'Logout',
                     subtitle: 'Sign out of your account',
                     isDanger: true,
-                    onTap: () {
-                      context.go('/login');
-                    },
+                    onTap: () => context.read<AuthCubit>().logout(),
                   ),
                 ],
               ),
@@ -97,18 +95,18 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
-  final String name;
-  final String email;
-  final String? imageUrl;
-  final String role;
-
-  const _ProfileHeader({
+class _AccountHeader extends StatelessWidget {
+  const _AccountHeader({
     required this.name,
     required this.email,
     required this.imageUrl,
     required this.role,
   });
+
+  final String name;
+  final String email;
+  final String? imageUrl;
+  final String role;
 
   @override
   Widget build(BuildContext context) {
@@ -198,20 +196,20 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _ProfileTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final bool isDanger;
-
-  const _ProfileTile({
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
     this.isDanger = false,
   });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isDanger;
 
   @override
   Widget build(BuildContext context) {
@@ -242,10 +240,7 @@ class _ProfileTile extends StatelessWidget {
             color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            icon,
-            color: color,
-          ),
+          child: Icon(icon, color: color),
         ),
         title: Text(
           title,
@@ -266,8 +261,8 @@ class _ProfileTile extends StatelessWidget {
   }
 }
 
-class _GuestProfileView extends StatelessWidget {
-  const _GuestProfileView();
+class _GuestAccountView extends StatelessWidget {
+  const _GuestAccountView();
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +297,7 @@ class _GuestProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.push('/auth'),
+              onPressed: () => context.push(AppRoutes.auth),
               child: const Text('Sign Up / Login'),
             ),
           ],

@@ -1,28 +1,26 @@
-class UserModel {
+/// LOVEN session identity returned by `GET /account/me` and held in [AuthSuccess].
+class AuthUser {
   final String id;
   final String name;
   final String email;
-  final String? phoneNumber;
-  final String? profileImageUrl;
   final String systemRole;
+  final String? profileImageUrl;
 
-  UserModel({
+  AuthUser({
     required this.id,
     required this.name,
     required this.email,
-    this.phoneNumber,
-    this.profileImageUrl,
     required this.systemRole,
+    this.profileImageUrl,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory AuthUser.fromJson(Map<String, dynamic> json) {
+    return AuthUser(
       id: json['id'].toString(),
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      phoneNumber: json['phone_number'],
-      profileImageUrl: json['profile_image_url'],
       systemRole: json['system_role'] ?? '',
+      profileImageUrl: json['profile_image_url']?.toString(),
     );
   }
 }

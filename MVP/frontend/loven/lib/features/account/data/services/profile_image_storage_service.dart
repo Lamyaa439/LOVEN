@@ -1,6 +1,9 @@
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// Uploads account profile images to Firebase Storage.
+///
+/// Owned by the account feature; consumed by [EditAccountScreen].
 class ProfileImageStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instanceFor(
     bucket: 'gs://loven-88b0a.firebasestorage.app',

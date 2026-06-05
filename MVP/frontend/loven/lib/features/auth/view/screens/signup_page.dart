@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 
 import '../../controller/cubit/auth_cubit.dart';
@@ -195,25 +196,30 @@ class _SignupPageState
   // Actions
   // =========================================================
 
-  void _signup() {
+  /// Firebase signup → LOVEN register-sync → verification screen.
+  ///
+  /// Navigation is driven by the returned email, not [AuthSuccess], so LOVEN
+  /// JWT and router session state stay decoupled during signup.
+  Future<void> _signup() async {
     if (!_isFormValid) return;
 
-    context.read<AuthCubit>().signup(
-          name:
-              _nameController.text.trim(),
-          email: _emailController.text
-              .trim(),
-          password:
-              _passwordController.text,
+    final email = await context.read<AuthCubit>().signupWithFirebase(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
           systemRole: _selectedRole,
         );
+
+    if (!mounted || email == null) return;
+
+    context.push(AppRoutes.signupVerifyEmail, extra: email);
   }
 
   void _navigateBack() {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/');
+      context.go(AppRoutes.home);
     }
   }
 
@@ -232,22 +238,6 @@ class _SignupPageState
         AuthCubit,
         AuthState>(
       listener: (context, state) {
-        if (state is AuthSuccess) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Account created successfully',
-              ),
-            ),
-          );
-
-          context.go(
-            '/signup/verify-email',
-            extra: _emailController.text.trim(),
-          );
-        }
-
         if (state is AuthFailure) {
           ScaffoldMessenger.of(context)
               .showSnackBar(
@@ -632,7 +622,7 @@ class _SignupPageState
                               ? null
                               : () {
                                   context.go(
-                                    '/login',
+                                    AppRoutes.login,
                                   );
                                 },
                           child: Text(

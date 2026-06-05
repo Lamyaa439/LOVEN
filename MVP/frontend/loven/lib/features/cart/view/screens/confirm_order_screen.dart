@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/cart/view/widgets/delivery_date_bottom_sheet.dart';
 
@@ -50,7 +50,7 @@ class ConfirmOrderScreen extends StatelessWidget {
                   'Dumbo Street No.20, Dumbo, New York 10001, United States',
                 ),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/location'),
+                onTap: () => context.push(AppRoutes.location),
               ),
             ),
 

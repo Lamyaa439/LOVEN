@@ -1,8 +1,8 @@
 """
-Authentication service layer.
+Authentication service layer (legacy bcrypt paths).
 
-This module defines the business logic for user registration and login.
-It connects the API layer with the persistence layer and security utilities.
+``register_user`` and ``login_user`` are superseded by Firebase Auth +
+``firebase_sync_service``. Facade returns 410 for legacy HTTP routes.
 """
 
 from sqlalchemy.exc import IntegrityError
@@ -20,15 +20,9 @@ artist_profile_repo = ArtistProfileRepository()
 
 def register_user(data):
     """
-    Register a new user and linked artist profile in one transaction.
+    Legacy bcrypt registration — deprecated.
 
-    Args:
-        data : Request data containing:
-            - name (str)
-            - email (str)
-            - password (str)
-    Returns:
-        tuple: JSON response and HTTP status code.
+    Use ``firebase_sync_service.register_sync`` via the Firebase register-sync route.
     """
     # Extract user input from request body
     name = data.get("name")
@@ -96,13 +90,9 @@ def register_user(data):
 
 def login_user(data: dict):
     """
-    Authenticate a user and return an access token.
-    Args:
-        data (dict): Request data containing:
-            - email (str)
-            - password (str)
-    Returns:
-        tuple: JSON response and HTTP status code.
+    Legacy bcrypt login — deprecated.
+
+    Use ``firebase_sync_service.login_exchange`` via the Firebase login route.
     """
     # Extract login credentials
     email = data.get("email")

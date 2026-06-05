@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
 import 'package:loven/features/cart/view/screens/cart_screen.dart';
@@ -9,7 +10,7 @@ import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
 
-import '../../../../main.dart';
+import 'package:loven/core/theme/theme_bloc.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
 import '../widget/navigation_widget.dart';
 
@@ -138,7 +139,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: () => context.push('/auth'),
+              onPressed: () => context.push(AppRoutes.auth),
               child: const Text('Sign Up / Login'),
             ),
           ],

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
-import '../../splash/splash_screen.dart'; // Adjust path if needed to point to your login/splash
+import 'package:loven/core/router/app_routes.dart';
 
+/// Guest settings — uses GoRouter (no [Navigator] to splash).
 class GuestSettingsScreen extends StatelessWidget {
   const GuestSettingsScreen({super.key});
 
@@ -62,12 +64,8 @@ class GuestSettingsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SplashScreen()),
-                        (route) => false,
-                      );
+                      // Auth entry via router — not a splash bypass.
+                      context.push(AppRoutes.auth);
                     },
                     child: const Text('Sign Up / Login'),
                   ),

@@ -3,13 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/features/cart/data/models/cart_item_model.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
 
 import '../../controller/cubit/cart_cubit.dart';
 import '../../controller/cubit/cart_state.dart';
 import '../../data/models/cart_model.dart';
-import '../../data/models/cart_item_model.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -66,8 +67,8 @@ class _CartScreenState extends State<CartScreen> {
               content: Text('Order created successfully'),
             ),
           );
-
-          context.go('/');
+          
+          context.go(AppRoutes.home);
         }
 
         if (state is OrderError) {
