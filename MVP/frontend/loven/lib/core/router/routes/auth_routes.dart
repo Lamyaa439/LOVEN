@@ -5,12 +5,10 @@ import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/auth/view/screens/change_password_screen.dart';
 import 'package:loven/features/auth/view/screens/forgot_password_page.dart';
 import 'package:loven/features/auth/view/screens/login_page.dart';
-import 'package:loven/features/auth/view/screens/new_password_page.dart';
 import 'package:loven/features/auth/view/screens/password_changed_page.dart';
 import 'package:loven/features/auth/view/screens/signup_page.dart';
 import 'package:loven/features/auth/view/screens/signup_success_page.dart';
 import 'package:loven/features/auth/view/screens/signup_verification_email_page.dart';
-import 'package:loven/features/auth/view/screens/verification_code_page.dart';
 
 /// Credential, recovery, password change, and sign-up flow routes.
 List<RouteBase> buildAuthRoutesPrimary(AppRouterDeps deps) {
@@ -26,21 +24,6 @@ List<RouteBase> buildAuthRoutesPrimary(AppRouterDeps deps) {
     GoRoute(
       path: AppRoutes.forgotPassword,
       builder: (context, state) => const ForgotPasswordPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.forgotPasswordCode,
-      builder: (context, state) {
-        return routeWithRequiredStringExtra(
-          state: state,
-          title: 'Verification Code',
-          missingMessage: 'Email is required to verify your code.',
-          builder: (email) => VerificationCodePage(email: email),
-        );
-      },
-    ),
-    GoRoute(
-      path: AppRoutes.forgotPasswordNewPassword,
-      builder: (context, state) => const NewPasswordPage(),
     ),
     GoRoute(
       path: AppRoutes.forgotPasswordSuccess,
