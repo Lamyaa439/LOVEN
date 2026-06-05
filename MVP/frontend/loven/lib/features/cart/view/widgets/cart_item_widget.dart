@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:loven/features/cart/data/models/cart_item_model.dart';
+import 'package:loven/core/res/responsive/responsive_extensions.dart';
 
 class CartItemWidget extends StatelessWidget {
   final CartItemModel item;
@@ -20,25 +21,35 @@ class CartItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final imageSize = context.responsive(
+      mobile: 72,
+      tablet: 80,
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(
+          context.responsive(
+            mobile: 10,
+            tablet: 12,
+          ),
+        ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: item.imageUrl == null || item.imageUrl!.isEmpty
                   ? Container(
-                      width: 80,
-                      height: 80,
+                      width: imageSize,
+                      height: imageSize,
                       color: theme.colorScheme.surface,
                       child: const Icon(Icons.image_not_supported_outlined),
                     )
                   : Image.network(
                       item.imageUrl!,
-                      width: 80,
-                      height: 80,
+                      width: imageSize,
+                      height: imageSize,
                       fit: BoxFit.cover,
                     ),
             ),
@@ -49,7 +60,14 @@ class CartItemWidget extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: theme.textTheme.titleMedium,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: context.responsive(
+                        mobile: 14,
+                        tablet: 16,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -60,13 +78,29 @@ class CartItemWidget extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                         onPressed: item.quantity > 1 ? onDecrease : null,
-                        icon: const Icon(Icons.remove_circle_outline),
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
+                          size: 20,
+                        ),
                       ),
                       Text(item.quantity.toString()),
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                         onPressed: onIncrease,
-                        icon: const Icon(Icons.add_circle_outline),
+                        icon: const Icon(
+                          Icons.add_circle_outline,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
@@ -74,8 +108,16 @@ class CartItemWidget extends StatelessWidget {
               ),
             ),
             IconButton(
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(
+                minWidth: 32,
+                minHeight: 32,
+              ),
               onPressed: onRemove,
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 20,
+              ),
             ),
           ],
         ),

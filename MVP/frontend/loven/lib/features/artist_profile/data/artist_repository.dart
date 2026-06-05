@@ -53,12 +53,16 @@ class ArtistRepository {
     String? city,
     String? shippingPolicy,
     String? profileImageUrl,
+    String? coverImageUrl,
   }) async {
     final Map<String, dynamic> body = {};
 
-    if (displayName != null) {
-      body['display_name'] = displayName;
-    }
+      if (displayName != null) body['display_name'] = displayName;
+  if (bio != null) body['bio'] = bio;
+  if (city != null) body['city'] = city;
+  if (shippingPolicy != null) body['shipping_policy'] = shippingPolicy;
+  if (profileImageUrl != null) body['profile_image_url'] = profileImageUrl;
+    if (coverImageUrl != null) body['cover_image_url'] = coverImageUrl;
 
     final response = await _apiClient.patch(
       ApiConstants.myArtistProfile,

@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
+import '../../data/services/artist_profile_image_storage_service.dart';
 import '../../model/artist_model.dart';
 
 class EditArtistProfileScreen extends StatefulWidget {
@@ -27,7 +31,12 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   late final TextEditingController _bioController;
   late final TextEditingController _shippingPolicyController;
 
-  bool _didSubmit = false;
+  final _picker = ImagePicker();
+  final _imageStorageService = ArtistProfileImageStorageService();
+
+  XFile? _selectedProfileImage;
+  XFile? _selectedCoverImage;
+  bool _isUploadingImages = false;
 
   final List<String> _cities = const [
     'Riyadh',
@@ -69,24 +78,95 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     super.dispose();
   }
 
-Future<void> _save() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> _pickProfileImage() async {
+    final image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 900,
+    );
 
-  await context.read<ArtistProfileCubit>().updateProfileInfo(
-        displayName: _displayNameController.text.trim(),
-        city: _cityController.text.trim(),
-        bio: _bioController.text.trim(),
-        shippingPolicy: _shippingPolicyController.text.trim(),
-      );
+    if (image == null) return;
 
-  if (!mounted) return;
-
-  final state = context.read<ArtistProfileCubit>().state;
-
-  if (state.status == ArtistProfileStatus.success) {
-    Navigator.of(context).pop(true);
+    setState(() {
+      _selectedProfileImage = image;
+    });
   }
-}
+
+  Future<void> _pickCoverImage() async {
+    final image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+      maxWidth: 1400,
+    );
+
+    if (image == null) return;
+
+    setState(() {
+      _selectedCoverImage = image;
+    });
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isUploadingImages = true;
+    });
+
+    try {
+      String? profileImageUrl = widget.artist.profileImageUrl;
+      String? coverImageUrl = widget.artist.coverImageUrl;
+
+      if (_selectedProfileImage != null) {
+        profileImageUrl = await _imageStorageService.uploadProfileImage(
+          imageFile: _selectedProfileImage!,
+          artistId: widget.artist.id,
+        );
+        print('UPLOADED PROFILE URL: $profileImageUrl');
+      }
+
+      if (_selectedCoverImage != null) {
+        coverImageUrl = await _imageStorageService.uploadCoverImage(
+          imageFile: _selectedCoverImage!,
+          artistId: widget.artist.id,
+        );
+        print('UPLOADED COVER URL: $coverImageUrl');
+      }
+
+      if (!mounted) return;
+
+      await context.read<ArtistProfileCubit>().updateProfileInfo(
+            displayName: _displayNameController.text.trim(),
+            city: _cityController.text.trim(),
+            bio: _bioController.text.trim(),
+            shippingPolicy: _shippingPolicyController.text.trim(),
+            profileImageUrl: profileImageUrl,
+            coverImageUrl: coverImageUrl,
+          );
+
+      if (!mounted) return;
+
+      final state = context.read<ArtistProfileCubit>().state;
+
+      if (state.status == ArtistProfileStatus.success) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not update profile: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImages = false;
+        });
+      }
+    }
+  }
 
   InputDecoration _inputDecoration({
     required String hint,
@@ -142,21 +222,7 @@ Future<void> _save() async {
   Widget build(BuildContext context) {
     return BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
       listener: (context, state) {
-        if (state.status == ArtistProfileStatus.success && _didSubmit) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully'),
-            ),
-          );
-
-          Navigator.of(context).pop(true);
-        }
-
         if (state.status == ArtistProfileStatus.error) {
-          setState(() {
-            _didSubmit = false;
-          });
-
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'Could not update profile'),
@@ -165,7 +231,8 @@ Future<void> _save() async {
         }
       },
       builder: (context, state) {
-        final isLoading = state.status == ArtistProfileStatus.loading;
+        final isLoading =
+            state.status == ArtistProfileStatus.loading || _isUploadingImages;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8F7F8),
@@ -207,13 +274,17 @@ Future<void> _save() async {
                   children: [
                     _CoverSection(
                       artist: widget.artist,
+                      selectedCoverImage: _selectedCoverImage,
+                      onPickCover: isLoading ? null : _pickCoverImage,
                     ),
                     const SizedBox(height: 26),
                     _AvatarSection(
                       artist: widget.artist,
+                      selectedProfileImage: _selectedProfileImage,
+                      onPickProfileImage:
+                          isLoading ? null : _pickProfileImage,
                     ),
                     const SizedBox(height: 30),
-
                     EditProfileField(
                       label: 'Display Name',
                       child: TextFormField(
@@ -230,7 +301,6 @@ Future<void> _save() async {
                         },
                       ),
                     ),
-
                     EditProfileField(
                       label: 'Location',
                       child: DropdownButtonFormField<String>(
@@ -252,7 +322,6 @@ Future<void> _save() async {
                         },
                       ),
                     ),
-
                     EditProfileField(
                       label: 'Artist Category',
                       child: TextFormField(
@@ -263,7 +332,6 @@ Future<void> _save() async {
                         ),
                       ),
                     ),
-
                     EditProfileField(
                       label: 'Bio',
                       child: TextFormField(
@@ -277,7 +345,6 @@ Future<void> _save() async {
                         ),
                       ),
                     ),
-
                     EditProfileField(
                       label: 'Shipping Policy',
                       child: TextFormField(
@@ -290,9 +357,7 @@ Future<void> _save() async {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     _AccountSection(
                       onSignOut: () {},
                     ),
@@ -310,77 +375,122 @@ Future<void> _save() async {
 class _CoverSection extends StatelessWidget {
   const _CoverSection({
     required this.artist,
+    required this.selectedCoverImage,
+    required this.onPickCover,
   });
 
   final ArtistModel artist;
+  final XFile? selectedCoverImage;
+  final VoidCallback? onPickCover;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 132,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [
-            AppColors.primaryPurple,
-            AppColors.deepPurple,
-            AppColors.primaryBlue,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -18,
-            top: -12,
-            child: Icon(
-              Icons.auto_awesome,
-              size: 118,
-              color: Colors.white.withValues(alpha: 0.12),
-            ),
-          ),
-          Positioned(
-            left: -16,
-            bottom: -20,
-            child: Icon(
-              Icons.brush_outlined,
-              size: 112,
-              color: Colors.white.withValues(alpha: 0.10),
-            ),
-          ),
-          Positioned(
-            right: 10,
-            bottom: 10,
-            child: FilledButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.image_outlined, size: 15),
-              label: const Text('Change Cover'),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.88),
-                foregroundColor: Colors.black87,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+    final hasNetworkCover =
+        artist.coverImageUrl != null && artist.coverImageUrl!.isNotEmpty;
+
+    return GestureDetector(
+      onTap: onPickCover,
+      child: FutureBuilder<Uint8List?>(
+        future: selectedCoverImage?.readAsBytes(),
+        builder: (context, snapshot) {
+          final hasSelectedImage = snapshot.hasData;
+
+          DecorationImage? coverImage;
+
+          if (hasSelectedImage) {
+            coverImage = DecorationImage(
+              image: MemoryImage(snapshot.data!),
+              fit: BoxFit.cover,
+            );
+          } else if (hasNetworkCover) {
+            coverImage = DecorationImage(
+              image: NetworkImage(artist.coverImageUrl!),
+              fit: BoxFit.cover,
+            );
+          }
+
+          return Container(
+            height: 132,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: coverImage == null
+                  ? const LinearGradient(
+                      colors: [
+                        AppColors.primaryPurple,
+                        AppColors.deepPurple,
+                        AppColors.primaryBlue,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              image: coverImage,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
-                textStyle: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
+              ],
             ),
-          ),
-        ],
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                if (coverImage == null) ...[
+                  Positioned(
+                    right: -18,
+                    top: -12,
+                    child: Icon(
+                      Icons.auto_awesome,
+                      size: 118,
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  Positioned(
+                    left: -16,
+                    bottom: -20,
+                    child: Icon(
+                      Icons.brush_outlined,
+                      size: 112,
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
+                  ),
+                ],
+                if (coverImage != null)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: FilledButton.icon(
+                    onPressed: onPickCover,
+                    icon: const Icon(Icons.image_outlined, size: 15),
+                    label: const Text('Change Cover'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.88),
+                      foregroundColor: Colors.black87,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -389,50 +499,80 @@ class _CoverSection extends StatelessWidget {
 class _AvatarSection extends StatelessWidget {
   const _AvatarSection({
     required this.artist,
+    required this.selectedProfileImage,
+    required this.onPickProfileImage,
   });
 
   final ArtistModel artist;
+  final XFile? selectedProfileImage;
+  final VoidCallback? onPickProfileImage;
 
   @override
   Widget build(BuildContext context) {
-    final hasImage =
-        artist.profileImageUrl != null && artist.profileImageUrl!.isNotEmpty;
+    final hasNetworkImage =
+        artist.profileImageUrl != null &&
+        artist.profileImageUrl!.isNotEmpty;
 
     return Center(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          CircleAvatar(
-            radius: 42,
-            backgroundColor: AppColors.primaryPurple,
-            backgroundImage:
-                hasImage ? NetworkImage(artist.profileImageUrl!) : null,
-            child: hasImage
-                ? null
-                : Text(
-                    artist.displayName.isNotEmpty
-                        ? artist.displayName[0].toUpperCase()
-                        : '?',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primaryBlue,
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-          ),
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: CircleAvatar(
-              radius: 15,
-              backgroundColor: AppColors.primaryBlue,
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 14,
+      child: GestureDetector(
+        onTap: onPickProfileImage,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            FutureBuilder<Uint8List?>(
+              future: selectedProfileImage?.readAsBytes(),
+              builder: (context, snapshot) {
+                final hasSelectedImage = snapshot.hasData;
+
+                ImageProvider? imageProvider;
+
+                if (hasSelectedImage) {
+                  imageProvider = MemoryImage(snapshot.data!);
+                } else if (hasNetworkImage) {
+                  imageProvider =
+                      NetworkImage(artist.profileImageUrl!);
+                }
+
+                return CircleAvatar(
+                  radius: 42,
+                  backgroundColor: AppColors.primaryPurple,
+                  backgroundImage: imageProvider,
+                  child: imageProvider == null
+                      ? Text(
+                          artist.displayName.isNotEmpty
+                              ? artist.displayName[0]
+                                  .toUpperCase()
+                              : '?',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color:
+                                    AppColors.primaryBlue,
+                                fontWeight:
+                                    FontWeight.w900,
+                              ),
+                        )
+                      : null,
+                );
+              },
+            ),
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: CircleAvatar(
+                radius: 15,
+                backgroundColor:
+                    AppColors.primaryBlue,
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 14,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -15,7 +15,6 @@ import 'features/home/controller/bloc/home_bloc.dart';
 import 'features/home/controller/bloc/home_event.dart';
 import 'features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
-import 'features/artist_profile/controller/artist_profile_cubit.dart';
 import 'features/artist_profile/data/artist_repository.dart';
 
 import 'features/cart/data/repositories/cart_repository.dart';
@@ -52,7 +51,7 @@ class ThemeBloc extends Cubit<ThemeMode> {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "assets/.env");
 
   // Initialize Firebase configuration before running the app
   await Firebase.initializeApp(

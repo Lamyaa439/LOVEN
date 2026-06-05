@@ -107,6 +107,7 @@ class ArtistModel {
   final String? city;
   final String? bio;
   final String? profileImageUrl;
+  final String? coverImageUrl;
   final bool isVerified;
   final String? shippingPolicy;
   final String? createdAt;
@@ -119,6 +120,7 @@ class ArtistModel {
     this.city,
     this.bio,
     this.profileImageUrl,
+    this.coverImageUrl,
     this.isVerified = false,
     this.shippingPolicy,
     this.createdAt,
@@ -138,6 +140,7 @@ class ArtistModel {
       city: data['city'] as String?,
       bio: data['bio'] as String?,
       profileImageUrl: data['profile_image_url'] as String?,
+      coverImageUrl: data['cover_image_url'] as String?,
       isVerified: data['is_verified'] as bool? ?? false,
       shippingPolicy: data['shipping_policy'] as String?,
       createdAt: data['created_at'] as String?,
@@ -155,6 +158,7 @@ class ArtistModel {
       if (bio != null) 'bio': bio,
       if (city != null) 'city': city,
       if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
+      if (coverImageUrl != null) 'cover_image_url': coverImageUrl,
       if (shippingPolicy != null) 'shipping_policy': shippingPolicy,
     };
   }

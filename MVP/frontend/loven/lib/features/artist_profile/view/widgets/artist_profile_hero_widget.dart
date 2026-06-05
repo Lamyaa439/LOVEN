@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/res/theme/app_colors.dart';
 import '../../model/artist_model.dart';
+import '../../../../core/res/responsive/responsive_extensions.dart';
+import '../../../../core/res/dimensions/app_spacing.dart';
 
 class ArtistProfileHeroWidget extends StatelessWidget {
   const ArtistProfileHeroWidget({
@@ -24,6 +26,8 @@ class ArtistProfileHeroWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final hasImage =
         artist.profileImageUrl != null && artist.profileImageUrl!.isNotEmpty;
+    final hasCoverImage =
+      artist.coverImageUrl != null && artist.coverImageUrl!.isNotEmpty;
 
     return Column(
       children: [
@@ -32,57 +36,75 @@ class ArtistProfileHeroWidget extends StatelessWidget {
           alignment: Alignment.topCenter,
           children: [
             Container(
-              height: 220,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryPurple,
-                    AppColors.deepPurple,
-                    AppColors.primaryBlue,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
-  children: [
-    Positioned(
-      top: -20,
-      right: -20,
-      child: Container(
-        width: 140,
-        height: 140,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.10),
-          shape: BoxShape.circle,
-        ),
-      ),
-    ),
-    Positioned(
-      bottom: -40,
-      left: -30,
-      child: Container(
-        width: 180,
-        height: 180,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
-          shape: BoxShape.circle,
-        ),
-      ),
-    ),
-    const Center(
-      child: Icon(
-        Icons.auto_awesome,
-        size: 120,
-        color: Colors.white54,
-      ),
-    ),
-  ],
-),
+  height: context.responsive(mobile: 160, tablet: 200, desktop: 220),
+  width: double.infinity,
+  decoration: BoxDecoration(
+    gradient: hasCoverImage
+        ? null
+        : const LinearGradient(
+            colors: [
+              AppColors.primaryPurple,
+              AppColors.deepPurple,
+              AppColors.primaryBlue,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+    image: hasCoverImage
+        ? DecorationImage(
+            image: NetworkImage(artist.coverImageUrl!),
+            fit: BoxFit.cover,
+          )
+        : null,
+  ),
+  child: Stack(
+    children: [
+      if (hasCoverImage)
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.18),
             ),
+          ),
+        )
+      else ...[
+        Positioned(
+          top: -20,
+          right: -20,
+          child: Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: context.responsive(mobile: -40, tablet: -46),
+          left: -30,
+          child: Container(
+            width: 180,
+            height: 180,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        const Center(
+          child: Icon(
+            Icons.auto_awesome,
+            size: 120,
+            color: Colors.white54,
+          ),
+        ),
+      ],
+    ],
+  ),
+),
             Positioned(
-              bottom: -46,
+              bottom: context.responsive(mobile: -40, tablet: -46),
               child: Container(
                 padding: const EdgeInsets.all(5),
                 decoration: const BoxDecoration(
@@ -90,7 +112,7 @@ class ArtistProfileHeroWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: CircleAvatar(
-                  radius: 48,
+  radius: context.responsive(mobile: 40, tablet: 48),
                   backgroundColor: AppColors.primaryPurple,
                   backgroundImage:
                       hasImage ? NetworkImage(artist.profileImageUrl!) : null,
@@ -110,7 +132,12 @@ class ArtistProfileHeroWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 60),
+        SizedBox(
+  height: context.responsive(
+    mobile: 52,
+    tablet: 60,
+  ),
+),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -131,7 +158,7 @@ class ArtistProfileHeroWidget extends StatelessWidget {
           ],
         ),
         if (artist.city != null && artist.city!.isNotEmpty) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             artist.city!,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -147,10 +174,15 @@ Text(
   ),
 ),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         if (isOwner)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(
+  horizontal: context.responsive(
+    mobile: 16,
+    tablet: 24,
+  ),
+),
             child: Row(
               children: [
                 Expanded(
@@ -162,7 +194,12 @@ Text(
     backgroundColor: AppColors.primaryBlue,
     foregroundColor: Colors.white,
     elevation: 0,
-    minimumSize: const Size.fromHeight(44),
+    minimumSize: Size.fromHeight(
+  context.responsive(
+    mobile: 42,
+    tablet: 44,
+  ),
+),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     ),
@@ -177,7 +214,12 @@ Text(
   label: const Text('Edit'),
   style: OutlinedButton.styleFrom(
     foregroundColor: AppColors.primaryBlue,
-    minimumSize: const Size.fromHeight(44),
+    minimumSize: Size.fromHeight(
+  context.responsive(
+    mobile: 42,
+    tablet: 44,
+  ),
+),
     side: BorderSide(
       color: AppColors.primaryBlue.withValues(alpha: 0.25),
     ),
@@ -192,14 +234,22 @@ Text(
           ),
         const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
+          padding: EdgeInsets.symmetric(
+  horizontal: context.responsive(
+    mobile: 12,
+    tablet: 18,
+  ),
+),
           child: GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            childAspectRatio: context.responsive(
+  mobile: 1.25,
+  tablet: 1.5,
+),
             children: [
               _StatCard(
                 icon: Icons.palette_outlined,
@@ -247,10 +297,20 @@ class _StatCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(
+  context.responsive(
+    mobile: 10,
+    tablet: 14,
+  ),
+),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(
+  context.responsive(
+    mobile: 16,
+    tablet: 22,
+  ),
+),
         border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
         boxShadow: [
           BoxShadow(
@@ -261,27 +321,33 @@ class _StatCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.deepPurple, size: 20),
-          const Spacer(),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label.toUpperCase(),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.black45,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
-        ],
+  crossAxisAlignment: CrossAxisAlignment.start,
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Icon(icon, color: AppColors.deepPurple, size: 18),
+    const SizedBox(height: 8),
+    Text(
+      value,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w900,
+        fontSize: 18,
       ),
+    ),
+    const SizedBox(height: 2),
+    Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: Colors.black45,
+        fontWeight: FontWeight.bold,
+        fontSize: 10,
+      ),
+    ),
+  ],
+),
     );
   }
 }
