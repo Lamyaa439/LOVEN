@@ -5,3 +5,4 @@ __pycache__/
 firebaseKey.json
 venv/
 *.sql
+MVP/email_verified.md
