@@ -1,123 +1,117 @@
-from flask import Blueprint, request, jsonify
-from app.services.facade.auth_facade import AuthFacade
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+"""
+Authentication HTTP routes.
+
+Firebase Auth owns email/password credentials. LOVEN JWT is issued only via
+``/auth/firebase/login`` after Firebase reports ``emailVerified == true``.
+
+Legacy ``/register`` and ``/login`` (bcrypt + immediate JWT) return 410 Gone.
+"""
+
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
 from app.core.auth_utils import get_authenticated_user_id
+from app.services.facade.auth_facade import AuthFacade
 
-
-# Blueprint for authentication-related routes (register, login, logout)
-# No url_prefix here — routes are /api/v1/register, /api/v1/login (matches Flutter ApiConstants).
 auth_bp = Blueprint("auth", __name__)
+
+
+@auth_bp.post("/auth/firebase/register-sync")
+def firebase_register_sync():
+    """
+    Create/sync LOVEN user after Firebase client signup.
+
+    Expects JSON: id_token, name, system_role (optional), fcm_token (optional).
+    Does **not** return LOVEN JWT.
+    """
+    data = request.get_json(silent=True) or {}
+
+    if not data.get("id_token"):
+        return jsonify({"error": "id_token is required"}), 400
+    if not data.get("name"):
+        return jsonify({"error": "name is required"}), 400
+
+    result, status_code = AuthFacade.register_firebase_sync(data)
+    return jsonify(result), status_code
+
+
+@auth_bp.post("/auth/firebase/login")
+def firebase_login():
+    """
+    Exchange verified Firebase ID token for LOVEN JWT.
+
+    Expects JSON: id_token, fcm_token (optional).
+    Returns 403 when Firebase email is not verified.
+    """
+    data = request.get_json(silent=True) or {}
+
+    if not data.get("id_token"):
+        return jsonify({"error": "id_token is required"}), 400
+
+    result, status_code = AuthFacade.login_firebase(data)
+    return jsonify(result), status_code
+
 
 @auth_bp.post("/register")
 def register():
     """
-    Handle user registration.
-
-    Expects JSON body with:
-        - name
-        - email
-        - password
-        - fcm_token (Optional: Used for Firebase welcome notifications)
-
-    Returns:
-        JSON response with result and HTTP status code.
+    Deprecated — use ``POST /api/v1/auth/firebase/register-sync``.
     """
     data = request.get_json(silent=True) or {}
-    # Validate required fields BEFORE passing to service layer
-    if not data.get("email") or not data.get("password"):
-        return jsonify({"error": "email and password are required"}), 400
-
-    # Delegate the payload to the Facade to handle multiple operations seamlessly:
-    # 1. Persist the new user in the database via auth_service.
-    # 2. Dispatch the welcome push notification via notification_service.
     result, status_code = AuthFacade.register(data)
-
     return jsonify(result), status_code
 
 
 @auth_bp.post("/login")
 def login():
     """
-    Handle user login.
-
-    Expects JSON body with:
-        - email
-        - password
-        - fcm_token (Optional: To update the device token on login)
-
-    Returns:
-        JSON response with JWT token if successful.
+    Deprecated — use ``POST /api/v1/auth/firebase/login``.
     """
-    # this to safely get JSON body and default to empty dict if missing or invalid
     data = request.get_json(silent=True) or {}
-
-    # Validate required fields BEFORE authentication logic
-    if not data.get("email") or not data.get("password"):
-        return jsonify({"error": "email and password are required"}), 400
-
-    # Delegate the payload to the Facade to verify credentials
-    # and update the user's FCM token in the database.
     result, status_code = AuthFacade.login(data)
     return jsonify(result), status_code
+
 
 @auth_bp.post("/refresh")
 @jwt_required(refresh=True)
 def refresh():
-    """
-    Handle token refresh.
-    Generates a new short-lived access token using a valid refresh token.
-    """
-
-    # Extract the identity dictionary (contains 'user_id' and 'role') from the refresh token.
+    """Issue a new access token from a valid refresh token."""
     current_user_identity = get_jwt_identity()
-
-    # Issue a fresh Access Token (valid for 30 mins) without requiring the user to login again.
     new_access_token = create_access_token(identity=current_user_identity)
 
-    # Return the new token to the client (Flutter app) to continue their session.
-    return jsonify({
-        "access_token": new_access_token
-    }), 200
+    return jsonify({"access_token": new_access_token}), 200
 
 
 @auth_bp.post("/logout")
 @jwt_required()
 def logout():
-    """
-    Handle user logout.
-    Clears the FCM token from the database to prevent cross-account notifications.
-    """
+    """Clear FCM token for the authenticated device."""
     user_id = get_authenticated_user_id()
     if not user_id:
         return jsonify({"error": "Invalid user identity"}), 401
 
     result, status_code = AuthFacade.logout(user_id)
-
     return jsonify(result), status_code
 
 
 @auth_bp.patch("/change-password")
 @jwt_required()
 def change_password_route():
+    """Authenticated password change (legacy local password — migrate to Firebase)."""
     current_user_id = get_jwt_identity()
     data = request.get_json(silent=True) or {}
 
-    result, status_code = AuthFacade.change_password(
-        current_user_id,
-        data,
-    )
-
+    result, status_code = AuthFacade.change_password(current_user_id, data)
     return jsonify(result), status_code
 
 
 @auth_bp.post("/google")
 def google_login():
+    """Google OAuth — out of scope for email/password Firebase auth."""
     data = request.get_json(silent=True) or {}
     id_token = data.get("id_token")
 
     if not id_token:
         return jsonify({"error": "id_token is required"}), 400
 
-    result, status_code = AuthFacade.google_login(id_token)
-    return jsonify(result), status_code
+    return jsonify({"error": "Google login is not available yet"}), 501
