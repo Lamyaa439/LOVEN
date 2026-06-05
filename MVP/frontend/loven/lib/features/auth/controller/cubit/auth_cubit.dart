@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/error/app_exception.dart';
-import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'auth_state.dart';
 

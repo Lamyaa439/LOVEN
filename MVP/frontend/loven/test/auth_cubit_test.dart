@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
-import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 
 void main() {
   group('AuthState', () {

@@ -4,7 +4,7 @@ import 'package:loven/core/router/redirect_policy.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
-import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

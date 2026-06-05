@@ -1,7 +1,7 @@
 import 'package:loven/core/error/app_exception.dart';
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
-import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 
 /// Data-access layer for auth credentials and session tokens.
 ///

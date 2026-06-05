@@ -1,4 +1,4 @@
-import 'package:loven/features/auth/data/models/user_model.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 
 /// Router and UI session contract for [AuthCubit] emissions.
 ///
