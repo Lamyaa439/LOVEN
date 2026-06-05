@@ -6,3 +6,4 @@ firebaseKey.json
 venv/
 *.sql
 MVP/email_verified.md
+MVP/backend/FIREBASE_AUTH_REPORT.md
