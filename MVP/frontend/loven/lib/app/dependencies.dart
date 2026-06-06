@@ -78,9 +78,12 @@ class AppDependencies {
 
     final splashMinDurationNotifier = SplashMinDurationNotifier();
 
-    apiClient.attachSessionExpiredHandler(
-      () => authCubit.handleSessionExpired(),
-    );
+    apiClient.attachSessionExpiredHandler(() {
+      if (authCubit.isClosed) {
+        return;
+      }
+      authCubit.handleSessionExpired();
+    });
 
     authCubit.restoreSession();
 
@@ -112,6 +115,7 @@ class AppDependencies {
   }
 
   void dispose() {
+    apiClient.detachSessionExpiredHandler();
     authCubit.close();
     splashMinDurationNotifier.dispose();
   }

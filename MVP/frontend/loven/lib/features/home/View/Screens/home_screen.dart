@@ -11,16 +11,10 @@ import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import '../widgets/art_card.dart';
-import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/core/session/app_session.dart';
 
 class HomeScreen extends StatelessWidget {
-  final bool isGuest;
-
-  const HomeScreen({
-    super.key,
-    this.isGuest = false,
-  });
+  const HomeScreen({super.key});
 
   void _goToSignup(BuildContext context) {
     context.push(AppRoutes.signupFromGuest());
@@ -71,7 +65,9 @@ class HomeScreen extends StatelessWidget {
           quantity: 1,
         );
 
-    await context.read<CartCubit>().getCart();
+    if (!context.mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${art.title} added to cart')),
@@ -340,12 +336,8 @@ class HomeScreen extends StatelessWidget {
 
           return ArtCard(
             artwork: art,
-            isGuest: isGuest,
             onActionPressed: () async {
-              final isActuallyGuest =
-                  isGuest || context.read<AuthCubit>().state is AuthGuest;
-
-              if (isActuallyGuest) {
+              if (!AppSession.hasSessionFromContext(context)) {
                 context.push(AppRoutes.auth);
                 return;
               }

@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
 import '../model/artist_model.dart';
 import '../data/artist_repository.dart';
@@ -8,18 +10,37 @@ import 'artist_profile_state.dart';
 ///
 /// The View calls methods here; this class talks to [ArtistRepository] and
 /// emits [ArtistProfileState] snapshots. The UI rebuilds via [BlocBuilder].
+///
+/// [authCubit] gates protected API calls ([fetchMyProfileData],
+/// [updateProfileInfo]). Public profile loads do not require a session.
 class ArtistProfileCubit extends Cubit<ArtistProfileState> {
-  final ArtistRepository _repository;
-
-  ArtistProfileCubit({required ArtistRepository repository})
-      : _repository = repository,
+  ArtistProfileCubit({
+    required ArtistRepository repository,
+    AuthCubit? authCubit,
+  })  : _repository = repository,
+        _authCubit = authCubit,
         super(const ArtistProfileState());
+
+  final ArtistRepository _repository;
+  final AuthCubit? _authCubit;
+
+  bool get _hasSession {
+    final auth = _authCubit;
+    if (auth == null) {
+      return false;
+    }
+    return authStateHasSession(auth.state);
+  }
 
   /// Loads profile + artworks in parallel for faster first paint.
   ///
-  /// Why [Future.wait]: `getMyProfile` and `listMyArtworks` are independent;
-  /// running them together cuts wait time vs awaiting sequentially.
+  /// Requires a valid LOVEN session; no-ops when session is absent or cubit
+  /// is closed.
   Future<void> fetchMyProfileData() async {
+    if (!_hasSession || isClosed) {
+      return;
+    }
+
     emit(
       state.copyWith(
         status: ArtistProfileStatus.loading,
@@ -33,6 +54,10 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         _repository.listMyArtworks(),
       ]);
 
+      if (isClosed) {
+        return;
+      }
+
       final artist = results[0] as ArtistModel;
       final artworks = results[1] as List<ArtworkModel>;
 
@@ -45,7 +70,10 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         ),
       );
     } catch (e) {
-      // Keep any previously loaded data visible while showing the error banner.
+      if (isClosed) {
+        return;
+      }
+
       emit(
         state.copyWith(
           status: ArtistProfileStatus.error,
@@ -57,6 +85,10 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
 
   /// Public profile page — no JWT; uses profile UUID from the route.
   Future<void> fetchPublicArtistProfile(String artistProfileId) async {
+    if (isClosed) {
+      return;
+    }
+
     emit(
       state.copyWith(
         status: ArtistProfileStatus.loading,
@@ -70,6 +102,10 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         _repository.listArtworksForProfile(artistProfileId),
       ]);
 
+      if (isClosed) {
+        return;
+      }
+
       final artist = results[0] as ArtistModel;
       final artworks = results[1] as List<ArtworkModel>;
 
@@ -82,6 +118,10 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         ),
       );
     } catch (e) {
+      if (isClosed) {
+        return;
+      }
+
       emit(
         state.copyWith(
           status: ArtistProfileStatus.error,
@@ -94,74 +134,87 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
   /// PATCHes editable profile fields, then merges the new [ArtistModel] into state.
   ///
   /// [artworks] are intentionally untouched so the grid does not flicker/reload.
-Future<void> updateProfileInfo({
-  String? displayName,
-  String? bio,
-  String? city,
-  String? shippingPolicy,
-  String? profileImageUrl,
-  String? coverImageUrl,
-}) async {
-  final previousArtist = state.artist;
+  Future<void> updateProfileInfo({
+    String? displayName,
+    String? bio,
+    String? city,
+    String? shippingPolicy,
+    String? profileImageUrl,
+    String? coverImageUrl,
+  }) async {
+    if (!_hasSession || isClosed) {
+      return;
+    }
 
-  emit(
-    state.copyWith(
-      status: ArtistProfileStatus.loading,
-      clearErrorMessage: true,
-    ),
-  );
-
-  try {
-    final updatedArtist = await _repository.updateMyProfile(
-      displayName: displayName,
-      bio: bio,
-      city: city,
-      shippingPolicy: shippingPolicy,
-      profileImageUrl: profileImageUrl,
-      coverImageUrl: coverImageUrl,
-    );
-
-    final mergedArtist = ArtistModel(
-      id: updatedArtist.id.isNotEmpty
-          ? updatedArtist.id
-          : previousArtist?.id ?? '',
-      userId: updatedArtist.userId.isNotEmpty
-          ? updatedArtist.userId
-          : previousArtist?.userId ?? '',
-      displayName: updatedArtist.displayName.isNotEmpty
-          ? updatedArtist.displayName
-          : previousArtist?.displayName ?? '',
-      city: updatedArtist.city ?? previousArtist?.city,
-      bio: updatedArtist.bio ?? previousArtist?.bio,
-      profileImageUrl: updatedArtist.profileImageUrl ??
-          profileImageUrl ??
-          previousArtist?.profileImageUrl,
-      coverImageUrl: updatedArtist.coverImageUrl ??
-          coverImageUrl ??
-          previousArtist?.coverImageUrl,
-      isVerified: updatedArtist.isVerified,
-      shippingPolicy:
-          updatedArtist.shippingPolicy ?? previousArtist?.shippingPolicy,
-      createdAt: updatedArtist.createdAt ?? previousArtist?.createdAt,
-      updatedAt: updatedArtist.updatedAt ?? previousArtist?.updatedAt,
-    );
+    final previousArtist = state.artist;
 
     emit(
       state.copyWith(
-        status: ArtistProfileStatus.success,
-        artist: mergedArtist,
+        status: ArtistProfileStatus.loading,
         clearErrorMessage: true,
       ),
     );
-  } catch (e) {
-    emit(
-      state.copyWith(
-        status: ArtistProfileStatus.error,
-        errorMessage: _safeErrorMessage(e),
-      ),
-    );
+
+    try {
+      final updatedArtist = await _repository.updateMyProfile(
+        displayName: displayName,
+        bio: bio,
+        city: city,
+        shippingPolicy: shippingPolicy,
+        profileImageUrl: profileImageUrl,
+        coverImageUrl: coverImageUrl,
+      );
+
+      if (isClosed) {
+        return;
+      }
+
+      final mergedArtist = ArtistModel(
+        id: updatedArtist.id.isNotEmpty
+            ? updatedArtist.id
+            : previousArtist?.id ?? '',
+        userId: updatedArtist.userId.isNotEmpty
+            ? updatedArtist.userId
+            : previousArtist?.userId ?? '',
+        displayName: updatedArtist.displayName.isNotEmpty
+            ? updatedArtist.displayName
+            : previousArtist?.displayName ?? '',
+        city: updatedArtist.city ?? previousArtist?.city,
+        bio: updatedArtist.bio ?? previousArtist?.bio,
+        profileImageUrl: updatedArtist.profileImageUrl ??
+            profileImageUrl ??
+            previousArtist?.profileImageUrl,
+        coverImageUrl: updatedArtist.coverImageUrl ??
+            coverImageUrl ??
+            previousArtist?.coverImageUrl,
+        isVerified: updatedArtist.isVerified,
+        shippingPolicy:
+            updatedArtist.shippingPolicy ?? previousArtist?.shippingPolicy,
+        createdAt: updatedArtist.createdAt ?? previousArtist?.createdAt,
+        updatedAt: updatedArtist.updatedAt ?? previousArtist?.updatedAt,
+      );
+
+      emit(
+        state.copyWith(
+          status: ArtistProfileStatus.success,
+          artist: mergedArtist,
+          clearErrorMessage: true,
+        ),
+      );
+    } catch (e) {
+      if (isClosed) {
+        return;
+      }
+
+      emit(
+        state.copyWith(
+          status: ArtistProfileStatus.error,
+          errorMessage: _safeErrorMessage(e),
+        ),
+      );
+    }
   }
-}
+
   /// Normalizes thrown objects to a user-visible string (Exception, HTTP errors, etc.).
   String _safeErrorMessage(Object error) {
     if (error is Exception) {

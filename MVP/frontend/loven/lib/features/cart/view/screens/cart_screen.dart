@@ -23,7 +23,14 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CartCubit>().getCart();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      context.read<CartCubit>().getCart();
+    });
   }
 
   Future<void> _checkout(CartModel cart) async {

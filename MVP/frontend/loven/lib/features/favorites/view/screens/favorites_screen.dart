@@ -6,8 +6,26 @@ import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
+
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      context.read<FavoritesCubit>().loadFavorites();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +165,6 @@ class _FavoriteTile extends StatelessWidget {
               child: ArtDetailsScreen(
                 artItem: artworkModel,
                 artistRepository: context.read<ArtistRepository>(),
-                isGuest: false,
               ),
             );
           },

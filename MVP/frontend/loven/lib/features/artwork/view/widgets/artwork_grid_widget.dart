@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:loven/core/router/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/core/res/responsive/responsive_extensions.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -13,13 +11,11 @@ class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
     super.key,
     required this.artworks,
-    required this.isGuest,
     this.canManage = false,
     this.onDelete,
   });
 
   final List<ArtworkModel> artworks;
-  final bool isGuest;
   final bool canManage;
   final Future<void> Function(ArtworkModel artwork)? onDelete;
 
@@ -66,7 +62,6 @@ return Padding(
     itemBuilder: (context, index) {
       return _ArtworkCard(
         artwork: artworks[index],
-        isGuest: isGuest,
         canManage: canManage,
         onDelete: onDelete,
       );
@@ -79,13 +74,11 @@ return Padding(
 class _ArtworkCard extends StatelessWidget {
   const _ArtworkCard({
     required this.artwork,
-    required this.isGuest,
     required this.canManage,
     this.onDelete,
   });
 
   final ArtworkModel artwork;
-  final bool isGuest;
   final bool canManage;
   final Future<void> Function(ArtworkModel artwork)? onDelete;
 
@@ -99,11 +92,6 @@ class _ArtworkCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        if (isGuest) {
-          context.push(AppRoutes.auth);
-          return;
-        }
-
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -113,7 +101,6 @@ class _ArtworkCard extends StatelessWidget {
               heightFactor: 0.92,
               child: ArtDetailsScreen(
                 artItem: artwork,
-                isGuest: isGuest,
                 artistRepository: context.read<ArtistRepository>(),
               ),
             );

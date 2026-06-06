@@ -73,6 +73,8 @@ class _SignupPageState
 
   String _selectedRole = 'customer';
 
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -203,16 +205,24 @@ class _SignupPageState
   Future<void> _signup() async {
     if (!_isFormValid) return;
 
-    final email = await context.read<AuthCubit>().signupWithFirebase(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          systemRole: _selectedRole,
-        );
+    setState(() => _isSubmitting = true);
 
-    if (!mounted || email == null) return;
+    try {
+      final email = await context.read<AuthCubit>().signupWithFirebase(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            systemRole: _selectedRole,
+          );
 
-    context.push(AppRoutes.signupVerifyEmail, extra: email);
+      if (!mounted || email == null) return;
+
+      context.push(AppRoutes.signupVerifyEmail, extra: email);
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   void _navigateBack() {
@@ -234,53 +244,35 @@ class _SignupPageState
     final colorScheme =
         theme.colorScheme;
 
-    return BlocConsumer<
-        AuthCubit,
-        AuthState>(
+    return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthFailure) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(state.message),
-              backgroundColor:
-                  colorScheme.error,
+              content: Text(state.message),
+              backgroundColor: colorScheme.error,
             ),
           );
         }
       },
-      builder: (context, state) {
-        final isLoading =
-            state is AuthLoading;
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior:
+                ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
 
-        return Scaffold(
-          backgroundColor:
-              theme.scaffoldBackgroundColor,
-
-          body: SafeArea(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior
-                      .onDrag,
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 24,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
-                  children: [
-                    const SizedBox(
-                        height: 4),
-
-                    IconButton(
-                      onPressed: isLoading
-                          ? null
-                          : _navigateBack,
+                  IconButton(
+                    onPressed: _isSubmitting ? null : _navigateBack,
                       icon: Icon(
                         Icons.arrow_back,
                         color: colorScheme
@@ -332,7 +324,7 @@ class _SignupPageState
                       textInputAction:
                           TextInputAction
                               .next,
-                      enabled: !isLoading,
+                      enabled: !_isSubmitting,
                       onFieldSubmitted:
                           (_) {
                         FocusScope.of(
@@ -372,7 +364,7 @@ class _SignupPageState
                       textInputAction:
                           TextInputAction
                               .next,
-                      enabled: !isLoading,
+                      enabled: !_isSubmitting,
                       onFieldSubmitted:
                           (_) {
                         FocusScope.of(
@@ -449,7 +441,7 @@ class _SignupPageState
                           _passwordFocusNode,
                       obscureText:
                           _obscurePassword,
-                      enabled: !isLoading,
+                      enabled: !_isSubmitting,
                       decoration:
                           InputDecoration(
                         hintText:
@@ -471,10 +463,9 @@ class _SignupPageState
                                 colorScheme
                                     .onSurfaceVariant,
                           ),
-                          onPressed:
-                              isLoading
-                                  ? null
-                                  : () {
+                          onPressed: _isSubmitting
+                              ? null
+                              : () {
                                       setState(
                                           () {
                                         _obscurePassword =
@@ -536,8 +527,7 @@ class _SignupPageState
                     RoleSelector(
                       selectedRole:
                           _selectedRole,
-                      isDisabled:
-                          isLoading,
+                      isDisabled: _isSubmitting,
                       onChanged:
                           (role) {
                         setState(() {
@@ -556,11 +546,9 @@ class _SignupPageState
                       height: 50,
                       child:
                           ElevatedButton(
-                        onPressed:
-                            (_isFormValid &&
-                                    !isLoading)
-                                ? _signup
-                                : null,
+                        onPressed: (_isFormValid && !_isSubmitting)
+                            ? _signup
+                            : null,
                         style:
                             ElevatedButton
                                 .styleFrom(
@@ -577,7 +565,7 @@ class _SignupPageState
                             ),
                           ),
                         ),
-                        child: isLoading
+                        child: _isSubmitting
                             ? const SizedBox(
                                 width:
                                     20,
@@ -618,7 +606,7 @@ class _SignupPageState
                           ),
                         ),
                         GestureDetector(
-                          onTap: isLoading
+                          onTap: _isSubmitting
                               ? null
                               : () {
                                   context.go(
@@ -669,8 +657,7 @@ class _SignupPageState
               ),
             ),
           ),
-        );
-      },
+        ),
     );
   }
 }

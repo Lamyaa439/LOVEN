@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_router_deps.dart';
@@ -7,9 +8,20 @@ import 'package:loven/features/artist_profile/controller/artist_profile_cubit.da
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
 import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_screen.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/home/View/Screens/artists_list_screen.dart';
 import 'package:loven/features/home/View/Screens/artworks_list_screen.dart';
 import 'package:loven/features/home/View/Screens/settings_screen.dart';
+
+ArtistProfileCubit _createArtistProfileCubit(
+  BuildContext context,
+  AppRouterDeps deps,
+) {
+  return ArtistProfileCubit(
+    repository: deps.artistRepository,
+    authCubit: context.read<AuthCubit>(),
+  );
+}
 
 /// Public browsing and signed-in artist storefront routes.
 List<RouteBase> buildDiscoveryRoutesBrowse(AppRouterDeps deps) {
@@ -18,10 +30,8 @@ List<RouteBase> buildDiscoveryRoutesBrowse(AppRouterDeps deps) {
       path: AppRoutes.myProfile,
       builder: (context, state) {
         return BlocProvider(
-          create: (_) => ArtistProfileCubit(
-            repository: deps.artistRepository,
-          )..fetchMyProfileData(),
-          child: ArtistProfileScreen(repository: deps.artistRepository),
+          create: (context) => _createArtistProfileCubit(context, deps),
+          child: const ArtistProfileScreen(),
         );
       },
     ),
@@ -35,12 +45,9 @@ List<RouteBase> buildDiscoveryRoutesBrowse(AppRouterDeps deps) {
         final artistId = state.pathParameters['artistId']!;
 
         return BlocProvider(
-          create: (_) => ArtistProfileCubit(
-            repository: deps.artistRepository,
-          )..fetchPublicArtistProfile(artistId),
+          create: (context) => _createArtistProfileCubit(context, deps),
           child: ArtistProfileScreen(
             artistProfileId: artistId,
-            repository: deps.artistRepository,
           ),
         );
       },
@@ -61,9 +68,7 @@ List<RouteBase> buildDiscoveryRoutesSettings(AppRouterDeps deps) {
       path: AppRoutes.settings,
       builder: (context, state) {
         return BlocProvider(
-          create: (_) => ArtistProfileCubit(
-            repository: deps.artistRepository,
-          )..fetchMyProfileData(),
+          create: (context) => _createArtistProfileCubit(context, deps),
           child: const SettingsScreen(),
         );
       },
@@ -86,9 +91,7 @@ List<RouteBase> buildDiscoveryRoutesArtistEdit(AppRouterDeps deps) {
         final artist = raw;
 
         return BlocProvider(
-          create: (_) => ArtistProfileCubit(
-            repository: deps.artistRepository,
-          ),
+          create: (context) => _createArtistProfileCubit(context, deps),
           child: EditArtistProfileScreen(artist: artist),
         );
       },

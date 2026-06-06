@@ -68,7 +68,6 @@ class ArtworksListScreen extends StatelessWidget {
             ),
             child: ArtworkGridWidget(
               artworks: artworks,
-              isGuest: false,
               canManage: false,
             ),
           );

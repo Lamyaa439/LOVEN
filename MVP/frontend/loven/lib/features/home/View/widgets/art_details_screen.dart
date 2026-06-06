@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/session/app_session.dart';
 
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
@@ -12,13 +13,11 @@ import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
   final ArtistRepository artistRepository;
-  final bool isGuest;
 
   const ArtDetailsScreen({
     super.key,
     required this.artItem,
     required this.artistRepository,
-    this.isGuest = false,
   });
 
   @override
@@ -38,7 +37,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
   }
 
   Future<void> _checkIfOwnArtwork() async {
-    if (widget.isGuest) {
+    if (!AppSession.hasSessionFromContext(context)) {
       setState(() {
         _isOwnArtwork = false;
         _checkingOwner = false;
@@ -67,7 +66,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
   }
 
   Future<void> _addToCart() async {
-    if (widget.isGuest) {
+    if (!AppSession.hasSessionFromContext(context)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please log in or sign up to add items to cart.'),
@@ -282,7 +281,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
 
             return IconButton(
               onPressed: () {
-                if (widget.isGuest) {
+                if (!AppSession.hasSessionFromContext(context)) {
                   Navigator.pop(context);
                   context.push(AppRoutes.auth);
                   return;
