@@ -7,46 +7,65 @@ Firebase is initialized lazily on first use so the API can start even when
 credentials are missing (e.g. local dev without firebaseKey.json).
 """
 
-import firebase_admin
-from firebase_admin import credentials, messaging, storage
+import json
 import logging
 import os
-from firebase_admin import auth
+
+import firebase_admin
+from firebase_admin import auth, credentials, messaging, storage
 
 logger = logging.getLogger(__name__)
 
 
 # Configuration: Use environment variables for security with local fallbacks
 SERVICE_ACCOUNT_KEY = os.getenv("FIREBASE_CREDENTIALS_PATH", "/app/firebaseKey.json")
-STORAGE_BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", "loven-88b0a.appspot.com")
+STORAGE_BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", "loven-88b0a.firebasestorage.app")
 
 
 def initialize_firebase() -> bool:
     """
     Initialize the Firebase Admin SDK singleton when credentials are available.
 
-    Returns True when Firebase is ready, False when credentials are missing
-    or initialization fails. Safe to call repeatedly.
+    Supports:
+    1. FIREBASE_SERVICE_ACCOUNT_JSON environment variable for Render.
+    2. FIREBASE_CREDENTIALS_PATH file path for local Docker development.
     """
     if firebase_admin._apps:
         return True
 
-    if not os.path.exists(SERVICE_ACCOUNT_KEY):
-        logger.warning(
-            "Firebase credentials not found at %s. "
-            "FCM and Storage features are disabled.",
-            SERVICE_ACCOUNT_KEY,
-        )
-        return False
+    firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+    firebase_json = firebase_json.strip() if firebase_json else None
 
     try:
+        if firebase_json:
+            service_account_info = json.loads(firebase_json)
+            
+            cred = credentials.Certificate(service_account_info)
+            
+            firebase_admin.initialize_app(
+                cred,
+                {"storageBucket": STORAGE_BUCKET_NAME},
+            )
+            
+            logger.info("Firebase SDK initialized from environment variable.")
+            return True
+
+        if not os.path.exists(SERVICE_ACCOUNT_KEY):
+            logger.warning(
+                "Firebase credentials not found at %s. "
+                "FCM and Storage features are disabled.",
+                SERVICE_ACCOUNT_KEY,
+            )
+            return False
+
         cred = credentials.Certificate(SERVICE_ACCOUNT_KEY)
         firebase_admin.initialize_app(
             cred,
             {"storageBucket": STORAGE_BUCKET_NAME},
         )
-        logger.info("Firebase SDK initialized (FCM + Storage).")
+        logger.info("Firebase SDK initialized from credentials file.")
         return True
+
     except Exception as exc:
         logger.error("Firebase initialization failed: %s", exc)
         return False
