@@ -50,6 +50,7 @@ abstract final class AppRoutes {
   /// Account hub — guest and signed-in ([AccountScreen]); not session-gated.
   static const String profile = '/profile';
   static const String profileEdit = '/profile/edit';
+/// Legacy settings path — redirects to [profile] (single account hub).
   static const String settings = '/settings';
   static const String notifications = '/notifications';
   static const String verificationRequest = '/verification-request';
@@ -128,13 +129,13 @@ abstract final class AppRoutes {
   /// Account hub reachable without a LOVEN JWT ([AuthGuest] profile UI).
   static const Set<String> guestAccessibleExactPaths = {
     profile,
+    settings,
   };
 
   /// Exact paths that require [authStateHasSession].
   static const Set<String> sessionRequiredExactPaths = {
     // Account (signed-in only)
     profileEdit,
-    settings,
     notifications,
     verificationRequest,
     changePassword,

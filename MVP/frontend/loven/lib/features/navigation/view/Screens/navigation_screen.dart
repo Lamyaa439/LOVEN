@@ -3,9 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
+import 'package:loven/features/account/view/screens/account_screen.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
-import 'package:loven/features/artist_profile/view/screens/artist_profile_screen.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
@@ -19,9 +20,12 @@ import '../../controller/cubit/navigation_bar_cubit.dart';
 import '../widget/navigation_widget.dart';
 
 /// Bottom-nav tab indices aligned with [NavigationWidget].
+///
+/// Tab 4 (index [_accountTabIndex]) is the account hub ([AccountScreen]).
+/// Artist storefront lives at [AppRoutes.myProfile], not in the shell.
 const _favoritesTabIndex = 1;
 const _cartTabIndex = 2;
-const _profileTabIndex = 3;
+const _accountTabIndex = 3;
 const _firstProtectedTabIndex = _favoritesTabIndex;
 
 class NavigationScreen extends StatefulWidget {
@@ -55,6 +59,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   void _activateProtectedTabIfNeeded(int tabIndex) {
+    if (tabIndex == _accountTabIndex) {
+      return;
+    }
+
     if (tabIndex < _firstProtectedTabIndex) {
       return;
     }
@@ -107,6 +115,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           listener: (context, state) {
             context.read<CartCubit>().resetForSignedOut();
             context.read<FavoritesCubit>().resetForSignedOut();
+            context.read<AccountCubit>().resetForSignedOut();
             _clearActivatedProtectedTabs();
           },
         ),
@@ -168,17 +177,13 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       guestMessage: 'Sign in to view your cart',
                       child: const CartScreen(),
                     ),
-                    _buildProtectedTabSlot(
-                      tabIndex: _profileTabIndex,
-                      hasSession: hasSession,
-                      guestMessage: 'Sign in to view your profile',
-                      child: BlocProvider(
-                        create: (context) => ArtistProfileCubit(
-                          repository: context.read<ArtistRepository>(),
-                          authCubit: context.read<AuthCubit>(),
-                        ),
-                        child: const ArtistProfileScreen(),
+                    BlocProvider(
+                      key: const ValueKey('account-tab'),
+                      create: (context) => ArtistProfileCubit(
+                        repository: context.read<ArtistRepository>(),
+                        authCubit: context.read<AuthCubit>(),
                       ),
+                      child: const AccountScreen(),
                     ),
                   ],
                 );

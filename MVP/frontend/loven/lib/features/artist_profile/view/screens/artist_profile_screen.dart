@@ -90,9 +90,10 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
         actions: [
           if (!_isPublicView)
             IconButton(
-              icon: const Icon(Icons.settings_outlined),
+              icon: const Icon(Icons.manage_accounts_outlined),
+              tooltip: 'Account',
               onPressed: () {
-                context.push(AppRoutes.settings);
+                context.push(AppRoutes.profile);
               },
             ),
         ],

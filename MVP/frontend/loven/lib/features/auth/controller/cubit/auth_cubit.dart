@@ -4,20 +4,25 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/error/app_exception.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
 import 'package:loven/features/auth/data/models/auth_error_codes.dart';
 import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 import 'auth_state.dart';
 
-/// LOVEN session orchestration — JWT state only; Firebase owns credentials.
+/// LOVEN session orchestration — JWT state and credential flows; Firebase owns credentials.
 ///
 /// **Session ownership:**
-/// - [restoreSession] — boot entry; reads stored LOVEN JWT via [AuthRepository].
+/// - [restoreSession] — boot entry; JWT via [AuthRepository], initial user via [AccountRepository].
 /// - [loginWithFirebase] / [signupWithFirebase] — Firebase credential flows.
+/// - [syncSessionUser] — narrow session user refresh after [AccountCubit] mutations.
 /// - [ApiClient] — JWT refresh; calls [handleSessionExpired] when refresh fails.
+///
+/// Profile load/update UI orchestration lives in [AccountCubit].
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  final AccountRepository _accountRepository;
   final FirebaseAuthService _firebaseAuthService;
 
   Future<void>? _bootstrapFuture;
@@ -25,8 +30,10 @@ class AuthCubit extends Cubit<AuthState> {
 
   AuthCubit({
     required AuthRepository authRepository,
+    required AccountRepository accountRepository,
     FirebaseAuthService? firebaseAuthService,
   })  : _authRepository = authRepository,
+        _accountRepository = accountRepository,
         _firebaseAuthService = firebaseAuthService ?? FirebaseAuthService(),
         super(const AuthInitial());
 
@@ -58,7 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
     _emit(const AuthLoading());
 
     try {
-      final user = await _authRepository.restoreAuthenticatedUser();
+      final user = await _accountRepository.getAccount();
       if (isClosed) {
         return;
       }
@@ -76,8 +83,18 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> _completeAuthenticatedSession() async {
-    final user = await _authRepository.getCurrentUser();
+    final user = await _accountRepository.getAccount();
     if (isClosed) {
+      return;
+    }
+    _emit(AuthSuccess(user: user));
+  }
+
+  /// Refreshes [AuthSuccess.user] after account profile changes elsewhere.
+  ///
+  /// No-op when there is no active session. Does not fetch from the network.
+  void syncSessionUser(AuthUser user) {
+    if (isClosed || !authStateHasSession(state)) {
       return;
     }
     _emit(AuthSuccess(user: user));
@@ -281,6 +298,18 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Sends a Firebase password-reset email.
+  ///
+  /// Failures are swallowed so UI can always show generic success copy and
+  /// avoid email enumeration.
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _firebaseAuthService.sendPasswordResetEmail(email: email);
+    } catch (_) {
+      // Generic success UX — do not reveal whether the email exists.
+    }
+  }
+
   Future<bool> checkEmailVerified() async {
     final user = await _firebaseAuthService.reloadUser();
     return user?.emailVerified ?? false;
@@ -336,42 +365,6 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
       _emit(_operationFailure(_mapFirebaseAuthError(e)));
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
-      _emit(_operationFailure(_extractMessage(e)));
-    }
-  }
-
-  Future<void> loadCurrentUser() async {
-    try {
-      await _completeAuthenticatedSession();
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
-      _emit(_operationFailure(_extractMessage(e)));
-    }
-  }
-
-  Future<void> updateProfile({
-    required String name,
-    required String email,
-    String? profileImageUrl,
-  }) async {
-    try {
-      final user = await _authRepository.updateProfile(
-        name: name,
-        email: email,
-        profileImageUrl: profileImageUrl,
-      );
-
-      if (isClosed) {
-        return;
-      }
-
-      _emit(AuthSuccess(user: user));
     } catch (e) {
       if (isClosed) {
         return;

@@ -11,7 +11,6 @@ import 'package:loven/features/artist_profile/view/screens/edit_artist_profile_s
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/home/View/Screens/artists_list_screen.dart';
 import 'package:loven/features/home/View/Screens/artworks_list_screen.dart';
-import 'package:loven/features/home/View/Screens/settings_screen.dart';
 
 ArtistProfileCubit _createArtistProfileCubit(
   BuildContext context,
@@ -57,20 +56,6 @@ List<RouteBase> buildDiscoveryRoutesBrowse(AppRouterDeps deps) {
       builder: (context, state) {
         final type = state.pathParameters['type'] ?? 'featured';
         return ArtworksListScreen(type: type);
-      },
-    ),
-  ];
-}
-
-List<RouteBase> buildDiscoveryRoutesSettings(AppRouterDeps deps) {
-  return [
-    GoRoute(
-      path: AppRoutes.settings,
-      builder: (context, state) {
-        return BlocProvider(
-          create: (context) => _createArtistProfileCubit(context, deps),
-          child: const SettingsScreen(),
-        );
       },
     ),
   ];

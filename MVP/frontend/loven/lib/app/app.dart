@@ -7,6 +7,8 @@ import 'package:loven/core/res/theme/app_theme.dart';
 import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/theme/theme_bloc.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
+import 'package:loven/features/account/data/services/profile_image_storage_service.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
@@ -61,12 +63,19 @@ class _LovenAppState extends State<LovenApp> {
         RepositoryProvider<AuthRepository>.value(
           value: _deps.authRepository,
         ),
+        RepositoryProvider<AccountRepository>.value(
+          value: _deps.accountRepository,
+        ),
+        RepositoryProvider<ProfileImageStorageService>.value(
+          value: _deps.profileImageStorageService,
+        ),
       ],
       child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
         value: _deps.splashMinDurationNotifier,
         child: MultiBlocProvider(
           providers: [
           BlocProvider.value(value: _deps.authCubit),
+          BlocProvider.value(value: _deps.accountCubit),
           BlocProvider(create: (context) => NavigationBarCubit()),
           BlocProvider(
             create: (context) => HomeBloc(

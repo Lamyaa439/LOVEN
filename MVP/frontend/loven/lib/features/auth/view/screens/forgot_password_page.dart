@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 
 /// Password-reset entry screen — Firebase link-based only.
 ///
@@ -19,7 +20,6 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final _firebaseAuthService = FirebaseAuthService();
 
   bool _emailSent = false;
   bool _isSubmitting = false;
@@ -38,9 +38,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      await _firebaseAuthService.sendPasswordResetEmail(
-        email: _emailController.text.trim(),
-      );
+      await context.read<AuthCubit>().sendPasswordResetEmail(
+            email: _emailController.text.trim(),
+          );
     } catch (_) {
       // Always show generic success — do not reveal whether the email exists.
     } finally {

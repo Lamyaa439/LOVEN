@@ -3,6 +3,9 @@ import 'package:loven/core/router/app_router.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
+import 'package:loven/features/account/data/services/profile_image_storage_service.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
@@ -24,7 +27,10 @@ class AppDependencies {
     required this.tokenStorage,
     required this.apiClient,
     required this.authRepository,
+    required this.accountRepository,
+    required this.profileImageStorageService,
     required this.authCubit,
+    required this.accountCubit,
     required this.artworkRepository,
     required this.orderRepository,
     required this.artistRepository,
@@ -41,7 +47,10 @@ class AppDependencies {
   final TokenStorage tokenStorage;
   final ApiClient apiClient;
   final AuthRepository authRepository;
+  final AccountRepository accountRepository;
+  final ProfileImageStorageService profileImageStorageService;
   final AuthCubit authCubit;
+  final AccountCubit accountCubit;
   final ArtworkRepository artworkRepository;
   final OrderRepository orderRepository;
   final ArtistRepository artistRepository;
@@ -63,6 +72,9 @@ class AppDependencies {
       tokenStorage: tokenStorage,
     );
 
+    final accountRepository = AccountRepository(apiClient: apiClient);
+    final profileImageStorageService = ProfileImageStorageService();
+
     final artworkRepository = ArtworkRepository(apiClient: apiClient);
     final orderRepository = OrderRepository(apiClient: apiClient);
     final artistRepository = ArtistRepository(apiClient: apiClient);
@@ -74,7 +86,15 @@ class AppDependencies {
     final feedbackRepository = FeedbackRepository(apiClient: apiClient);
     final reportRepository = ReportRepository(apiClient: apiClient);
 
-    final authCubit = AuthCubit(authRepository: authRepository);
+    final authCubit = AuthCubit(
+      authRepository: authRepository,
+      accountRepository: accountRepository,
+    );
+
+    final accountCubit = AccountCubit(
+      accountRepository: accountRepository,
+      authCubit: authCubit,
+    );
 
     final splashMinDurationNotifier = SplashMinDurationNotifier();
 
@@ -100,7 +120,10 @@ class AppDependencies {
       tokenStorage: tokenStorage,
       apiClient: apiClient,
       authRepository: authRepository,
+      accountRepository: accountRepository,
+      profileImageStorageService: profileImageStorageService,
       authCubit: authCubit,
+      accountCubit: accountCubit,
       artworkRepository: artworkRepository,
       orderRepository: orderRepository,
       artistRepository: artistRepository,
@@ -116,6 +139,7 @@ class AppDependencies {
 
   void dispose() {
     apiClient.detachSessionExpiredHandler();
+    accountCubit.close();
     authCubit.close();
     splashMinDurationNotifier.dispose();
   }

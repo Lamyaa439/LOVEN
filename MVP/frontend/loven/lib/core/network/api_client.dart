@@ -3,7 +3,8 @@
 // **Session ownership:**
 // - [TokenStorage]: persists JWT access/refresh tokens only.
 // - [ApiClient]: sole owner of access-token refresh (`POST /refresh` on 401).
-// - [AuthRepository]: login/register/logout and profile calls; no refresh implementation.
+// - [AuthRepository]: login/register/logout and token persistence; no refresh implementation.
+// - [AccountRepository]: `GET/PATCH /account/me` profile access.
 // - [AuthCubit]: orchestrates boot [restoreSession] and auth state emissions.
 //
 // Wire [attachSessionExpiredHandler] to [AuthCubit.handleSessionExpired] from [main].
