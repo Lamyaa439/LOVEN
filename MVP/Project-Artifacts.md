@@ -4,7 +4,8 @@
 
 LOVEN is a digital art marketplace designed to connect artists and customers through a modern and user-friendly platform. The application enables artists to showcase and manage their artwork while allowing customers to browse, favorite, purchase, and interact with artwork collections.
 
-The project was developed using Agile Scrum practices and delivered as a Minimum Viable Product (MVP).
+LOVEN was developed as an MVP focusing on the essential marketplace workflow:
+artist onboarding, artwork publishing, artwork discovery, purchasing, and user interaction features.
 
 ---
 
@@ -12,6 +13,7 @@ The project was developed using Agile Scrum practices and delivered as a Minimum
 
 * Authentication and Authorization
 * Artist Profile Management
+* Account Management
 * Artwork Upload and Management
 * Favorites System
 * Shopping Cart
@@ -47,6 +49,7 @@ The project was developed using Agile Scrum practices and delivered as a Minimum
 * Firebase Authentication
 * Firebase Cloud Messaging (FCM)
 * Firebase Storage
+* Firebase Email Verification
 
 ---
 
@@ -137,11 +140,11 @@ Each sprint was conducted over a two-week development cycle.
 
 #### Jira Board
 
-https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/boards/34
+[Jira Board](https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/boards/34)
 
 #### Jira Backlog
 
-https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/boards/34/backlog
+[Jira Backlog](https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/boards/34/backlog)
 
 ---
 
@@ -204,7 +207,7 @@ Jira was used to:
 
 ### Bug Tracking
 
-https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/summary
+[Jira Bug Tracking](https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/summary)
 
 ---
 
@@ -214,7 +217,7 @@ Sprint reviews were conducted at the end of each sprint to demonstrate completed
 
 ## Sprint Reviews Document
 
-https://github.com/user-attachments/files/28428214/Sprint.reviews.pdf
+[Sprint.reviews.pdf](https://github.com/user-attachments/files/28428214/Sprint.reviews.pdf)
 
 ### Included Reviews
 
@@ -237,7 +240,7 @@ Topics discussed included:
 
 ## Retrospectives Document
 
-https://github.com/user-attachments/files/28428204/LOVEN_MVP_Retrospectives.pdf
+[LOVEN_MVP_Retrospectives.pdf](https://github.com/user-attachments/files/28428204/LOVEN_MVP_Retrospectives.pdf)
 
 ---
 
@@ -297,14 +300,17 @@ Comprehensive integration testing was performed to verify communication between:
 
 The following areas were tested:
 
-* Authentication
+* Authentication and Authorization
+* Account Management
 * Artist Profiles
 * Artwork Management
-* Favorites
-* Cart Operations
+* Favorites System
+* Shopping Cart Operations
 * Order Processing
-* Notifications
 * Verification Requests
+* Report Submission
+* Feedback Submission
+* Notifications
 
 ## Testing Tools
 
@@ -317,13 +323,27 @@ The following areas were tested:
 
 # Testing Evidence and Results
 
-## Authentication API Test Cases
+## End-to-End (E2E) Testing
 
-[Auth.md](https://github.com/Lamyaa439/LOVEN/blob/develop/MVP/backend/README.md)
+Comprehensive End-to-End testing was performed using Postman against the deployed Render production environment.
 
-## Order Management API Test Cases
+The following workflows were successfully validated:
 
-[Order.management.pdf](https://github.com/user-attachments/files/28428194/Order.management.pdf)
+* Firebase Authentication
+* JWT Authorization
+* Account Management
+* Artist Profile Management
+* Artwork Creation and Management
+* Favorites System
+* Shopping Cart Operations
+* Order Processing
+* Verification Requests
+* Report Submission
+* Feedback Submission
+
+### E2E Testing Evidence
+
+[E2E Render Testing Evidence.pdf](https://github.com/user-attachments/files/28668049/E2E.Render.Testing.Evidence.pdf)
 
 ---
 
@@ -331,7 +351,7 @@ The following areas were tested:
 
 GitHub Repository:
 
-https://github.com/Lamyaa439/LOVEN/tree/main
+[LOVEN.repo](https://github.com/Lamyaa439/LOVEN/tree/main)
 
 ---
 
@@ -354,6 +374,7 @@ The LOVEN MVP application is deployed using Render cloud services.
 * Firebase Authentication
 * Firebase Storage
 * Firebase Cloud Messaging (FCM)
+* Firebase Email Verification
 
 ## Deployment Architecture
 
@@ -361,6 +382,7 @@ The LOVEN MVP application is deployed using Render cloud services.
 Flutter Application
         │
         ├── Firebase Authentication
+        ├── Firebase Email Verification
         │
         ▼
 Render Flask API
@@ -387,8 +409,8 @@ Render PostgreSQL
 | Retrospectives         | [LOVEN_MVP_Retrospectives.pdf](https://github.com/user-attachments/files/28428204/LOVEN_MVP_Retrospectives.pdf) |
 | Source Repository      | [LOVEN Repository](https://github.com/Lamyaa439/LOVEN/tree/main)                                                |
 | Bug Tracking           | [Jira Bug Tracking](https://lamyaaalghaihab.atlassian.net/jira/software/projects/LOVEN/summary)                 |
-| Testing Evidence       | Authentication & Order Management Test Cases                                                                    |
-| Production Environment | https://loven.onrender.com                                                                                      |
+| Testing Evidence       | [E2E Render Testing Results](https://github.com/user-attachments/files/28668049/E2E.Render.Testing.Evidence.pdf) |
+| Production Environment | [LOVEN Application](https://loven.onrender.com)                                                                                     |
 
 ---
 
