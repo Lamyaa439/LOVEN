@@ -75,7 +75,10 @@ class _LovenAppState extends State<LovenApp> {
           ),
           BlocProvider(create: (context) => ThemeBloc()),
           BlocProvider(
-            create: (context) => CartCubit(_deps.cartRepository),
+            create: (_) => CartCubit(
+              _deps.cartRepository,
+              authCubit: _deps.authCubit,
+            ),
           ),
           BlocProvider(
             create: (context) => ArtworkCubit(_deps.artworkRepository),
@@ -90,7 +93,10 @@ class _LovenAppState extends State<LovenApp> {
             create: (context) => ReportCubit(_deps.reportRepository),
           ),
           BlocProvider(
-            create: (_) => FavoritesCubit(_deps.favoritesRepository),
+            create: (_) => FavoritesCubit(
+              _deps.favoritesRepository,
+              authCubit: _deps.authCubit,
+            ),
           ),
           BlocProvider(
             create: (_) => VerificationRequestCubit(

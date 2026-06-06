@@ -5,8 +5,7 @@ import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/core/session/app_session.dart';
 import 'package:loven/features/home/View/widgets/art_details_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
@@ -14,13 +13,11 @@ import 'package:loven/core/res/responsive/responsive_extensions.dart';
 
 class ArtCard extends StatelessWidget {
   final ArtworkModel artwork;
-  final bool isGuest;
   final VoidCallback onActionPressed;
 
   const ArtCard({
     super.key,
     required this.artwork,
-    required this.isGuest,
     required this.onActionPressed,
   });
 
@@ -37,7 +34,6 @@ class ArtCard extends StatelessWidget {
               heightFactor: 0.92,
               child: ArtDetailsScreen(
                 artItem: artwork,
-                isGuest: isGuest,
                 artistRepository: context.read<ArtistRepository>(),
               ),
             );
@@ -114,15 +110,13 @@ margin: EdgeInsets.only(
                                 color: Colors.red,
                               ),
                               onPressed: () {
-                                final isActuallyGuest =
-                              isGuest || context.read<AuthCubit>().state is AuthGuest;
-                                if (isActuallyGuest) {
+                                if (!AppSession.hasSessionFromContext(context)) {
                                   context.push(AppRoutes.auth);
-                                } else {
-                                  context
-                                      .read<FavoritesCubit>()
-                                      .toggleFavorite(artwork.id);
+                                  return;
                                 }
+                                context
+                                    .read<FavoritesCubit>()
+                                    .toggleFavorite(artwork.id);
                               },
                             ),
                           );
@@ -141,13 +135,11 @@ margin: EdgeInsets.only(
                             color: AppColors.primaryBlue,
                           ),
                           onPressed: () {
-                              final isActuallyGuest =
-                              isGuest || context.read<AuthCubit>().state is AuthGuest;
-                            if (isActuallyGuest) {
+                            if (!AppSession.hasSessionFromContext(context)) {
                               context.push(AppRoutes.auth);
-                            } else {
-                              onActionPressed();
+                              return;
                             }
+                            onActionPressed();
                           },
                         ),
                       ),

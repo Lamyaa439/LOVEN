@@ -4,7 +4,6 @@ import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/cart/view/screens/confirm_order_screen.dart';
 import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
 import 'package:loven/features/location/view/screens/address_form_screen.dart';
@@ -84,16 +83,7 @@ List<RouteBase> buildCommerceRoutesCart(AppRouterDeps deps) {
   return [
     GoRoute(
       path: AppRoutes.cart,
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final isGuest =
-            extra?['isGuest'] as bool? ?? deps.authCubit.state is AuthGuest;
-
-        return NavigationScreen(
-          isGuest: isGuest,
-          initialIndex: 2,
-        );
-      },
+      builder: (context, state) => const NavigationScreen(initialIndex: 2),
     ),
     GoRoute(
       path: AppRoutes.artworksCreate,

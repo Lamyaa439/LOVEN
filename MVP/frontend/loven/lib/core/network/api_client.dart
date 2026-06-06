@@ -70,6 +70,11 @@ class ApiClient {
   /// Coalesces concurrent refresh attempts into one in-flight request.
   Future<void>? _refreshInFlight;
 
+  /// Removes the session-expired callback — call before [AuthCubit.close] on teardown.
+  void detachSessionExpiredHandler() {
+    _onSessionExpired = null;
+  }
+
   /// @deprecated Use [AppEnv.defaultBaseUrl].
   static const String defaultBaseUrl = AppEnv.defaultBaseUrl;
 
@@ -82,7 +87,11 @@ class ApiClient {
   }
 
   void _notifySessionExpired() {
-    _onSessionExpired?.call();
+    final handler = _onSessionExpired;
+    if (handler == null) {
+      return;
+    }
+    handler();
   }
 
   /// Exchanges the stored refresh JWT for a new access token (`POST /refresh`).

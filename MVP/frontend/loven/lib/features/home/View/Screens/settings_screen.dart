@@ -8,8 +8,26 @@ import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      context.read<ArtistProfileCubit>().fetchMyProfileData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
