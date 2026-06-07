@@ -1,9 +1,10 @@
 from app.models.order import Order
 from app.persistence.repositories.order_repo import order_repo
+from app.services.notification_service import notification_service
 
-from app.external_services.firebase_service import (
-    send_order_status_notification,
-)
+import logging
+
+logger = logging.getLogger(__name__)
 
 # =========================================================
 # Service: Order Service
@@ -82,6 +83,17 @@ def create_user_order(data):
         order_item.to_dict() for order_item in created_items
     ]
 
+    try:
+        artist_users = order_repo.get_artist_users_for_order(order.id)
+        for artist_user in artist_users:
+            notification_service.notify_artist_new_order(artist_user, order)
+    except Exception:
+        logger.exception(
+            "Artist new-order notifications failed (non-fatal) "
+            "for order_id=%s",
+            order.id,
+        )
+
     return {
         "message": "Order created successfully",
         "order": order_payload,
@@ -142,16 +154,23 @@ def change_order_status(
     if not order:
         return {"error": "Order not found"}, 404
 
-    if status == "shipped":
+    try:
         buyer = order_repo.get_buyer_notification_info(order.buyer_id)
-
-        if buyer and buyer.fcm_token:
-            send_order_status_notification(
-                fcm_token=buyer.fcm_token,
-                user_name=buyer.name or "Customer",
-                order_id=str(order.id),
-                status="shipped",
+        # Paid transitions are owned by payment_service.verify_payment()
+        # via notify_payment_success(); skip generic order_status here.
+        if buyer and status != "paid":
+            notification_service.notify_customer_order_status(
+                buyer,
+                order,
+                status,
             )
+    except Exception:
+        logger.exception(
+            "Customer order-status notifications failed (non-fatal) "
+            "for order_id=%s status=%s",
+            order.id,
+            status,
+        )
 
     return {
         "message": "Order status updated successfully",
