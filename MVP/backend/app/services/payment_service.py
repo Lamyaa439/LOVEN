@@ -23,7 +23,9 @@ from app.extensions import db
 from app.external_services.moyasar_service import MoyasarClient, MoyasarError
 from app.models.order import Order
 from app.models.payment import Payment
+from app.persistence.repositories.order_repo import order_repo
 from app.persistence.repositories.payment_repo import PaymentRepository
+from app.services.notification_service import notification_service
 from config import Config
 
 logger = logging.getLogger(__name__)
@@ -264,6 +266,23 @@ def verify_payment(order_id, moyasar_payment_id, buyer_id):
 
     if not updated_payment:
         return {"error": "Could not fulfill payment for order"}, 500
+
+    try:
+        db.session.refresh(order)
+        buyer = order_repo.get_buyer_notification_info(order.buyer_id)
+        if buyer:
+            notification_service.notify_payment_success(
+                buyer,
+                order,
+                payment=updated_payment,
+            )
+    except Exception:
+        logger.exception(
+            "Payment-success notification failed (non-fatal) "
+            "for order_id=%s payment_id=%s",
+            order.id,
+            updated_payment.id,
+        )
 
     return {
         "message": "Payment verified successfully",
