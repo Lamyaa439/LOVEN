@@ -10,3 +10,4 @@ from .feedback import Feedback
 from .report import Report
 from .favorites import Favorite
 from .payment import Payment
+from .notification import Notification
