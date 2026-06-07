@@ -169,6 +169,54 @@ def send_order_status_notification(
         return False
 
 
+def send_artist_new_order_notification(
+    fcm_token: str,
+    user_name: str,
+    order_id: str,
+) -> bool:
+    """
+    Sends a new-order push notification to an artist.
+
+    Args:
+        fcm_token (str): The artist's FCM device token.
+        user_name (str): The artist's display name.
+        order_id (str): The order ID.
+
+    Returns:
+        bool: True if sent successfully, False otherwise.
+    """
+    if not fcm_token:
+        logger.warning("No token provided. Skipping artist new-order notification.")
+        return False
+
+    if not _ensure_firebase():
+        logger.warning(
+            "Firebase unavailable. Skipping artist new-order notification."
+        )
+        return False
+
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title="New order on LOVEN 🎨",
+            body=f"Hi {user_name}, you received a new order #{order_id}.",
+        ),
+        data={
+            "type": "order_new_artist",
+            "action": "open_order_details",
+            "order_id": str(order_id),
+        },
+        token=fcm_token,
+    )
+
+    try:
+        message_id = messaging.send(message)
+        logger.info("Artist new-order notification sent. ID: %s", message_id)
+        return True
+    except Exception as exc:
+        logger.error("FCM artist new-order notification failed: %s", exc)
+        return False
+
+
 # ==========================================
 # 2. Cloud Storage (Media Management)
 # ==========================================
