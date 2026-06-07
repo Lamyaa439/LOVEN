@@ -189,4 +189,6 @@ String _resolvePostBootstrapLocation({
 // (†) Admin when [authStateSessionUser].systemRole == 'admin', else home.
 //
 // Not redirected here (registry decides): [AppRoutes.profile] (guest hub),
-// public discovery, [AppRoutes.isPasswordRecoveryPath], [AuthFailure] screens.
+// public discovery, [AppRoutes.isPasswordRecoveryPath], [AuthFailure] screens,
+// and pre-login signup sub-routes under [AppRoutes.signupRoutePrefix]
+// (e.g. [AppRoutes.signupSuccess] — guests stay until they sign in).

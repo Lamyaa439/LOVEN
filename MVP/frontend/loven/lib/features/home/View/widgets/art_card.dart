@@ -55,32 +55,29 @@ margin: EdgeInsets.only(
           children: [
             Stack(
               children: [
-                Hero(
-                  tag: artwork.id,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(18),
-                    ),
-                    child: Image.network(
-                      artwork.artworkImageUrl ?? '',
-                      fit: BoxFit.cover,
-                      height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
-                      width: double.infinity,
-                      errorBuilder: (
-                        context,
-                        error,
-                        stackTrace,
-                      ) {
-                        return Container(
-                          height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
-                          color: Colors.grey[300],
-                          child: const Icon(
-                            Icons.broken_image,
-                            size: 38,
-                          ),
-                        );
-                      },
-                    ),
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(18),
+                  ),
+                  child: Image.network(
+                    artwork.artworkImageUrl ?? '',
+                    fit: BoxFit.cover,
+                    height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
+                    width: double.infinity,
+                    errorBuilder: (
+                      context,
+                      error,
+                      stackTrace,
+                    ) {
+                      return Container(
+                        height: context.responsive(mobile: 120, tablet: 145, desktop: 155),
+                        color: Colors.grey[300],
+                        child: const Icon(
+                          Icons.broken_image,
+                          size: 38,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Positioned(

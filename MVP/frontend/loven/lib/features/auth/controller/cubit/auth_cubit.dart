@@ -31,10 +31,10 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit({
     required AuthRepository authRepository,
     required AccountRepository accountRepository,
-    FirebaseAuthService? firebaseAuthService,
+    required FirebaseAuthService firebaseAuthService,
   })  : _authRepository = authRepository,
         _accountRepository = accountRepository,
-        _firebaseAuthService = firebaseAuthService ?? FirebaseAuthService(),
+        _firebaseAuthService = firebaseAuthService,
         super(const AuthInitial());
 
   void _emit(AuthState state) {

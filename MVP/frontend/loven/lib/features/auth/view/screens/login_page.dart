@@ -310,9 +310,7 @@ class _LoginPageState extends State<LoginPage> {
                         onTap: _isSubmitting
                             ? null
                             : () {
-                                context.pushReplacement(
-                                  AppRoutes.auth,
-                                );
+                                context.go(AppRoutes.auth);
                               },
                         child: const Text(
                           'Sign Up',
