@@ -25,6 +25,7 @@ abstract final class ApiEndpoints {
   static const String logout = '/logout';
   static const String changePassword = '/change-password'; // Backend legacy — unused by Flutter
   static const String currentUser = '/account/me';
+  static const String currentUserRole = '/account/me/role';
 
   // ---------------------------------------------------------------------------
   // Artist profiles (mounted on /api/v1)

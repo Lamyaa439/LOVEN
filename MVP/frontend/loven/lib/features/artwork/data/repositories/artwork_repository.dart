@@ -126,6 +126,7 @@ class ArtworkRepository {
     required int quantityAvailable,
     required double shippingFee,
     String? artworkImageUrl,
+    String? status,
   }) async {
     final response = await _apiClient.post(
       ApiConstants.artworks,
@@ -136,6 +137,7 @@ class ArtworkRepository {
         'quantity_available': quantityAvailable,
         'shipping_fee': shippingFee,
         'artwork_image_url': artworkImageUrl,
+        if (status != null) 'status': status,
       },
     );
 
@@ -158,6 +160,12 @@ class ArtworkRepository {
     if (title != null) body['title'] = title;
     if (description != null) body['description'] = description;
     if (price != null) body['price'] = price;
+    if (quantityAvailable != null) {
+      body['quantity_available'] = quantityAvailable;
+    }
+    if (shippingFee != null) body['shipping_fee'] = shippingFee;
+    if (artworkImageUrl != null) body['artwork_image_url'] = artworkImageUrl;
+    if (status != null) body['status'] = status;
 
     final response = await _apiClient.patch(
       ApiConstants.artworkById(artworkId),
