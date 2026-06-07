@@ -18,6 +18,7 @@ from app.persistence.repositories.artist_profile_repo import ArtistProfileReposi
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.artists_profiles_service import prepare_registration_profile
 from app.services.firebase_auth_service import FirebaseAuthError, firebase_auth_service
+from app.services.notification_service import notification_service
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,14 @@ def register_sync(data: dict) -> tuple[dict, int]:
             db.session.add(profile)
 
         db.session.commit()
+
+        try:
+            notification_service.notify_welcome(new_user)
+        except Exception:
+            logger.exception(
+                "Welcome notification failed for user_id=%s (non-fatal)",
+                new_user.id,
+            )
 
         return {
             "message": "Account created. Please verify your email.",
