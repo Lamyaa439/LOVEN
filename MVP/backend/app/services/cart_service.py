@@ -5,6 +5,8 @@ Business logic for shopping cart operations. Returns (dict, status_code) tuples
 like other services in this project.
 """
 
+from datetime import datetime, timezone
+
 from sqlalchemy.exc import IntegrityError
 
 from app.core.uuid_utils import as_uuid
@@ -32,6 +34,20 @@ def _parse_quantity(value, default=1):
     if quantity < 1:
         raise ValueError("Quantity must be at least 1.")
     return quantity
+
+
+def _touch_cart_activity(cart):
+    """
+    Refresh the parent cart ``updated_at`` after a line-item mutation.
+
+    Used by inactivity reminder queries that treat cart activity as a signal
+    for user engagement with cart contents.
+    """
+    if not cart:
+        return
+
+    cart.updated_at = datetime.now(timezone.utc)
+    cart_repo.save(cart)
 
 
 def _artwork_snapshot(artwork):
@@ -290,7 +306,9 @@ def add_to_cart(user_id, data):
             updated = cart_repo.increment_quantity(existing.id, quantity)
             if not updated:
                 return {"error": "Could not update cart item"}, 500
-            
+
+            _touch_cart_activity(cart)
+
             return {
                 "message": "Cart updated",
                 "item": _cart_item_to_dict(updated, include_artwork=True),
@@ -299,6 +317,7 @@ def add_to_cart(user_id, data):
         # إذا المنتج مب موجود في السلة ننشئه ونحفظه في السلة
         item = CartItem(cart_id=cart.id, artwork_id=aid, quantity=quantity)
         cart_repo.add_item(item)
+        _touch_cart_activity(cart)
         return {
             "message": "Item added to cart",
             "item": _cart_item_to_dict(item, include_artwork=True),
@@ -353,6 +372,7 @@ def update_cart_item(user_id, item_id, data):
         updated = cart_repo.update_item(item.id, {"quantity": quantity})
         if not updated:
             return {"error": "Cart item not found"}, 404
+        _touch_cart_activity(_get_user_cart(uid))
         return {
             "message": "Cart item updated",
             "item": _cart_item_to_dict(updated, include_artwork=True),
@@ -386,9 +406,11 @@ def remove_cart_item(user_id, item_id):
     if not _item_belongs_to_user(item, uid):
         return {"error": "Access denied"}, 403
 
+    cart = _get_user_cart(uid)
     ok = cart_repo.remove_item(item.id)
     if not ok:
         return {"error": "Could not remove cart item"}, 500
+    _touch_cart_activity(cart)
     return {"message": "Item removed from cart"}, 200
 
 # حذف أو تفريغ السلة كاملة إذا تمت عملية الدفع
@@ -411,6 +433,7 @@ def clear_cart(user_id):
 
     try:
         cleared = cart_repo.clear_items(cart.id)
+        _touch_cart_activity(cart)
         return {"message": "Cart cleared", "cleared": cleared}, 200
     except Exception:
         return {"error": "An internal error occurred"}, 500
