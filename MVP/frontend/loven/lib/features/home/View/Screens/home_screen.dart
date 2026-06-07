@@ -94,7 +94,12 @@ class HomeScreen extends StatelessWidget {
             if (state is HomeLoaded) {
               final artworks = state.artPieces;
               final featured = artworks.take(5).toList();
-              final newArrivals = artworks.skip(1).take(5).toList();
+              final featuredIds =
+                  featured.map((artwork) => artwork.id).toSet();
+              final newArrivals = artworks
+                  .where((artwork) => !featuredIds.contains(artwork.id))
+                  .take(5)
+                  .toList();
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 110),
@@ -137,7 +142,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildArtworkList(
                       context: context,
-                      artworks: newArrivals.isEmpty ? featured : newArrivals,
+                      artworks: newArrivals,
                     ),
                     const SizedBox(height: 28),
                     _buildArtistPreviewSection(

@@ -10,6 +10,7 @@ import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artwork/data/repositories/artwork_repository.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
+import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 import 'package:loven/features/cart/data/repositories/cart_repository.dart';
 import 'package:loven/features/favorites/data/repositories/favorites_repository.dart';
 import 'package:loven/features/feedback/data/repositories/feedback_repository.dart';
@@ -19,8 +20,9 @@ import 'package:loven/features/verification_request/data/repositories/verificati
 
 /// App-wide singletons constructed once at startup.
 ///
-/// **Ownership:** repositories, [ApiClient], [AuthCubit], [AppRouter], and
-/// session wiring. Does not build widgets — [LovenApp] consumes this graph.
+/// **Ownership:** repositories, [ApiClient], [FirebaseAuthService], [AuthCubit],
+/// [AppRouter], and session wiring. Does not build widgets — [LovenApp] consumes
+/// this graph.
 class AppDependencies {
   AppDependencies._({
     required this.appPreferences,
@@ -28,6 +30,7 @@ class AppDependencies {
     required this.apiClient,
     required this.authRepository,
     required this.accountRepository,
+    required this.firebaseAuthService,
     required this.profileImageStorageService,
     required this.authCubit,
     required this.accountCubit,
@@ -48,6 +51,7 @@ class AppDependencies {
   final ApiClient apiClient;
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
+  final FirebaseAuthService firebaseAuthService;
   final ProfileImageStorageService profileImageStorageService;
   final AuthCubit authCubit;
   final AccountCubit accountCubit;
@@ -73,6 +77,7 @@ class AppDependencies {
     );
 
     final accountRepository = AccountRepository(apiClient: apiClient);
+    final firebaseAuthService = FirebaseAuthService();
     final profileImageStorageService = ProfileImageStorageService();
 
     final artworkRepository = ArtworkRepository(apiClient: apiClient);
@@ -89,6 +94,7 @@ class AppDependencies {
     final authCubit = AuthCubit(
       authRepository: authRepository,
       accountRepository: accountRepository,
+      firebaseAuthService: firebaseAuthService,
     );
 
     final accountCubit = AccountCubit(
@@ -121,6 +127,7 @@ class AppDependencies {
       apiClient: apiClient,
       authRepository: authRepository,
       accountRepository: accountRepository,
+      firebaseAuthService: firebaseAuthService,
       profileImageStorageService: profileImageStorageService,
       authCubit: authCubit,
       accountCubit: accountCubit,
