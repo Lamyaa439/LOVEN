@@ -105,7 +105,7 @@ def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
             body=f"Hi {user_name}, we're happy you're here!!",
         ),
         data={
-            "type": "welcome_alert",
+            "type": "welcome",
             "action": "open_home_screen",
         },
         token=fcm_token,
@@ -146,16 +146,21 @@ def send_order_status_notification(
         logger.warning("Firebase unavailable. Skipping order notification.")
         return False
 
+    order_id = str(order_id)
+    display_status = str(status).replace("_", " ")
+
     message = messaging.Message(
         notification=messaging.Notification(
-            title="Order Update from LOVEN 🎨",
-            body=f"Hi {user_name}, your order #{order_id} is now {status}.",
+            title="Order update from LOVEN 🎨",
+            body=f"Hi {user_name}, your order #{order_id} is now {display_status}.",
         ),
         data={
-            "type": "order_status_update",
+            "type": "order_status",
             "action": "open_order_details",
-            "order_id": str(order_id),
-            "status": status,
+            "order_id": order_id,
+            "reference_id": order_id,
+            "reference_type": "order",
+            "status": str(status),
         },
         token=fcm_token,
     )
@@ -169,7 +174,7 @@ def send_order_status_notification(
         return False
 
 
-def send_artist_new_order_notification(
+def send_new_order_notification(
     fcm_token: str,
     user_name: str,
     order_id: str,
@@ -186,14 +191,14 @@ def send_artist_new_order_notification(
         bool: True if sent successfully, False otherwise.
     """
     if not fcm_token:
-        logger.warning("No token provided. Skipping artist new-order notification.")
+        logger.warning("No token provided. Skipping new-order notification.")
         return False
 
     if not _ensure_firebase():
-        logger.warning(
-            "Firebase unavailable. Skipping artist new-order notification."
-        )
+        logger.warning("Firebase unavailable. Skipping new-order notification.")
         return False
+
+    order_id = str(order_id)
 
     message = messaging.Message(
         notification=messaging.Notification(
@@ -203,18 +208,91 @@ def send_artist_new_order_notification(
         data={
             "type": "order_new_artist",
             "action": "open_order_details",
-            "order_id": str(order_id),
+            "order_id": order_id,
+            "reference_id": order_id,
+            "reference_type": "order",
         },
         token=fcm_token,
     )
 
     try:
         message_id = messaging.send(message)
-        logger.info("Artist new-order notification sent. ID: %s", message_id)
+        logger.info("New-order notification sent. ID: %s", message_id)
         return True
     except Exception as exc:
-        logger.error("FCM artist new-order notification failed: %s", exc)
+        logger.error("FCM new-order notification failed: %s", exc)
         return False
+
+
+def send_payment_success_notification(
+    fcm_token: str,
+    user_name: str,
+    order_id: str,
+    payment_id: str | None = None,
+) -> bool:
+    """
+    Sends a payment-success push notification to a customer.
+
+    Args:
+        fcm_token (str): The buyer's FCM device token.
+        user_name (str): The buyer's display name.
+        order_id (str): The order ID.
+        payment_id (str | None): Optional internal payment UUID.
+
+    Returns:
+        bool: True if sent successfully, False otherwise.
+    """
+    if not fcm_token:
+        logger.warning("No token provided. Skipping payment-success notification.")
+        return False
+
+    if not _ensure_firebase():
+        logger.warning(
+            "Firebase unavailable. Skipping payment-success notification."
+        )
+        return False
+
+    order_id = str(order_id)
+    data = {
+        "type": "payment_success",
+        "action": "open_order_details",
+        "order_id": order_id,
+        "reference_id": order_id,
+        "reference_type": "order",
+    }
+    if payment_id:
+        data["payment_id"] = str(payment_id)
+
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title="Payment confirmed 🎨",
+            body=(
+                f"Hi {user_name}, your payment for order #{order_id} "
+                "was successful."
+            ),
+        ),
+        data=data,
+        token=fcm_token,
+    )
+
+    try:
+        message_id = messaging.send(message)
+        logger.info("Payment-success notification sent. ID: %s", message_id)
+        return True
+    except Exception as exc:
+        logger.error("FCM payment-success notification failed: %s", exc)
+        return False
+
+
+def send_artist_new_order_notification(
+    fcm_token: str,
+    user_name: str,
+    order_id: str,
+) -> bool:
+    """
+    Backward-compatible alias for :func:`send_new_order_notification`.
+    """
+    return send_new_order_notification(fcm_token, user_name, order_id)
 
 
 # ==========================================
