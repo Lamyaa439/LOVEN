@@ -69,7 +69,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               children: [
                 const SizedBox(height: 4),
                 IconButton(
-                  onPressed: _isSubmitting ? null : () => context.pop(),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(AppRoutes.login);
+                          }
+                        },
                   icon: const Icon(Icons.arrow_back),
                 ),
                 const SizedBox(height: 8),
