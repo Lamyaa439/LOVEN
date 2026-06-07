@@ -33,22 +33,6 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  Future<void> _checkout(CartModel cart) async {
-    final items = cart.items.map((item) {
-      return {
-        'artwork_id': item.artworkId,
-        'quantity': item.quantity,
-      };
-    }).toList();
-
-    await context.read<OrderCubit>().createOrder(
-          subtotal: cart.subtotal,
-          shippingFee: cart.shippingFee,
-          totalAmount: cart.totalAmount,
-          items: items,
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<OrderCubit, OrderState>(
@@ -231,7 +215,9 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   _CartSummary(
                     cart: cart,
-                    onCheckout: () => _checkout(cart),
+                    onCheckout: () {
+                      context.push(AppRoutes.checkout, extra: cart);
+                      },
                   ),
                 ],
               );

@@ -15,6 +15,8 @@ import 'package:loven/features/order/view/screens/order_details_screen.dart';
 import 'package:loven/features/order/view/screens/order_history_screen.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'package:loven/features/verification_request/view/screens/verification_request_screen.dart';
+import 'package:loven/features/cart/data/models/cart_model.dart';
+import 'package:loven/features/cart/view/screens/checkout_screen.dart';
 
 /// Account hub, orders, cart, checkout, and related signed-in flows.
 List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
@@ -88,6 +90,21 @@ List<RouteBase> buildCommerceRoutesCart(AppRouterDeps deps) {
     GoRoute(
       path: AppRoutes.artworksCreate,
       builder: (context, state) => const CreateArtworkScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.checkout,
+      builder: (context, state) {
+        final raw = state.extra;
+
+        if (raw is! CartModel) {
+          return invalidRouteExtraFallback(
+            title: 'Checkout',
+            message: 'Unable to open checkout. Cart data is missing.',
+          );
+        }
+
+        return CheckoutScreen(cart: raw);
+      },
     ),
   ];
 }

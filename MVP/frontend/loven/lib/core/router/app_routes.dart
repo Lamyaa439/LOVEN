@@ -82,6 +82,7 @@ abstract final class AppRoutes {
 
   static const String cart = '/cart';
   static const String confirmOrder = '/confirm-order';
+  static const checkout = '/checkout';
 
   static const String ordersPrefix = '/orders/';
   static const String ordersDetails = '/orders/details';
