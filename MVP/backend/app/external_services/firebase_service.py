@@ -80,219 +80,50 @@ def _ensure_firebase() -> bool:
 # 1. Cloud Messaging (Notifications)
 # ==========================================
 
-def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
-    """
-    Dispatches a personalized welcome push notification to new users.
-
-    Args:
-        fcm_token (str): The FCM device token provided by the frontend.
-        user_name (str): The user's name for personalizing the message.
-
-    Returns:
-        bool: True if the notification was sent successfully, False otherwise.
-    """
-    if not fcm_token:
-        logger.warning("No token provided. Skipping welcome notification.")
-        return False
-
-    if not _ensure_firebase():
-        logger.warning("Firebase unavailable. Skipping welcome notification.")
-        return False
-
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="Welcome to LOVEN! 🎨 ",
-            body=f"Hi {user_name}, we're happy you're here!!",
-        ),
-        data={
-            "type": "welcome",
-            "action": "open_home_screen",
-        },
-        token=fcm_token,
-    )
-
-    try:
-        message_id = messaging.send(message)
-        logger.info("Welcome notification sent. ID: %s", message_id)
-        return True
-    except Exception as exc:
-        logger.error("FCM welcome notification failed: %s", exc)
-        return False
-
-
-def send_order_status_notification(
+def send_push_notification(
     fcm_token: str,
-    user_name: str,
-    order_id: str,
-    status: str,
+    *,
+    title: str,
+    body: str,
+    data: dict | None = None,
 ) -> bool:
     """
-    Sends an order status update push notification to the user.
+    Canonical FCM transport for all app push notifications.
 
-    Args:
-        fcm_token (str): The user's FCM device token.
-        user_name (str): The user's name.
-        order_id (str): The order ID.
-        status (str): The updated order status.
-
-    Returns:
-        bool: True if sent successfully, False otherwise.
+    Callers (typically NotificationService) own business copy and payload
+    keys; this function only initializes Firebase, stringifies data values,
+    and sends the message. Failures are logged and return False — never raised.
     """
     if not fcm_token:
-        logger.warning("No token provided. Skipping order notification.")
+        logger.debug("No FCM token; skipping push notification.")
         return False
 
     if not _ensure_firebase():
-        logger.warning("Firebase unavailable. Skipping order notification.")
+        logger.warning("Firebase unavailable; skipping push notification.")
         return False
 
-    order_id = str(order_id)
-    display_status = str(status).replace("_", " ")
-
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="Order update from LOVEN 🎨",
-            body=f"Hi {user_name}, your order #{order_id} is now {display_status}.",
-        ),
-        data={
-            "type": "order_status",
-            "action": "open_order_details",
-            "order_id": order_id,
-            "reference_id": order_id,
-            "reference_type": "order",
-            "status": str(status),
-        },
-        token=fcm_token,
-    )
-
-    try:
-        message_id = messaging.send(message)
-        logger.info("Order notification sent. ID: %s", message_id)
-        return True
-    except Exception as exc:
-        logger.error("FCM order notification failed: %s", exc)
-        return False
-
-
-def send_new_order_notification(
-    fcm_token: str,
-    user_name: str,
-    order_id: str,
-) -> bool:
-    """
-    Sends a new-order push notification to an artist.
-
-    Args:
-        fcm_token (str): The artist's FCM device token.
-        user_name (str): The artist's display name.
-        order_id (str): The order ID.
-
-    Returns:
-        bool: True if sent successfully, False otherwise.
-    """
-    if not fcm_token:
-        logger.warning("No token provided. Skipping new-order notification.")
-        return False
-
-    if not _ensure_firebase():
-        logger.warning("Firebase unavailable. Skipping new-order notification.")
-        return False
-
-    order_id = str(order_id)
-
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="New order on LOVEN 🎨",
-            body=f"Hi {user_name}, you received a new order #{order_id}.",
-        ),
-        data={
-            "type": "order_new_artist",
-            "action": "open_order_details",
-            "order_id": order_id,
-            "reference_id": order_id,
-            "reference_type": "order",
-        },
-        token=fcm_token,
-    )
-
-    try:
-        message_id = messaging.send(message)
-        logger.info("New-order notification sent. ID: %s", message_id)
-        return True
-    except Exception as exc:
-        logger.error("FCM new-order notification failed: %s", exc)
-        return False
-
-
-def send_payment_success_notification(
-    fcm_token: str,
-    user_name: str,
-    order_id: str,
-    payment_id: str | None = None,
-) -> bool:
-    """
-    Sends a payment-success push notification to a customer.
-
-    Args:
-        fcm_token (str): The buyer's FCM device token.
-        user_name (str): The buyer's display name.
-        order_id (str): The order ID.
-        payment_id (str | None): Optional internal payment UUID.
-
-    Returns:
-        bool: True if sent successfully, False otherwise.
-    """
-    if not fcm_token:
-        logger.warning("No token provided. Skipping payment-success notification.")
-        return False
-
-    if not _ensure_firebase():
-        logger.warning(
-            "Firebase unavailable. Skipping payment-success notification."
-        )
-        return False
-
-    order_id = str(order_id)
-    data = {
-        "type": "payment_success",
-        "action": "open_order_details",
-        "order_id": order_id,
-        "reference_id": order_id,
-        "reference_type": "order",
+    payload = {
+        key: str(value)
+        for key, value in (data or {}).items()
+        if value is not None
     }
-    if payment_id:
-        data["payment_id"] = str(payment_id)
 
     message = messaging.Message(
         notification=messaging.Notification(
-            title="Payment confirmed 🎨",
-            body=(
-                f"Hi {user_name}, your payment for order #{order_id} "
-                "was successful."
-            ),
+            title=title,
+            body=body,
         ),
-        data=data,
+        data=payload,
         token=fcm_token,
     )
 
     try:
         message_id = messaging.send(message)
-        logger.info("Payment-success notification sent. ID: %s", message_id)
+        logger.info("Push notification sent. ID: %s", message_id)
         return True
     except Exception as exc:
-        logger.error("FCM payment-success notification failed: %s", exc)
+        logger.warning("Push notification failed (non-fatal): %s", exc)
         return False
-
-
-def send_artist_new_order_notification(
-    fcm_token: str,
-    user_name: str,
-    order_id: str,
-) -> bool:
-    """
-    Backward-compatible alias for :func:`send_new_order_notification`.
-    """
-    return send_new_order_notification(fcm_token, user_name, order_id)
 
 
 # ==========================================
