@@ -1,10 +1,13 @@
 from app.models.order import Order
+from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 from app.persistence.repositories.order_repo import order_repo
 from app.services.notification_service import notification_service
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+artist_profile_repo = ArtistProfileRepository()
 
 # =========================================================
 # Service: Order Service
@@ -83,17 +86,6 @@ def create_user_order(data):
         order_item.to_dict() for order_item in created_items
     ]
 
-    try:
-        artist_users = order_repo.get_artist_users_for_order(order.id)
-        for artist_user in artist_users:
-            notification_service.notify_artist_new_order(artist_user, order)
-    except Exception:
-        logger.exception(
-            "Artist new-order notifications failed (non-fatal) "
-            "for order_id=%s",
-            order.id,
-        )
-
     return {
         "message": "Order created successfully",
         "order": order_payload,
@@ -110,6 +102,41 @@ def get_user_orders(buyer_id):
     return {
         "orders": [order.to_dict() for order in orders],
     }, 200
+
+
+def get_order_by_id(order_id, user_id, role=None):
+    """
+    Return a single order with line items when the caller is authorized.
+
+    Buyers may access their own orders. Artists may access orders that
+    include their artworks. Admins may access any order.
+    """
+    if not order_id:
+        return {"error": "order_id is required"}, 400
+
+    if not user_id:
+        return {"error": "user_id is required"}, 400
+
+    order, items = order_repo.get_order_with_items(order_id)
+    if not order:
+        return {"error": "Order not found"}, 404
+
+    if role != "admin":
+        is_buyer = str(order.buyer_id) == str(user_id)
+        is_artist = False
+
+        if not is_buyer:
+            profile = artist_profile_repo.get_active_by_user_id(user_id)
+            if profile:
+                is_artist = order_repo.artist_has_order(profile.id, order.id)
+
+        if not is_buyer and not is_artist:
+            return {"error": "Forbidden"}, 403
+
+    order_payload = order.to_dict()
+    order_payload["items"] = [item.to_dict() for item in items]
+
+    return {"order": order_payload}, 200
 
 
 def get_artist_orders(artist_profile_id):

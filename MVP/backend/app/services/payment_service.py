@@ -284,6 +284,18 @@ def verify_payment(order_id, moyasar_payment_id, buyer_id):
             updated_payment.id,
         )
 
+    try:
+        artist_users = order_repo.get_artist_users_for_order(order.id)
+        for artist_user in artist_users:
+            notification_service.notify_artist_new_order(artist_user, order)
+    except Exception:
+        logger.exception(
+            "Artist new-order notifications failed (non-fatal) "
+            "for order_id=%s payment_id=%s",
+            order.id,
+            updated_payment.id,
+        )
+
     return {
         "message": "Payment verified successfully",
         "payment": updated_payment.to_dict(),
