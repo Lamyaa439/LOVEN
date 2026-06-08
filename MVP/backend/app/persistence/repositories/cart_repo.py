@@ -8,7 +8,7 @@ cart-specific lookups and line-item helpers.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import update
+from sqlalchemy import func, update
 from sqlalchemy.orm import joinedload
 
 from app.models.cart import Cart
@@ -78,6 +78,37 @@ class CartRepository(SQLAlchemyRepository):
         # نرتب القائمة حسب التاريخ الاحدث
         active_items.sort(key=get_creation_data, reverse=True)   
         return cart, active_items
+
+    def list_carts_needing_inactivity_reminder(self, cutoff_dt):
+        """
+        Return active carts whose latest cart/item activity is on/before cutoff.
+
+        Requires at least one active line item. Uses the most recent timestamp
+        across ``carts.updated_at`` and each active line's ``created_at`` /
+        ``updated_at``. Notification dedupe remains in NotificationService.
+        """
+        if not cutoff_dt:
+            return []
+
+        last_activity = func.greatest(
+            Cart.updated_at,
+            func.max(
+                func.greatest(
+                    CartItem.updated_at,
+                    CartItem.created_at,
+                )
+            ),
+        )
+
+        return (
+            self.model.query
+            .join(CartItem, CartItem.cart_id == Cart.id)
+            .filter(Cart.deleted_at.is_(None))
+            .filter(CartItem.deleted_at.is_(None))
+            .group_by(Cart.id)
+            .having(last_activity <= cutoff_dt)
+            .all()
+        )
 
     # =====================================================================
     # CartItem operations

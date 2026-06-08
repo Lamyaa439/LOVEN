@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -28,6 +30,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void>? _bootstrapFuture;
   bool _sessionExpiryInProgress = false;
+  StreamSubscription<String>? _fcmTokenRefreshSubscription;
 
   AuthCubit({
     required AuthRepository authRepository,
@@ -71,6 +74,7 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
       _emit(AuthSuccess(user: user));
+      unawaited(syncFcmTokenIfSessionActive());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Session restore failed: $e');
@@ -394,6 +398,73 @@ class AuthCubit extends Cubit<AuthState> {
       }
       return false;
     }
+  }
+
+  /// Listens for FCM token rotation and syncs to the backend when signed in.
+  void startPushTokenSync() {
+    _fcmTokenRefreshSubscription ??=
+        FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+      unawaited(_syncFcmTokenToBackend(fcmToken: token));
+    });
+  }
+
+  /// Best-effort FCM token sync after session restore or explicit refresh.
+  Future<void> syncFcmTokenIfSessionActive() async {
+    if (!authStateHasSession(state) || isClosed) {
+      return;
+    }
+
+    try {
+      final firebaseUser = await _firebaseAuthService.reloadUser();
+      if (firebaseUser == null || isClosed) {
+        return;
+      }
+
+      final fcmToken = await _getFcmTokenSafely();
+      if (fcmToken == null || isClosed) {
+        return;
+      }
+
+      await _syncFcmTokenToBackend(fcmToken: fcmToken);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM token sync skipped: $e');
+      }
+    }
+  }
+
+  Future<void> _syncFcmTokenToBackend({required String fcmToken}) async {
+    if (!authStateHasSession(state) || isClosed) {
+      return;
+    }
+
+    try {
+      final firebaseUser = await _firebaseAuthService.reloadUser();
+      if (firebaseUser == null || isClosed) {
+        return;
+      }
+
+      final idToken = await _firebaseAuthService.getIdToken();
+      if (isClosed) {
+        return;
+      }
+
+      await _authRepository.loginWithFirebase(
+        idToken: idToken,
+        fcmToken: fcmToken,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM token sync failed: $e');
+      }
+    }
+  }
+
+  @override
+  Future<void> close() {
+    unawaited(_fcmTokenRefreshSubscription?.cancel());
+    _fcmTokenRefreshSubscription = null;
+    return super.close();
   }
 
   Future<String?> _getFcmTokenSafely() async {

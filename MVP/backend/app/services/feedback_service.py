@@ -1,5 +1,12 @@
-from app.persistence.repositories.feedback_repo import feedback_repo
+import logging
 
+from app.persistence.repositories.feedback_repo import feedback_repo
+from app.persistence.repositories.user_repo import UserRepository
+from app.services.notification_service import notification_service
+
+
+logger = logging.getLogger(__name__)
+user_repo = UserRepository()
 
 # =========================================================
 # Feedback Service
@@ -33,6 +40,18 @@ def submit_feedback(data):
         subject=subject,
         message=message,
     )
+
+    try:
+        user = user_repo.get_by_id(user_id)
+        if user:
+            notification_service.notify_feedback_submitted(user, feedback)
+    except Exception:
+        logger.exception(
+            "Feedback confirmation notification failed (non-fatal) "
+            "for user_id=%s feedback_id=%s",
+            user_id,
+            feedback.id,
+        )
 
     return {
         "message": "Feedback submitted successfully",

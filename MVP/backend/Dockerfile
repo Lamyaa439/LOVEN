@@ -8,4 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["sh", "-c", "gunicorn --workers 3 --timeout 120 --access-logfile - --error-logfile - --bind 0.0.0.0:$PORT run:app"]
+ENV FLASK_APP=run:app
+
+# Apply pending migrations before serving traffic (notifications table, etc.).
+CMD ["sh", "-c", "flask db upgrade && gunicorn --workers 3 --timeout 120 --access-logfile - --error-logfile - --bind 0.0.0.0:$PORT run:app"]

@@ -8,8 +8,10 @@ from decimal import Decimal, InvalidOperation
 
 from app.extensions import db
 from app.models.artwork import Artwork
+from app.models.artist_profile import ArtistProfile
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.payment import Payment
 from app.models.user import User
 from app.persistence.repository import SQLAlchemyRepository
 
@@ -201,6 +203,24 @@ class OrderRepository(SQLAlchemyRepository):
             .all()
         )
 
+    def get_order_with_items(self, order_id):
+        """
+        Return an order and its line items, or (None, []) when missing.
+        """
+        if not order_id:
+            return None, []
+
+        order = db.session.get(Order, order_id)
+        if not order:
+            return None, []
+
+        items = (
+            OrderItem.query.filter_by(order_id=order.id)
+            .order_by(OrderItem.created_at.asc())
+            .all()
+        )
+        return order, items
+
     def get_incoming_orders_by_artist(self, artist_profile_id):
         """
         Return distinct orders containing artworks owned by the artist.
@@ -236,6 +256,48 @@ class OrderRepository(SQLAlchemyRepository):
             )
             .first()
             is not None
+        )
+
+    def get_artist_users_for_order(self, order_id):
+        """
+        Return distinct artist User rows linked to artworks in an order.
+
+        Supports multi-artist orders. Returns only active users.
+        """
+        if not order_id:
+            return []
+
+        return (
+            db.session.query(User)
+            .join(ArtistProfile, ArtistProfile.user_id == User.id)
+            .join(Artwork, Artwork.artist_profile_id == ArtistProfile.id)
+            .join(OrderItem, OrderItem.artwork_id == Artwork.id)
+            .filter(OrderItem.order_id == order_id)
+            .filter(User.is_active.is_(True))
+            .distinct()
+            .all()
+        )
+
+    def list_orders_needing_artist_reminder(self, cutoff_dt):
+        """
+        Return paid orders whose payment timestamp is on/before ``cutoff_dt``.
+
+        Used by scheduled jobs to find orders still awaiting artist fulfillment.
+        Notification dedupe remains in NotificationService.
+        """
+        if not cutoff_dt:
+            return []
+
+        return (
+            db.session.query(Order)
+            .join(Payment, Payment.order_id == Order.id)
+            .filter(Order.status == "paid")
+            .filter(Payment.status == "paid")
+            .filter(Payment.paid_at.isnot(None))
+            .filter(Payment.paid_at <= cutoff_dt)
+            .filter(Payment.deleted_at.is_(None))
+            .order_by(Payment.paid_at.asc())
+            .all()
         )
 
     def update_order_status(

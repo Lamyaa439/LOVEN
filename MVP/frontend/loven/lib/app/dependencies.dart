@@ -14,6 +14,9 @@ import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 import 'package:loven/features/cart/data/repositories/cart_repository.dart';
 import 'package:loven/features/favorites/data/repositories/favorites_repository.dart';
 import 'package:loven/features/feedback/data/repositories/feedback_repository.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
+import 'package:loven/features/notifications/data/repositories/notifications_repository.dart';
+import 'package:loven/features/notifications/data/services/push_notification_service.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/data/repositories/report_repository.dart';
 import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
@@ -42,6 +45,9 @@ class AppDependencies {
     required this.cartRepository,
     required this.feedbackRepository,
     required this.reportRepository,
+    required this.notificationsRepository,
+    required this.notificationsCubit,
+    required this.pushNotificationService,
     required this.splashMinDurationNotifier,
     required this.appRouter,
   });
@@ -63,6 +69,9 @@ class AppDependencies {
   final CartRepository cartRepository;
   final FeedbackRepository feedbackRepository;
   final ReportRepository reportRepository;
+  final NotificationsRepository notificationsRepository;
+  final NotificationsCubit notificationsCubit;
+  final PushNotificationService pushNotificationService;
   final SplashMinDurationNotifier splashMinDurationNotifier;
   final AppRouter appRouter;
 
@@ -90,6 +99,9 @@ class AppDependencies {
     final cartRepository = CartRepository(apiClient: apiClient);
     final feedbackRepository = FeedbackRepository(apiClient: apiClient);
     final reportRepository = ReportRepository(apiClient: apiClient);
+    final notificationsRepository = NotificationsRepository(
+      apiClient: apiClient,
+    );
 
     final authCubit = AuthCubit(
       authRepository: authRepository,
@@ -99,6 +111,11 @@ class AppDependencies {
 
     final accountCubit = AccountCubit(
       accountRepository: accountRepository,
+      authCubit: authCubit,
+    );
+
+    final notificationsCubit = NotificationsCubit(
+      notificationsRepository,
       authCubit: authCubit,
     );
 
@@ -121,6 +138,8 @@ class AppDependencies {
       verificationRequestRepository: verificationRequestRepository,
     );
 
+    final pushNotificationService = PushNotificationService();
+
     return AppDependencies._(
       appPreferences: appPreferences,
       tokenStorage: tokenStorage,
@@ -139,6 +158,9 @@ class AppDependencies {
       cartRepository: cartRepository,
       feedbackRepository: feedbackRepository,
       reportRepository: reportRepository,
+      notificationsRepository: notificationsRepository,
+      notificationsCubit: notificationsCubit,
+      pushNotificationService: pushNotificationService,
       splashMinDurationNotifier: splashMinDurationNotifier,
       appRouter: appRouter,
     );
@@ -146,6 +168,8 @@ class AppDependencies {
 
   void dispose() {
     apiClient.detachSessionExpiredHandler();
+    pushNotificationService.dispose();
+    notificationsCubit.close();
     accountCubit.close();
     authCubit.close();
     splashMinDurationNotifier.dispose();

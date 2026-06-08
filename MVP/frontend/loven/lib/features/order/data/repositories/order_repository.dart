@@ -73,6 +73,15 @@ class OrderRepository {
     return _asMap(response.data);
   }
 
+  /// Fetches a single order by ID (`GET /orders/{orderId}`).
+  ///
+  /// Returns the decoded JSON body (typically `{"order": ...}`).
+  Future<Map<String, dynamic>> getOrderById(String orderId) async {
+    final response = await _apiClient.get(ApiConstants.orderById(orderId));
+
+    return _asMap(response.data);
+  }
+
   /// Lists orders for the authenticated buyer (`GET /orders/mine`).
   Future<Map<String, dynamic>> getMyOrders() async {
     final response = await _apiClient.get(ApiConstants.myOrders);

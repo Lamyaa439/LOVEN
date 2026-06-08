@@ -8,7 +8,6 @@ legacy helpers (logout, change-password) isolated from Firebase credential logic
 import logging
 
 from app.core.uuid_utils import as_uuid
-from app.external_services.firebase_service import send_welcome_notification
 from app.persistence.repositories.user_repo import UserRepository
 from app.services.auth_service import change_password
 from app.services.firebase_sync_service import login_exchange, register_sync
