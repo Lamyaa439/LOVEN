@@ -9,6 +9,7 @@ import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
+import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
@@ -64,6 +65,132 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
       });
     }
   }
+
+  Future<void> _showReportDialog() async {
+  if (!AppSession.hasSessionFromContext(context)) {
+    context.go(AppRoutes.auth);
+    return;
+  }
+
+  String selectedReason = 'Copyright infringement';
+
+  final detailsController = TextEditingController();
+
+  await showDialog(
+    context: context,
+    builder: (_) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Report Artwork'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedReason,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Copyright infringement',
+                      child: Text('Copyright infringement'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Offensive content',
+                      child: Text('Offensive content'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Spam',
+                      child: Text('Spam'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Fake artwork',
+                      child: Text('Fake artwork'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Misleading description',
+                      child: Text('Misleading description'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Other',
+                      child: Text('Other'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        selectedReason = value;
+                      });
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Additional details (optional)',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+onPressed: () async {
+  try {
+final success =
+    await context.read<ReportCubit>().submitReport(
+          targetType: 'artwork',
+          targetId: widget.artItem.id,
+          reason: selectedReason,
+          details: detailsController.text.trim().isEmpty
+              ? null
+              : detailsController.text.trim(),
+        );
+
+if (!mounted) return;
+
+if (success) {
+  Navigator.pop(context);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Report submitted'),
+    ),
+  );
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Failed to submit report'),
+    ),
+  );
+}
+  } catch (_) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to submit report'),
+      ),
+    );
+  }
+},
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
 
   Future<void> _addToCart() async {
     if (!AppSession.hasSessionFromContext(context)) {
@@ -271,33 +398,49 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
             ),
           ),
         ),
-        BlocBuilder<FavoritesCubit, FavoritesState>(
-          builder: (context, state) {
-            final favoriteIds = state is FavoritesLoaded
-                ? state.favoriteArtworkIds
-                : <String>{};
+Row(
+  children: [
+    IconButton(
+      onPressed: () {
+        _showReportDialog();
+      },
+      icon: Icon(
+        Icons.flag_outlined,
+        color: theme.colorScheme.error,
+      ),
+    ),
 
-            final isFavorited = favoriteIds.contains(widget.artItem.id);
+    BlocBuilder<FavoritesCubit, FavoritesState>(
+      builder: (context, state) {
+        final favoriteIds = state is FavoritesLoaded
+            ? state.favoriteArtworkIds
+            : <String>{};
 
-            return IconButton(
-              onPressed: () {
-                if (!AppSession.hasSessionFromContext(context)) {
-                  Navigator.pop(context);
-                  context.push(AppRoutes.auth);
-                  return;
-                }
+        final isFavorited = favoriteIds.contains(widget.artItem.id);
 
-                context.read<FavoritesCubit>().toggleFavorite(
-                      widget.artItem.id,
-                    );
-              },
-              icon: Icon(
-                isFavorited ? Icons.favorite : Icons.favorite_border,
-                color: theme.colorScheme.primary,
-              ),
-            );
+        return IconButton(
+          onPressed: () {
+            if (!AppSession.hasSessionFromContext(context)) {
+              Navigator.pop(context);
+              context.push(AppRoutes.auth);
+              return;
+            }
+
+            context.read<FavoritesCubit>().toggleFavorite(
+                  widget.artItem.id,
+                );
           },
-        ),
+          icon: Icon(
+            isFavorited
+                ? Icons.favorite
+                : Icons.favorite_border,
+            color: theme.colorScheme.primary,
+          ),
+        );
+      },
+    ),
+  ],
+)
       ],
     );
   }
