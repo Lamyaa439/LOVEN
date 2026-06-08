@@ -8,9 +8,7 @@ notification rows or sending push messages directly.
 
 import logging
 
-from firebase_admin import messaging
-
-from app.external_services.firebase_service import initialize_firebase
+from app.external_services.firebase_service import send_push_notification
 from app.persistence.repositories.notification_repo import notification_repo
 
 
@@ -95,10 +93,10 @@ class NotificationService:
             title=title,
             body=body,
             push_user=user,
-            push_data={
-                "type": self.TYPE_WELCOME,
-                "action": "open_home_screen",
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_WELCOME,
+                action="open_home_screen",
+            ),
         )
 
     def notify_artist_new_order(self, artist_user, order):
@@ -143,11 +141,12 @@ class NotificationService:
             reference_id=order.id,
             reference_type=self.REFERENCE_ORDER,
             push_user=artist_user,
-            push_data={
-                "type": self.TYPE_ORDER_NEW_ARTIST,
-                "action": "open_order_details",
-                "order_id": order_id,
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_ORDER_NEW_ARTIST,
+                action="open_order_details",
+                reference_id=order.id,
+                reference_type=self.REFERENCE_ORDER,
+            ),
         )
 
     def notify_artist_order_reminder(self, artist_user, order):
@@ -196,15 +195,22 @@ class NotificationService:
             reference_id=order.id,
             reference_type=self.REFERENCE_ORDER,
             push_user=artist_user,
-            push_data={
-                "type": self.TYPE_ARTIST_ORDER_REMINDER,
-                "action": "open_order_details",
-                "order_id": order_id,
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_ARTIST_ORDER_REMINDER,
+                action="open_order_details",
+                reference_id=order.id,
+                reference_type=self.REFERENCE_ORDER,
+            ),
         )
 
     def notify_customer_order_status(self, buyer_user, order, new_status):
-        """Notify a customer that their order status changed."""
+        """
+        Notify a customer that their order status changed.
+
+        Deduplicated: at most one order-status notification per buyer per order
+        per status value (e.g. shipped and delivered may both exist; repeated
+        shipped does not create another row).
+        """
         if not buyer_user or not buyer_user.id:
             return None
         if not order or not order.id:
@@ -212,9 +218,25 @@ class NotificationService:
         if not new_status:
             return None
 
+        body_suffix = self._order_status_body_suffix(new_status)
+        existing = self.notification_repo.find_order_status_notification(
+            user_id=buyer_user.id,
+            order_id=order.id,
+            body_suffix=body_suffix,
+        )
+        if existing:
+            logger.debug(
+                "Skipping duplicate order-status notification "
+                "for user_id=%s order_id=%s status=%s",
+                buyer_user.id,
+                order.id,
+                new_status,
+            )
+            return existing
+
         order_id = str(order.id)
         display_name = buyer_user.name or "Customer"
-        display_status = str(new_status).replace("_", " ")
+        display_status = self._order_status_display(new_status)
         title = "Order update from LOVEN 🎨"
         body = (
             f"Hi {display_name}, your order #{order_id} "
@@ -229,12 +251,13 @@ class NotificationService:
             reference_id=order.id,
             reference_type=self.REFERENCE_ORDER,
             push_user=buyer_user,
-            push_data={
-                "type": self.TYPE_ORDER_STATUS,
-                "action": "open_order_details",
-                "order_id": order_id,
-                "status": str(new_status),
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_ORDER_STATUS,
+                action="open_order_details",
+                reference_id=order.id,
+                reference_type=self.REFERENCE_ORDER,
+                status=str(new_status),
+            ),
         )
 
     def notify_payment_success(self, buyer_user, order, payment=None):
@@ -276,13 +299,11 @@ class NotificationService:
             "was successful."
         )
 
-        push_data = {
-            "type": self.TYPE_PAYMENT_SUCCESS,
-            "action": "open_order_details",
-            "order_id": order_id,
-        }
-        if payment is not None and getattr(payment, "id", None):
-            push_data["payment_id"] = str(payment.id)
+        payment_id = (
+            str(payment.id)
+            if payment is not None and getattr(payment, "id", None)
+            else None
+        )
 
         return self.create_in_app_notification(
             user_id=buyer_user.id,
@@ -292,7 +313,13 @@ class NotificationService:
             reference_id=order.id,
             reference_type=self.REFERENCE_ORDER,
             push_user=buyer_user,
-            push_data=push_data,
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_PAYMENT_SUCCESS,
+                action="open_order_details",
+                reference_id=order.id,
+                reference_type=self.REFERENCE_ORDER,
+                payment_id=payment_id,
+            ),
         )
 
     def notify_feedback_submitted(self, user, feedback):
@@ -317,11 +344,12 @@ class NotificationService:
             reference_id=feedback.id,
             reference_type=self.REFERENCE_FEEDBACK,
             push_user=user,
-            push_data={
-                "type": self.TYPE_FEEDBACK_SUBMITTED,
-                "action": "open_notifications",
-                "feedback_id": str(feedback.id),
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_FEEDBACK_SUBMITTED,
+                action="open_notifications",
+                reference_id=feedback.id,
+                reference_type=self.REFERENCE_FEEDBACK,
+            ),
         )
 
     def notify_cart_inactivity(self, user, cart):
@@ -370,11 +398,12 @@ class NotificationService:
             reference_id=cart.id,
             reference_type=self.REFERENCE_CART,
             push_user=user,
-            push_data={
-                "type": self.TYPE_CART_INACTIVITY,
-                "action": "open_cart",
-                "cart_id": str(cart.id),
-            },
+            push_data=self._build_push_data(
+                notification_type=self.TYPE_CART_INACTIVITY,
+                action="open_cart",
+                reference_id=cart.id,
+                reference_type=self.REFERENCE_CART,
+            ),
         )
 
     def _notification_exists(
@@ -421,45 +450,95 @@ class NotificationService:
 
         return query.first()
 
+    @staticmethod
+    def _normalize_order_status(status):
+        """Normalize raw status values for stable display and dedupe matching."""
+        return str(status).strip().lower()
+
+    @classmethod
+    def _order_status_display(cls, status):
+        """Human-readable status label used in notification copy."""
+        return cls._normalize_order_status(status).replace("_", " ")
+
+    @classmethod
+    def _order_status_body_suffix(cls, status):
+        """
+        Stable trailing body fragment identifying a specific order status.
+
+        Used by order_status dedupe to distinguish shipped vs delivered while
+        collapsing repeated emissions of the same status.
+        """
+        return f"is now {cls._order_status_display(status)}."
+
+    @staticmethod
+    def _build_push_data(
+        *,
+        notification_type,
+        action,
+        reference_id=None,
+        reference_type=None,
+        order_id=None,
+        cart_id=None,
+        feedback_id=None,
+        payment_id=None,
+        status=None,
+    ):
+        """
+        Build the canonical FCM data payload for a notification type.
+
+        Always includes ``type`` and ``action``. Entity reference keys
+        (``reference_id``, ``reference_type``, and typed IDs) are added
+        when provided so Flutter can route from one consistent contract.
+        """
+        data = {
+            "type": notification_type,
+            "action": action,
+        }
+
+        if reference_id is not None:
+            data["reference_id"] = str(reference_id)
+
+        if reference_type is not None:
+            data["reference_type"] = reference_type
+
+        if reference_type == NotificationService.REFERENCE_ORDER:
+            resolved_order_id = order_id if order_id is not None else reference_id
+            if resolved_order_id is not None:
+                data["order_id"] = str(resolved_order_id)
+
+        if reference_type == NotificationService.REFERENCE_CART:
+            resolved_cart_id = cart_id if cart_id is not None else reference_id
+            if resolved_cart_id is not None:
+                data["cart_id"] = str(resolved_cart_id)
+
+        if reference_type == NotificationService.REFERENCE_FEEDBACK:
+            resolved_feedback_id = (
+                feedback_id if feedback_id is not None else reference_id
+            )
+            if resolved_feedback_id is not None:
+                data["feedback_id"] = str(resolved_feedback_id)
+
+        if payment_id is not None:
+            data["payment_id"] = str(payment_id)
+
+        if status is not None:
+            data["status"] = str(status)
+
+        return data
+
     def _send_push_best_effort(self, fcm_token, title, body, data=None):
         """
         Attempt FCM delivery without affecting the caller's control flow.
 
+        Delegates transport to firebase_service.send_push_notification.
         Returns True when a message was sent, False otherwise.
         """
-        if not fcm_token:
-            logger.debug("No FCM token; skipping push notification.")
-            return False
-
-        if not initialize_firebase():
-            logger.warning("Firebase unavailable; skipping push notification.")
-            return False
-
-        payload = {
-            key: str(value)
-            for key, value in (data or {}).items()
-            if value is not None
-        }
-
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            data=payload,
-            token=fcm_token,
+        return send_push_notification(
+            fcm_token,
+            title=title,
+            body=body,
+            data=data,
         )
-
-        try:
-            message_id = messaging.send(message)
-            logger.info("Push notification sent. ID: %s", message_id)
-            return True
-        except Exception as exc:
-            logger.warning(
-                "Push notification failed (non-fatal): %s",
-                exc,
-            )
-            return False
 
 
 notification_service = NotificationService()
