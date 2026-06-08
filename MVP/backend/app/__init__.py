@@ -180,4 +180,8 @@ def create_app():
 
     logger.debug("Registered routes: %s", app.url_map)
 
+    from app.cli import register_cli_commands
+
+    register_cli_commands(app)
+
     return app
