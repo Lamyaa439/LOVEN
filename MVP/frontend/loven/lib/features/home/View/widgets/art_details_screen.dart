@@ -9,6 +9,7 @@ import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
+import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 
 class ArtDetailsScreen extends StatefulWidget {
   final ArtworkModel artItem;
@@ -64,6 +65,58 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
       });
     }
   }
+
+  Future<void> _showReportDialog() async {
+  if (!AppSession.hasSessionFromContext(context)) {
+    context.go(AppRoutes.auth);
+    return;
+  }
+
+  final controller = TextEditingController();
+
+  await showDialog(
+    context: context,
+    builder: (_) {
+      return AlertDialog(
+        title: const Text('Report Artwork'),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            hintText: 'Describe the issue',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await context.read<ReportCubit>().submitReport(
+                    targetType: 'artwork',
+                    targetId: widget.artItem.id,
+                    reason: 'reported_by_user',
+                    details: controller.text.trim(),
+                  );
+
+              if (!mounted) return;
+
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Report submitted'),
+                ),
+              );
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> _addToCart() async {
     if (!AppSession.hasSessionFromContext(context)) {
@@ -271,33 +324,49 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
             ),
           ),
         ),
-        BlocBuilder<FavoritesCubit, FavoritesState>(
-          builder: (context, state) {
-            final favoriteIds = state is FavoritesLoaded
-                ? state.favoriteArtworkIds
-                : <String>{};
+Row(
+  children: [
+    IconButton(
+      onPressed: () {
+        _showReportDialog();
+      },
+      icon: Icon(
+        Icons.flag_outlined,
+        color: theme.colorScheme.error,
+      ),
+    ),
 
-            final isFavorited = favoriteIds.contains(widget.artItem.id);
+    BlocBuilder<FavoritesCubit, FavoritesState>(
+      builder: (context, state) {
+        final favoriteIds = state is FavoritesLoaded
+            ? state.favoriteArtworkIds
+            : <String>{};
 
-            return IconButton(
-              onPressed: () {
-                if (!AppSession.hasSessionFromContext(context)) {
-                  Navigator.pop(context);
-                  context.push(AppRoutes.auth);
-                  return;
-                }
+        final isFavorited = favoriteIds.contains(widget.artItem.id);
 
-                context.read<FavoritesCubit>().toggleFavorite(
-                      widget.artItem.id,
-                    );
-              },
-              icon: Icon(
-                isFavorited ? Icons.favorite : Icons.favorite_border,
-                color: theme.colorScheme.primary,
-              ),
-            );
+        return IconButton(
+          onPressed: () {
+            if (!AppSession.hasSessionFromContext(context)) {
+              Navigator.pop(context);
+              context.push(AppRoutes.auth);
+              return;
+            }
+
+            context.read<FavoritesCubit>().toggleFavorite(
+                  widget.artItem.id,
+                );
           },
-        ),
+          icon: Icon(
+            isFavorited
+                ? Icons.favorite
+                : Icons.favorite_border,
+            color: theme.colorScheme.primary,
+          ),
+        );
+      },
+    ),
+  ],
+)
       ],
     );
   }

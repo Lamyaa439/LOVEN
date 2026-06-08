@@ -17,6 +17,7 @@ import 'package:loven/features/verification_request/controller/cubit/verificatio
 import 'package:loven/features/verification_request/view/screens/verification_request_screen.dart';
 import 'package:loven/features/cart/data/models/cart_model.dart';
 import 'package:loven/features/cart/view/screens/checkout_screen.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 
 /// Account hub, orders, cart, checkout, and related signed-in flows.
 List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
@@ -88,9 +89,17 @@ List<RouteBase> buildCommerceRoutesCart(AppRouterDeps deps) {
       builder: (context, state) => const NavigationScreen(initialIndex: 2),
     ),
     GoRoute(
-      path: AppRoutes.artworksCreate,
-      builder: (context, state) => const CreateArtworkScreen(),
-    ),
+  path: AppRoutes.artworksCreate,
+  builder: (context, state) {
+    return BlocProvider(
+      create: (_) => ArtistProfileCubit(
+        repository: deps.artistRepository,
+        authCubit: deps.authCubit,
+      )..fetchMyProfileData(),
+      child: const CreateArtworkScreen(),
+    );
+  },
+),
     GoRoute(
       path: AppRoutes.checkout,
       builder: (context, state) {
