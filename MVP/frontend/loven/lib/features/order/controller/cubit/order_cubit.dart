@@ -1,20 +1,54 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
+
 import 'order_state.dart';
 
 /// Checkout and order-listing presentation logic.
 ///
-/// Delegates data access to [OrderRepository] and translates backend
-/// pricing-validation failures into actionable UI messages so buyers
-/// refresh stale cart totals instead of retrying with outdated amounts.
+/// Delegates data access to [OrderRepository] and gates all protected order
+/// operations behind the active LOVEN session.
 class OrderCubit extends Cubit<OrderState> {
+  OrderCubit(
+    this._repository, {
+    required AuthCubit authCubit,
+  })  : _authCubit = authCubit,
+        super(OrderInitial());
+
   final OrderRepository _repository;
+  final AuthCubit _authCubit;
 
   /// Backend rejects checkout when client totals diverge from DB artwork prices.
   static const _pricingMismatchPattern = 'does not match server pricing';
 
-  OrderCubit(this._repository) : super(OrderInitial());
+  bool get _hasSession => authStateHasSession(_authCubit.state);
+
+  void _emit(OrderState state) {
+    if (isClosed) {
+      return;
+    }
+
+    emit(state);
+  }
+
+  void resetForSignedOut() {
+    if (isClosed) {
+      return;
+    }
+
+    emit(OrderInitial());
+  }
+
+  bool _guardSession() {
+    if (_hasSession) {
+      return true;
+    }
+
+    resetForSignedOut();
+    return false;
+  }
 
   /// Returns true when [message] is a server-side pricing validation failure.
   bool _isPricingMismatchError(String message) {
@@ -46,7 +80,11 @@ class OrderCubit extends Cubit<OrderState> {
     required double totalAmount,
     required List<Map<String, dynamic>> items,
   }) async {
-    emit(OrderLoading());
+    if (!_guardSession()) {
+      return;
+    }
+
+    _emit(OrderLoading());
 
     try {
       final order = await _repository.createOrder(
@@ -56,11 +94,11 @@ class OrderCubit extends Cubit<OrderState> {
         items: items,
       );
 
-      emit(OrderLoaded(order));
+      _emit(OrderLoaded(order));
     } catch (e) {
       final message = _mapCreateOrderError(e);
 
-      emit(
+      _emit(
         OrderError(
           message,
           shouldRefreshCart: _isPricingMismatchError(e.toString()),
@@ -70,46 +108,58 @@ class OrderCubit extends Cubit<OrderState> {
   }
 
   Future<void> getMyOrders() async {
-    emit(OrderLoading());
+    if (!_guardSession()) {
+      return;
+    }
+
+    _emit(OrderLoading());
 
     try {
       final data = await _repository.getMyOrders();
 
-      emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
+      _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
     } catch (e) {
-      emit(OrderError(e.toString()));
+      _emit(OrderError(e.toString()));
     }
   }
 
   Future<void> getBuyerOrders({
     required String buyerId,
   }) async {
-    emit(OrderLoading());
+    if (!_guardSession()) {
+      return;
+    }
+
+    _emit(OrderLoading());
 
     try {
       final data = await _repository.getBuyerOrders(
         buyerId: buyerId,
       );
 
-      emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
+      _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
     } catch (e) {
-      emit(OrderError(e.toString()));
+      _emit(OrderError(e.toString()));
     }
   }
 
   Future<void> getArtistOrders({
     required String artistProfileId,
   }) async {
-    emit(OrderLoading());
+    if (!_guardSession()) {
+      return;
+    }
+
+    _emit(OrderLoading());
 
     try {
       final data = await _repository.getArtistOrders(
         artistProfileId: artistProfileId,
       );
 
-      emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
+      _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
     } catch (e) {
-      emit(OrderError(e.toString()));
+      _emit(OrderError(e.toString()));
     }
   }
 
@@ -119,7 +169,12 @@ class OrderCubit extends Cubit<OrderState> {
     String? shippingCompany,
     String? trackingNumber,
   }) async {
-    emit(OrderLoading());
+    if (!_guardSession()) {
+      return;
+    }
+
+    _emit(OrderLoading());
+
     try {
       final order = await _repository.updateOrderStatus(
         orderId: orderId,
@@ -128,9 +183,9 @@ class OrderCubit extends Cubit<OrderState> {
         trackingNumber: trackingNumber,
       );
 
-      emit(OrderLoaded(order));
+      _emit(OrderLoaded(order));
     } catch (e) {
-      emit(OrderError(e.toString()));
+      _emit(OrderError(e.toString()));
     }
   }
 }

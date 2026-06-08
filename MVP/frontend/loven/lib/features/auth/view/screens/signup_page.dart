@@ -38,22 +38,17 @@ class SignupPage extends StatefulWidget {
   });
 
   @override
-  State<SignupPage> createState() =>
-      _SignupPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _SignupPageState
-    extends State<SignupPage> {
+class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController =
-      TextEditingController();
+  final _nameController = TextEditingController();
 
-  final _emailController =
-      TextEditingController();
+  final _emailController = TextEditingController();
 
-  final _passwordController =
-      TextEditingController();
+  final _passwordController = TextEditingController();
 
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
@@ -108,11 +103,9 @@ class _SignupPageState
   // =========================================================
 
   void _onEmailChanged() {
-    final email =
-        _emailController.text.trim();
+    final email = _emailController.text.trim();
 
-    if (_debounceTimer?.isActive ??
-        false) {
+    if (_debounceTimer?.isActive ?? false) {
       _debounceTimer!.cancel();
     }
 
@@ -130,8 +123,7 @@ class _SignupPageState
 
     if (!emailRegex.hasMatch(email)) {
       setState(() {
-        _emailAsyncError =
-            'Enter a valid email address';
+        _emailAsyncError = 'Enter a valid email address';
       });
 
       return;
@@ -145,51 +137,37 @@ class _SignupPageState
     _debounceTimer = Timer(
       const Duration(milliseconds: 500),
       () async {
-        final isTaken = await context
-            .read<AuthCubit>()
-            .checkEmailExists(email);
+        final isTaken = await context.read<AuthCubit>().checkEmailExists(email);
 
         if (!mounted) return;
 
         setState(() {
           _isEmailChecking = false;
 
-          _emailAsyncError = isTaken
-              ? 'This email is already registered'
-              : null;
+          _emailAsyncError =
+              isTaken ? 'This email is already registered' : null;
         });
       },
     );
   }
 
   void _onPasswordChanged() {
-    final password =
-        _passwordController.text;
+    final password = _passwordController.text;
 
     setState(() {
-      _hasMinLength =
-          password.length >= 8;
+      _hasMinLength = password.length >= 8;
 
-      _hasUppercase = password
-          .contains(RegExp(r'[A-Za-z]'));
+      _hasUppercase = password.contains(RegExp(r'[A-Za-z]'));
 
-      _hasDigits = password
-          .contains(RegExp(r'[0-9]'));
+      _hasDigits = password.contains(RegExp(r'[0-9]'));
     });
   }
 
-  bool get _isPasswordValid =>
-      _hasMinLength &&
-      _hasUppercase &&
-      _hasDigits;
+  bool get _isPasswordValid => _hasMinLength && _hasUppercase && _hasDigits;
 
   bool get _isFormValid =>
-      _nameController.text
-          .trim()
-          .isNotEmpty &&
-      _emailController.text
-          .trim()
-          .isNotEmpty &&
+      _nameController.text.trim().isNotEmpty &&
+      _emailController.text.trim().isNotEmpty &&
       _emailAsyncError == null &&
       !_isEmailChecking &&
       _isPasswordValid;
@@ -241,8 +219,7 @@ class _SignupPageState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final colorScheme =
-        theme.colorScheme;
+    final colorScheme = theme.colorScheme;
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
@@ -259,8 +236,7 @@ class _SignupPageState
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(
               horizontal: 24,
             ),
@@ -270,394 +246,246 @@ class _SignupPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-
                   IconButton(
                     onPressed: _isSubmitting ? null : _navigateBack,
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: colorScheme
-                            .onSurface,
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Sign Up',
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      fontSize: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Create your account and start discovering art',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _FieldLabel(
+                    text: 'Name',
+                    theme: theme,
+                  ),
+                  TextFormField(
+                    controller: _nameController,
+                    focusNode: _nameFocusNode,
+                    textInputAction: TextInputAction.next,
+                    enabled: !_isSubmitting,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(
+                        _emailFocusNode,
+                      );
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Your name',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
                     ),
-
-                    const SizedBox(
-                        height: 4),
-
-                    Text(
-                      'Sign Up',
-                      style: theme
-                          .textTheme
-                          .displayLarge
-                          ?.copyWith(
-                        fontSize: 34,
+                  ),
+                  const SizedBox(height: 14),
+                  _FieldLabel(
+                    text: 'Email',
+                    theme: theme,
+                  ),
+                  TextFormField(
+                    controller: _emailController,
+                    focusNode: _emailFocusNode,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    enabled: !_isSubmitting,
+                    onFieldSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(
+                        _passwordFocusNode,
+                      );
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Your email',
+                      errorText: _emailAsyncError,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
                       ),
+                      suffixIcon: _isEmailChecking
+                          ? const Padding(
+                              padding: EdgeInsets.all(
+                                12,
+                              ),
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
-
-                    const SizedBox(
-                        height: 6),
-
-                    Text(
-                      'Create your account and start discovering art',
-                      style: theme
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                        color: colorScheme
-                            .onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 20),
-
-                    _FieldLabel(
-                      text: 'Name',
-                      theme: theme,
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _nameController,
-                      focusNode:
-                          _nameFocusNode,
-                      textInputAction:
-                          TextInputAction
-                              .next,
-                      enabled: !_isSubmitting,
-                      onFieldSubmitted:
-                          (_) {
-                        FocusScope.of(
-                                context)
-                            .requestFocus(
-                          _emailFocusNode,
-                        );
-                      },
-                      decoration:
-                          const InputDecoration(
-                        hintText:
-                            'Your name',
-                        contentPadding:
-                            EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 14),
-
-                    _FieldLabel(
-                      text: 'Email',
-                      theme: theme,
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _emailController,
-                      focusNode:
-                          _emailFocusNode,
-                      keyboardType:
-                          TextInputType
-                              .emailAddress,
-                      textInputAction:
-                          TextInputAction
-                              .next,
-                      enabled: !_isSubmitting,
-                      onFieldSubmitted:
-                          (_) {
-                        FocusScope.of(
-                                context)
-                            .requestFocus(
-                          _passwordFocusNode,
-                        );
-                      },
-                      decoration:
-                          InputDecoration(
-                        hintText:
-                            'Your email',
-                        errorText:
-                            _emailAsyncError,
-                        contentPadding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        suffixIcon:
-                            _isEmailChecking
-                                ? const Padding(
-                                    padding:
-                                        EdgeInsets
-                                            .all(
-                                      12,
-                                    ),
-                                    child:
-                                        SizedBox(
-                                      width:
-                                          16,
-                                      height:
-                                          16,
-                                      child:
-                                          CircularProgressIndicator(
-                                        strokeWidth:
-                                            2,
-                                      ),
-                                    ),
-                                  )
-                                : null,
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 14),
-
-                    Row(
-                      children: [
-                        _FieldLabel(
-                          text:
-                              'Password',
-                          theme: theme,
-                        ),
-                        const SizedBox(
-                            width: 8),
-                        _PasswordStrengthDot(
-                          isValid:
-                              _isPasswordValid,
-                          hasInput:
-                              _passwordController
-                                  .text
-                                  .isNotEmpty,
-                          colorScheme:
-                              colorScheme,
-                        ),
-                      ],
-                    ),
-
-                    TextFormField(
-                      controller:
-                          _passwordController,
-                      focusNode:
-                          _passwordFocusNode,
-                      obscureText:
-                          _obscurePassword,
-                      enabled: !_isSubmitting,
-                      decoration:
-                          InputDecoration(
-                        hintText:
-                            'Your password',
-                        contentPadding:
-                            const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        suffixIcon:
-                            IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons
-                                    .visibility_off_outlined
-                                : Icons
-                                    .visibility_outlined,
-                            color:
-                                colorScheme
-                                    .onSurfaceVariant,
-                          ),
-                          onPressed: _isSubmitting
-                              ? null
-                              : () {
-                                      setState(
-                                          () {
-                                        _obscurePassword =
-                                            !_obscurePassword;
-                                      });
-                                    },
-                        ),
-                      ),
-                    ),
-
-                    if (_passwordController
-                        .text.isNotEmpty) ...[
-                      const SizedBox(
-                          height: 8),
-
-                      _PasswordRule(
-                        text:
-                            'Minimum 8 characters',
-                        isMet:
-                            _hasMinLength,
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _FieldLabel(
+                        text: 'Password',
                         theme: theme,
                       ),
-
-                      const SizedBox(
-                          height: 2),
-
-                      _PasswordRule(
-                        text:
-                            'At least 1 number',
-                        isMet:
-                            _hasDigits,
-                        theme: theme,
-                      ),
-
-                      const SizedBox(
-                          height: 2),
-
-                      _PasswordRule(
-                        text:
-                            'Contains letters',
-                        isMet:
-                            _hasUppercase,
-                        theme: theme,
+                      const SizedBox(width: 8),
+                      _PasswordStrengthDot(
+                        isValid: _isPasswordValid,
+                        hasInput: _passwordController.text.isNotEmpty,
+                        colorScheme: colorScheme,
                       ),
                     ],
-
-                    const SizedBox(
-                        height: 16),
-
-                    _FieldLabel(
-                      text:
-                          'Account Type',
+                  ),
+                  TextFormField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
+                    obscureText: _obscurePassword,
+                    enabled: !_isSubmitting,
+                    decoration: InputDecoration(
+                      hintText: 'Your password',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 14,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                      ),
+                    ),
+                  ),
+                  if (_passwordController.text.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _PasswordRule(
+                      text: 'Minimum 8 characters',
+                      isMet: _hasMinLength,
                       theme: theme,
                     ),
-
-                    const SizedBox(
-                        height: 8),
-
-                    RoleSelector(
-                      selectedRole:
-                          _selectedRole,
-                      isDisabled: _isSubmitting,
-                      onChanged:
-                          (role) {
-                        setState(() {
-                          _selectedRole =
-                              role;
-                        });
-                      },
+                    const SizedBox(height: 2),
+                    _PasswordRule(
+                      text: 'At least 1 number',
+                      isMet: _hasDigits,
+                      theme: theme,
                     ),
-
-                    const SizedBox(
-                        height: 20),
-
-                    SizedBox(
-                      width:
-                          double.infinity,
-                      height: 50,
-                      child:
-                          ElevatedButton(
-                        onPressed: (_isFormValid && !_isSubmitting)
-                            ? _signup
-                            : null,
-                        style:
-                            ElevatedButton
-                                .styleFrom(
-                          backgroundColor:
-                              AppColors
-                                  .primaryBlue,
-                          foregroundColor:
-                              Colors.white,
-                          shape:
-                              RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(
-                              26,
-                            ),
-                          ),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width:
-                                    20,
-                                height:
-                                    20,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth:
-                                      2,
-                                  color: Colors
-                                      .white,
-                                ),
-                              )
-                            : const Text(
-                                'Register',
-                              ),
-                      ),
+                    const SizedBox(height: 2),
+                    _PasswordRule(
+                      text: 'Contains letters',
+                      isMet: _hasUppercase,
+                      theme: theme,
                     ),
-
-                    const SizedBox(
-                        height: 14),
-
-                    Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .center,
-                      children: [
-                        Text(
-                          'Have an account? ',
-                          style: theme
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                            fontSize: 13,
-                            color:
-                                colorScheme
-                                    .onSurfaceVariant,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: _isSubmitting
-                              ? null
-                              : () {
-                                  context.go(
-                                    AppRoutes.login,
-                                  );
-                                },
-                          child: Text(
-                            'Sign In',
-                            style: theme
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                              fontSize: 13,
-                              color: AppColors
-                                  .primaryBlue,
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(
-                        height: 18),
-
-                    Center(
-                      child: Text(
-                        'By registering, you agree to our terms and policies.',
-                        textAlign:
-                            TextAlign.center,
-                        style: theme
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(
-                          fontSize: 11,
-                          color: colorScheme
-                              .onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(
-                        height: 18),
                   ],
-                ),
+                  const SizedBox(height: 16),
+                  _FieldLabel(
+                    text: 'Account Type',
+                    theme: theme,
+                  ),
+                  const SizedBox(height: 8),
+                  RoleSelector(
+                    selectedRole: _selectedRole,
+                    isDisabled: _isSubmitting,
+                    onChanged: (role) {
+                      setState(() {
+                        _selectedRole = role;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed:
+                          (_isFormValid && !_isSubmitting) ? _signup : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            26,
+                          ),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Text(
+                              'Register',
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Have an account? ',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _isSubmitting
+                            ? null
+                            : () {
+                                context.go(
+                                  AppRoutes.login,
+                                );
+                              },
+                        child: Text(
+                          'Log In',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Center(
+                    child: Text(
+                      'By registering, you agree to our terms and policies.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -678,14 +506,11 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: theme.textTheme.bodyMedium
-            ?.copyWith(
-          fontWeight:
-              FontWeight.w700,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w700,
           fontSize: 13,
         ),
       ),
@@ -693,8 +518,7 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-class _PasswordStrengthDot
-    extends StatelessWidget {
+class _PasswordStrengthDot extends StatelessWidget {
   final bool isValid;
   final bool hasInput;
   final ColorScheme colorScheme;
@@ -726,8 +550,7 @@ class _PasswordStrengthDot
       height: 9,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color:
-            isFilled ? dotColor : null,
+        color: isFilled ? dotColor : null,
         border: isFilled
             ? null
             : Border.all(
@@ -739,8 +562,7 @@ class _PasswordStrengthDot
   }
 }
 
-class _PasswordRule
-    extends StatelessWidget {
+class _PasswordRule extends StatelessWidget {
   final String text;
   final bool isMet;
   final ThemeData theme;
@@ -756,23 +578,16 @@ class _PasswordRule
     return Row(
       children: [
         Icon(
-          isMet
-              ? Icons.check
-              : Icons.close,
+          isMet ? Icons.check : Icons.close,
           size: 14,
-          color: isMet
-              ? Colors.green
-              : Colors.red,
+          color: isMet ? Colors.green : Colors.red,
         ),
         const SizedBox(width: 6),
         Text(
           text,
-          style: theme.textTheme.bodySmall
-              ?.copyWith(
+          style: theme.textTheme.bodySmall?.copyWith(
             fontSize: 11,
-            color: theme
-                .colorScheme
-                .onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -783,8 +598,7 @@ class _PasswordRule
 class RoleSelector extends StatelessWidget {
   final String selectedRole;
   final bool isDisabled;
-  final ValueChanged<String>
-      onChanged;
+  final ValueChanged<String> onChanged;
 
   const RoleSelector({
     super.key,
@@ -800,11 +614,9 @@ class RoleSelector extends StatelessWidget {
         Expanded(
           child: _RoleOption(
             title: 'Customer',
-            icon: Icons
-                .shopping_bag_outlined,
+            icon: Icons.shopping_bag_outlined,
             value: 'customer',
-            selectedRole:
-                selectedRole,
+            selectedRole: selectedRole,
             isDisabled: isDisabled,
             onChanged: onChanged,
           ),
@@ -813,11 +625,9 @@ class RoleSelector extends StatelessWidget {
         Expanded(
           child: _RoleOption(
             title: 'Artist',
-            icon:
-                Icons.brush_outlined,
+            icon: Icons.brush_outlined,
             value: 'artist',
-            selectedRole:
-                selectedRole,
+            selectedRole: selectedRole,
             isDisabled: isDisabled,
             onChanged: onChanged,
           ),
@@ -827,16 +637,14 @@ class RoleSelector extends StatelessWidget {
   }
 }
 
-class _RoleOption
-    extends StatelessWidget {
+class _RoleOption extends StatelessWidget {
   final String title;
   final IconData icon;
   final String value;
   final String selectedRole;
   final bool isDisabled;
 
-  final ValueChanged<String>
-      onChanged;
+  final ValueChanged<String> onChanged;
 
   const _RoleOption({
     required this.title,
@@ -850,35 +658,26 @@ class _RoleOption
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    final isSelected =
-        selectedRole == value;
+    final isSelected = selectedRole == value;
 
     return InkWell(
-      onTap: isDisabled
-          ? null
-          : () => onChanged(value),
-      borderRadius:
-          BorderRadius.circular(14),
+      onTap: isDisabled ? null : () => onChanged(value),
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
-        duration:
-            const Duration(milliseconds: 180),
-        padding:
-            const EdgeInsets.symmetric(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(
           horizontal: 10,
           vertical: 10,
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryPurple
-                  .withValues(alpha: 0.18)
-              : theme.colorScheme.surface,
-          borderRadius:
-              BorderRadius.circular(14),
+              ? colorScheme.primary.withValues(alpha: 0.18)
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primaryBlue
-                : Colors.grey.shade300,
+            color: isSelected ? colorScheme.primary : Colors.grey.shade300,
             width: isSelected ? 1.4 : 1,
           ),
         ),
@@ -887,30 +686,21 @@ class _RoleOption
             CircleAvatar(
               radius: 14,
               backgroundColor: isSelected
-                  ? AppColors.primaryBlue
-                  : AppColors.primaryPurple
-                      .withValues(alpha: 0.2),
+                  ? colorScheme.primary
+                  : colorScheme.primary.withValues(alpha: 0.2),
               child: Icon(
                 icon,
                 size: 16,
-                color: isSelected
-                    ? Colors.white
-                    : AppColors.primaryBlue,
+                color: isSelected ? colorScheme.onPrimary : colorScheme.primary,
               ),
             ),
-
             const SizedBox(width: 8),
-
             Expanded(
               child: Text(
                 title,
-                overflow:
-                    TextOverflow.ellipsis,
-                style: theme
-                    .textTheme.bodyMedium
-                    ?.copyWith(
-                  fontWeight:
-                      FontWeight.w700,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
               ),

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+  // LIGHT THEME GOES HERE
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Almarai',
       scaffoldBackgroundColor: Colors.white,
-
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryBlue,
         primary: AppColors.primaryBlue,
@@ -15,12 +15,10 @@ class AppTheme {
         surface: AppColors.backgroundGrey,
         brightness: Brightness.light,
       ),
-
       iconTheme: const IconThemeData(
         color: AppColors.primaryBlue,
         size: 24,
       ),
-
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primaryBlue,
@@ -40,7 +38,6 @@ class AppTheme {
           fontSize: 11,
         ),
       ),
-
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontFamily: 'PT Serif',
@@ -76,7 +73,6 @@ class AppTheme {
           color: Colors.black54,
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryBlue,
@@ -99,7 +95,6 @@ class AppTheme {
           ),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryBlue,
@@ -122,7 +117,6 @@ class AppTheme {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.deepPurple,
@@ -137,7 +131,6 @@ class AppTheme {
           ),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
         isDense: true,
@@ -168,7 +161,6 @@ class AppTheme {
           ),
         ),
       ),
-
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryBlue.withOpacity(0.15),
         selectedColor: AppColors.primaryBlue,
@@ -189,13 +181,14 @@ class AppTheme {
     );
   }
 
+  // DARK THEME GOES HERE
+
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Almarai',
       brightness: Brightness.dark,
       scaffoldBackgroundColor: const Color(0xFF18181B),
-
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
         seedColor: AppColors.primaryBlue,
@@ -203,12 +196,10 @@ class AppTheme {
         secondary: AppColors.deepPurple,
         surface: const Color(0xFF18181B),
       ),
-
       iconTheme: const IconThemeData(
         color: AppColors.primaryPurple,
         size: 24,
       ),
-
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF18181B),
         selectedItemColor: AppColors.primaryPurple,
@@ -228,7 +219,6 @@ class AppTheme {
           fontSize: 11,
         ),
       ),
-
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontFamily: 'PT Serif',
@@ -264,7 +254,6 @@ class AppTheme {
           color: Colors.white60,
         ),
       ),
-
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryPurple,
@@ -285,7 +274,6 @@ class AppTheme {
           ),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryPurple,
@@ -308,7 +296,6 @@ class AppTheme {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryPurple,
@@ -323,7 +310,6 @@ class AppTheme {
           ),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
         isDense: true,
@@ -354,7 +340,6 @@ class AppTheme {
           ),
         ),
       ),
-
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primaryPurple.withOpacity(0.15),
         selectedColor: AppColors.primaryPurple,
