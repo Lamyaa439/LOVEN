@@ -23,6 +23,11 @@ def list_notifications():
         limit: max rows to return (default 20)
         offset: pagination offset (default 0)
         unread_only: true or false (default false)
+
+    Response metadata:
+        count: number of notifications in the current page
+        total_count: total rows matching the current filters
+        unread_count: global unread count for the user (not page-scoped)
     """
     user_id = get_authenticated_user_id()
 

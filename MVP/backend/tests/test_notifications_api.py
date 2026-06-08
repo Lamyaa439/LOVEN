@@ -56,6 +56,7 @@ class NotificationsApiTestCase(unittest.TestCase):
             {
                 "notifications": [notification],
                 "count": 1,
+                "total_count": 5,
                 "limit": 20,
                 "offset": 0,
             },
@@ -71,6 +72,8 @@ class NotificationsApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json["notifications"]), 1)
         self.assertEqual(response.json["notifications"][0]["id"], notification["id"])
+        self.assertEqual(response.json["count"], 1)
+        self.assertEqual(response.json["total_count"], 5)
         self.assertEqual(response.json["unread_count"], 1)
         mock_list_for_user.assert_called_once_with(
             user_id=self.user_id,

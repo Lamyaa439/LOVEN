@@ -22,10 +22,15 @@ class NotificationFacade:
 
     @staticmethod
     def list_for_user(user_id, limit=20, offset=0, unread_only=False):
+        user_uuid = as_uuid(user_id)
         notifications = notification_repo.list_for_user(
-            user_id=as_uuid(user_id),
+            user_id=user_uuid,
             limit=limit,
             offset=offset,
+            unread_only=unread_only,
+        )
+        total_count = notification_repo.count_for_user(
+            user_id=user_uuid,
             unread_only=unread_only,
         )
 
@@ -35,6 +40,7 @@ class NotificationFacade:
                 for notification in notifications
             ],
             "count": len(notifications),
+            "total_count": total_count,
             "limit": limit,
             "offset": offset,
         }, 200
