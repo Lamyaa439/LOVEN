@@ -203,6 +203,24 @@ class OrderRepository(SQLAlchemyRepository):
             .all()
         )
 
+    def get_order_with_items(self, order_id):
+        """
+        Return an order and its line items, or (None, []) when missing.
+        """
+        if not order_id:
+            return None, []
+
+        order = db.session.get(Order, order_id)
+        if not order:
+            return None, []
+
+        items = (
+            OrderItem.query.filter_by(order_id=order.id)
+            .order_by(OrderItem.created_at.asc())
+            .all()
+        )
+        return order, items
+
     def get_incoming_orders_by_artist(self, artist_profile_id):
         """
         Return distinct orders containing artworks owned by the artist.
