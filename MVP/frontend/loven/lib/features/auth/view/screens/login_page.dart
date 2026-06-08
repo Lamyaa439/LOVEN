@@ -20,8 +20,7 @@ class LoginPage extends StatefulWidget {
   });
 
   @override
-  State<LoginPage> createState() =>
-      _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
@@ -64,6 +63,7 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _inputDecoration({
     required String hint,
     Widget? suffixIcon,
+    required dynamic colorScheme,
   }) {
     final theme = Theme.of(context);
 
@@ -86,8 +86,8 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.primaryBlue,
+        borderSide: BorderSide(
+          color: colorScheme.primary,
           width: 1.3,
         ),
       ),
@@ -113,19 +113,16 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(
               horizontal: 24,
             ),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-
                   IconButton(
                     onPressed: _isSubmitting
                         ? null
@@ -141,45 +138,34 @@ class _LoginPageState extends State<LoginPage> {
                       color: theme.colorScheme.onSurface,
                     ),
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
                     'Welcome Back 👋',
-                    style: theme.textTheme.displayLarge
-                        ?.copyWith(
+                    style: theme.textTheme.displayLarge?.copyWith(
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 6),
-
                   Text(
-                    'Sign in to your account',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(
-                      color:
-                          theme.colorScheme.onSurfaceVariant,
+                    'Login in to your account',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   _FieldLabel('Email'),
-
                   TextFormField(
                     controller: emailController,
                     enabled: !_isSubmitting,
-                    keyboardType:
-                        TextInputType.emailAddress,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: _inputDecoration(
                       hint: 'Your email',
+                      colorScheme: theme.colorScheme,
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Email is required';
                       }
 
@@ -190,40 +176,33 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-
                   const SizedBox(height: 14),
-
                   _FieldLabel('Password'),
-
                   TextFormField(
                     controller: passwordController,
                     enabled: !_isSubmitting,
                     obscureText: obscurePassword,
                     decoration: _inputDecoration(
                       hint: 'Your password',
+                      colorScheme: theme.colorScheme,
                       suffixIcon: IconButton(
                         onPressed: _isSubmitting
                             ? null
                             : () {
                                 setState(() {
-                                  obscurePassword =
-                                      !obscurePassword;
+                                  obscurePassword = !obscurePassword;
                                 });
                               },
                         icon: Icon(
                           obscurePassword
-                              ? Icons
-                                  .visibility_off_outlined
-                              : Icons
-                                  .visibility_outlined,
-                          color: theme.colorScheme
-                              .onSurfaceVariant,
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
+                      if (value == null || value.isEmpty) {
                         return 'Password is required';
                       }
 
@@ -234,24 +213,20 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-
                   const SizedBox(height: 8),
-
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: _isSubmitting
-                      ? null
-                      : () {
-                        context.push(AppRoutes.forgotPassword);
-                      },
+                          ? null
+                          : () {
+                              context.push(AppRoutes.forgotPassword);
+                            },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
-                        tapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                        foregroundColor:
-                            AppColors.primaryBlue,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: theme.colorScheme.primary,
                       ),
                       child: const Text(
                         'Forgot Password?',
@@ -259,50 +234,39 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 18),
-
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed:
-                          _isSubmitting ? null : _login,
+                      onPressed: _isSubmitting ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            AppColors.primaryBlue,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(26),
                         ),
                       ),
                       child: _isSubmitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
-                              child:
-                                  CircularProgressIndicator(
+                              child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: theme.colorScheme.onPrimary,
                               ),
                             )
                           : const Text('Login'),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "Don’t have an account? ",
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(
-                          color: theme.colorScheme
-                              .onSurfaceVariant,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -312,10 +276,10 @@ class _LoginPageState extends State<LoginPage> {
                             : () {
                                 context.go(AppRoutes.auth);
                               },
-                        child: const Text(
+                        child: Text(
                           'Sign Up',
                           style: TextStyle(
-                            color: AppColors.primaryBlue,
+                            color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -323,7 +287,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 18),
                 ],
               ),
