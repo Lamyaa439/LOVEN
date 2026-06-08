@@ -16,6 +16,7 @@ import 'package:loven/features/favorites/data/repositories/favorites_repository.
 import 'package:loven/features/feedback/data/repositories/feedback_repository.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/data/repositories/notifications_repository.dart';
+import 'package:loven/features/notifications/data/services/push_notification_service.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/data/repositories/report_repository.dart';
 import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
@@ -46,6 +47,7 @@ class AppDependencies {
     required this.reportRepository,
     required this.notificationsRepository,
     required this.notificationsCubit,
+    required this.pushNotificationService,
     required this.splashMinDurationNotifier,
     required this.appRouter,
   });
@@ -69,6 +71,7 @@ class AppDependencies {
   final ReportRepository reportRepository;
   final NotificationsRepository notificationsRepository;
   final NotificationsCubit notificationsCubit;
+  final PushNotificationService pushNotificationService;
   final SplashMinDurationNotifier splashMinDurationNotifier;
   final AppRouter appRouter;
 
@@ -135,6 +138,8 @@ class AppDependencies {
       verificationRequestRepository: verificationRequestRepository,
     );
 
+    final pushNotificationService = PushNotificationService();
+
     return AppDependencies._(
       appPreferences: appPreferences,
       tokenStorage: tokenStorage,
@@ -155,6 +160,7 @@ class AppDependencies {
       reportRepository: reportRepository,
       notificationsRepository: notificationsRepository,
       notificationsCubit: notificationsCubit,
+      pushNotificationService: pushNotificationService,
       splashMinDurationNotifier: splashMinDurationNotifier,
       appRouter: appRouter,
     );
@@ -162,6 +168,7 @@ class AppDependencies {
 
   void dispose() {
     apiClient.detachSessionExpiredHandler();
+    pushNotificationService.dispose();
     notificationsCubit.close();
     accountCubit.close();
     authCubit.close();

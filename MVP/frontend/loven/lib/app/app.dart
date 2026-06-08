@@ -43,6 +43,15 @@ class _LovenAppState extends State<LovenApp> {
   void initState() {
     super.initState();
     _deps = AppDependencies.create(widget.appPreferences);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _deps.pushNotificationService.initialize(
+        router: _deps.appRouter.router,
+        authCubit: _deps.authCubit,
+        notificationsCubit: _deps.notificationsCubit,
+        orderRepository: _deps.orderRepository,
+      );
+      _deps.authCubit.startPushTokenSync();
+    });
   }
 
   @override
