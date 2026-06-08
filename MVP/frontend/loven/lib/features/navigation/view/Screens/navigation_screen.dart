@@ -14,6 +14,7 @@ import 'package:loven/features/cart/view/screens/cart_screen.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/view/screens/favorites_screen.dart';
 import 'package:loven/features/home/View/Screens/home_screen.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 
 import 'package:loven/core/theme/theme_bloc.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
@@ -55,6 +56,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
       context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
       _activateProtectedTabIfNeeded(widget.initialIndex);
+
+      if (authStateHasSession(context.read<AuthCubit>().state)) {
+        context.read<NotificationsCubit>().loadNotifications(refresh: true);
+      }
     });
   }
 
@@ -116,6 +121,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             context.read<CartCubit>().resetForSignedOut();
             context.read<FavoritesCubit>().resetForSignedOut();
             context.read<AccountCubit>().resetForSignedOut();
+            context.read<NotificationsCubit>().resetForSignedOut();
             _clearActivatedProtectedTabs();
           },
         ),
@@ -126,6 +132,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             _activateProtectedTabIfNeeded(
               context.read<NavigationBarCubit>().state.currentIndex,
             );
+            context.read<NotificationsCubit>().loadNotifications(refresh: true);
           },
         ),
         BlocListener<NavigationBarCubit, NavigationBarState>(

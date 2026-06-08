@@ -64,6 +64,19 @@ abstract final class ApiEndpoints {
 
   static String orderStatus(String orderId) => '$orders$orderId/status';
 
+  static String orderById(String orderId) => '$orders$orderId';
+
+  // ---------------------------------------------------------------------------
+  // Notifications (/api/v1/notifications/…)
+  // ---------------------------------------------------------------------------
+
+  static const String notifications = '/notifications/';
+
+  static String notificationRead(String notificationId) =>
+      '/notifications/$notificationId/read';
+
+  static const String notificationsReadAll = '/notifications/read-all';
+
   // ---------------------------------------------------------------------------
   // Artworks (/api/v1/artworks/…)
   // ---------------------------------------------------------------------------

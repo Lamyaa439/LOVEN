@@ -19,6 +19,7 @@ import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
+import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 
@@ -69,6 +70,9 @@ class _LovenAppState extends State<LovenApp> {
         RepositoryProvider<ProfileImageStorageService>.value(
           value: _deps.profileImageStorageService,
         ),
+        RepositoryProvider<OrderRepository>.value(
+          value: _deps.orderRepository,
+        ),
       ],
       child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
         value: _deps.splashMinDurationNotifier,
@@ -76,6 +80,7 @@ class _LovenAppState extends State<LovenApp> {
           providers: [
           BlocProvider.value(value: _deps.authCubit),
           BlocProvider.value(value: _deps.accountCubit),
+          BlocProvider.value(value: _deps.notificationsCubit),
           BlocProvider(create: (context) => NavigationBarCubit()),
           BlocProvider(
             create: (context) => HomeBloc(

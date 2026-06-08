@@ -12,6 +12,10 @@ import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import '../widgets/art_card.dart';
 import 'package:loven/core/session/app_session.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -187,14 +191,32 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            onPressed: () {
-              context.push(AppRoutes.notifications);
+          BlocBuilder<NotificationsCubit, NotificationsState>(
+            builder: (context, notificationsState) {
+              final hasSession = authStateHasSession(
+                context.read<AuthCubit>().state,
+              );
+              final unreadCount = notificationsState is NotificationsLoaded
+                  ? notificationsState.unreadCount
+                  : 0;
+              final showBadge = hasSession && unreadCount > 0;
+              final badgeLabel =
+                  unreadCount > 99 ? '99+' : unreadCount.toString();
+
+              return IconButton(
+                onPressed: () {
+                  context.push(AppRoutes.notifications);
+                },
+                icon: Badge(
+                  isLabelVisible: showBadge,
+                  label: Text(badgeLabel),
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              );
             },
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              color: theme.colorScheme.onSurface,
-            ),
           ),
         ],
       ),
