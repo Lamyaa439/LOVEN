@@ -34,19 +34,37 @@ class NotificationRepository(SQLAlchemyRepository):
         )
         return self.save(notification)
 
+    def _user_notifications_query(self, user_id, unread_only=False):
+        """Base query for a user's notification feed."""
+        query = self.model.query.filter(self.model.user_id == user_id)
+
+        if unread_only:
+            query = query.filter(self.model.is_read.is_(False))
+
+        return query
+
+    def count_for_user(self, user_id, unread_only=False):
+        """
+        Return total notifications matching the user's feed filters.
+
+        When ``unread_only`` is true, counts only unread rows.
+        """
+        if not user_id:
+            return 0
+
+        return self._user_notifications_query(
+            user_id,
+            unread_only=unread_only,
+        ).count()
+
     def list_for_user(self, user_id, limit=20, offset=0, unread_only=False):
         """
         Return notifications for a user, newest first.
 
         Supports paginated in-app feeds and optional unread-only filtering.
         """
-        query = self.model.query.filter(self.model.user_id == user_id)
-
-        if unread_only:
-            query = query.filter(self.model.is_read.is_(False))
-
         return (
-            query
+            self._user_notifications_query(user_id, unread_only=unread_only)
             .order_by(self.model.created_at.desc())
             .offset(offset)
             .limit(limit)
@@ -94,6 +112,27 @@ class NotificationRepository(SQLAlchemyRepository):
         )
         result = self.execute_and_commit(statement)
         return result.rowcount
+
+    def find_order_status_notification(self, user_id, order_id, body_suffix):
+        """
+        Return an existing order_status row for the same user, order, and status.
+
+        ``body_suffix`` is the stable trailing fragment of the notification body
+        (e.g. ``"is now shipped."``) so different statuses remain distinct while
+        repeated emissions of the same status dedupe without a schema change.
+        """
+        if not user_id or not order_id or not body_suffix:
+            return None
+
+        return (
+            self.model.query
+            .filter(self.model.user_id == user_id)
+            .filter(self.model.type == "order_status")
+            .filter(self.model.reference_id == order_id)
+            .filter(self.model.reference_type == "order")
+            .filter(self.model.body.endswith(body_suffix))
+            .first()
+        )
 
 
 notification_repo = NotificationRepository()
