@@ -47,25 +47,26 @@ class ArtworkModel {
 
   /// Accepts a flat artwork map OR `{ "artwork": { ... } }` (GET/PATCH responses).
   factory ArtworkModel.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> data = json['artwork'] is Map<String, dynamic>
-        ? json['artwork'] as Map<String, dynamic>
+    final nestedArtwork = json['artwork'];
+    final Map<String, dynamic> data = nestedArtwork is Map
+        ? Map<String, dynamic>.from(nestedArtwork)
         : json;
 
     return ArtworkModel(
       id: data['id']?.toString() ?? '',
       artistProfileId: data['artist_profile_id']?.toString() ?? '',
-      artistDisplayName: data['artist_display_name'] as String?,
-      artistProfileImageUrl: data['artist_profile_image_url'] as String?,
-      artistIsVerified: data['artist_is_verified'] as bool? ?? false,
-      title: data['title'] as String? ?? '',
-      description: data['description'] as String?,
+      artistDisplayName: _parseString(data['artist_display_name']),
+      artistProfileImageUrl: _parseString(data['artist_profile_image_url']),
+      artistIsVerified: _parseBool(data['artist_is_verified']),
+      title: data['title']?.toString() ?? '',
+      description: _parseString(data['description']),
       price: _parseDecimal(data['price']),
-      quantityAvailable: data['quantity_available'] as int?,
+      quantityAvailable: _parseInt(data['quantity_available']),
       shippingFee: _parseDecimal(data['shipping_fee']),
-      artworkImageUrl: data['artwork_image_url'] as String?,
-      status: data['status'] as String?,
-      createdAt: data['created_at'] as String?,
-      updatedAt: data['updated_at'] as String?,
+      artworkImageUrl: _parseString(data['artwork_image_url']),
+      status: _parseString(data['status']),
+      createdAt: _parseString(data['created_at']),
+      updatedAt: _parseString(data['updated_at']),
     );
   }
 
@@ -92,6 +93,31 @@ class ArtworkModel {
     if (value is num) return value.toDouble();
     if (value is String && value.isNotEmpty) return double.tryParse(value);
     return null;
+  }
+
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String && value.isNotEmpty) return int.tryParse(value);
+    return null;
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 }
 
@@ -169,8 +195,8 @@ class ArtistModel {
     if (raw is! List) return const [];
 
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(ArtworkModel.fromJson)
+        .whereType<Map>()
+        .map((item) => ArtworkModel.fromJson(Map<String, dynamic>.from(item)))
         .toList();
   }
 }
