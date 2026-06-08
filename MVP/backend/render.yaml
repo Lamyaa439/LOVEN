@@ -1,0 +1,25 @@
+# Render Blueprint — LOVEN backend API
+#
+# Production 404 on /api/v1/notifications/ occurs when Render deploys a branch
+# that does not include the notifications blueprint (e.g. develop without merging
+# frontend/notification). Point the service at a branch/commit that contains
+# MVP/backend/app/api/v1/notifications.py and its create_app() registration.
+#
+# After deploy, GET / should return "notifications_routes": true.
+
+services:
+  - type: web
+    name: loven-backend
+    runtime: docker
+    rootDir: MVP/backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: FLASK_APP
+        value: run:app
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false

@@ -128,8 +128,19 @@ def create_app():
     def home():
         """
         Health check route.
+
+        ``notifications_routes`` helps verify production deploys include the
+        notifications blueprint (GET/PATCH /api/v1/notifications/...).
         """
-        return {"status": "success", "message": "LOVEN Backend API is running on AWS"}
+        notifications_routes = any(
+            rule.rule.startswith("/api/v1/notifications")
+            for rule in app.url_map.iter_rules()
+        )
+        return {
+            "status": "success",
+            "message": "LOVEN Backend API is running on Render",
+            "notifications_routes": notifications_routes,
+        }
     # =========================================================
     # Register API Blueprints
     # =========================================================
