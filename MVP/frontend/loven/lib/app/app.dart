@@ -93,8 +93,11 @@ class _LovenAppState extends State<LovenApp> {
             create: (context) => ArtworkCubit(_deps.artworkRepository),
           ),
           BlocProvider(
-            create: (context) => OrderCubit(_deps.orderRepository),
-          ),
+  create: (_) => OrderCubit(
+    _deps.orderRepository,
+    authCubit: _deps.authCubit,
+  ),
+),
           BlocProvider(
             create: (context) => FeedbackCubit(_deps.feedbackRepository),
           ),
