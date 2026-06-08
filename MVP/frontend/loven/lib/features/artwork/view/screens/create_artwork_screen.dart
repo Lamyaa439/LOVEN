@@ -13,6 +13,7 @@ import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 
 class CreateArtworkScreen extends StatefulWidget {
   const CreateArtworkScreen({super.key});
@@ -95,16 +96,21 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
       if (!mounted) return;
 
+      final artist = context.read<ArtistProfileCubit>().state.artist;
+      final isVerifiedArtist = artist?.isVerified ?? false;
+      
       context.read<ArtworkCubit>().createArtwork(
-            title: titleController.text.trim(),
-            description: descriptionController.text.trim(),
-            price: double.parse(priceController.text.trim()),
-            quantityAvailable: int.parse(quantityController.text.trim()),
-            shippingFee: double.parse(shippingFeeController.text.trim()),
-            artworkImageUrl: imageUrl,
-          );
-    } catch (e) {
-      if (!mounted) return;
+        title: titleController.text.trim(),
+        description: descriptionController.text.trim(),
+        price: double.parse(priceController.text.trim()),
+        quantityAvailable: int.parse(quantityController.text.trim()),
+        shippingFee: double.parse(shippingFeeController.text.trim()),
+        artworkImageUrl: imageUrl,
+        status: isVerifiedArtist ? 'available' : 'hidden',
+      );
+      
+      } catch (e) {
+        if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -145,6 +151,8 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
       },
       builder: (context, state) {
         final isLoading = state is ArtworkLoading || _isUploadingImage;
+        final artist = context.watch<ArtistProfileCubit>().state.artist;
+        final isVerifiedArtist = artist?.isVerified ?? false;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8F7F8),
@@ -239,27 +247,62 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                     ),
 
                     _FieldSection(
-                      label: 'Availability',
-                      child: Row(
-                        children: const [
-                          Expanded(
-                            child: _AvailabilityChip(
-                              label: 'Available',
-                              selected: true,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: _AvailabilityChip(
-                              label: 'Draft',
-                              selected: false,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+  label: 'Artwork Status',
+  child: Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: Colors.black.withValues(alpha: 0.08),
+      ),
+    ),
+    child: Text(
+      isVerifiedArtist
+          ? 'Available for sale'
+          : 'Portfolio showcase only',
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: isVerifiedArtist
+                ? AppColors.primaryBlue
+                : Colors.black54,
+            fontWeight: FontWeight.w900,
+          ),
+    ),
+  ),
+),
 
                     const SizedBox(height: 8),
+
+                    if (!isVerifiedArtist) ...[
+  Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.amber.shade50,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: Colors.amber.shade300,
+      ),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Portfolio Mode',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'You are not verified yet. This artwork will appear in your portfolio but cannot be purchased until your verification request is approved.',
+        ),
+      ],
+    ),
+  ),
+  SizedBox(height: 20),
+],
 
                     SizedBox(
                       width: double.infinity,
@@ -276,8 +319,12 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                               )
                             : const Icon(Icons.cloud_upload_outlined),
                         label: Text(
-                          isLoading ? 'Uploading...' : 'Publish Artwork',
-                        ),
+                          isLoading
+                              ? 'Uploading...' 
+                              : isVerifiedArtist
+                                  ? 'Publish Artwork'
+                                  : 'Save Portfolio Artwork',
+                          ),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primaryBlue,
                           foregroundColor: Colors.white,
@@ -591,40 +638,6 @@ class _InputField extends StatelessWidget {
             width: 1.3,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AvailabilityChip extends StatelessWidget {
-  const _AvailabilityChip({
-    required this.label,
-    required this.selected,
-  });
-
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 46,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primaryBlue : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: selected
-              ? AppColors.primaryBlue
-              : Colors.black.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: selected ? Colors.white : Colors.black54,
-              fontWeight: FontWeight.w900,
-            ),
       ),
     );
   }

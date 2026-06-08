@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loven/core/error/app_exception.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
 import 'package:loven/features/account/data/repositories/account_repository.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
@@ -133,4 +134,39 @@ class AccountCubit extends Cubit<AccountState> {
 
     return raw;
   }
+
+Future<void> updateRole({
+  required String systemRole,
+}) async {
+  if (!_hasSession) {
+    resetForSignedOut();
+    return;
+  }
+
+  if (isClosed) {
+    return;
+  }
+
+  try {
+    final user = await _accountRepository.updateRole(
+      systemRole: systemRole,
+    );
+
+    if (isClosed) {
+      return;
+    }
+
+    _authCubit.syncSessionUser(user);
+    _emit(AccountLoaded(user: user));
+  } catch (e) {
+    if (isClosed) {
+      return;
+    }
+
+    _emit(AccountFailure(
+      message: _extractMessage(e),
+      user: _sessionUser,
+    ));
+  }
+}
 }

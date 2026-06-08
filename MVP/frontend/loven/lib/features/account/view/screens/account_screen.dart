@@ -9,6 +9,7 @@ import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
 
 /// Single account hub for guests and signed-in users (`/profile`).
 ///
@@ -110,6 +111,18 @@ class _SignedInAccountHub extends StatelessWidget {
 
   bool get _isArtist => user.systemRole == 'artist';
 
+  Future<void> _changeRole(BuildContext context) async {
+    final nextRole = _isArtist ? 'customer' : 'artist';
+
+    await context.read<AccountCubit>().updateRole(
+      systemRole: nextRole,
+    );
+
+    if (nextRole == 'artist') {
+      context.read<ArtistProfileCubit>().fetchMyProfileData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -134,6 +147,18 @@ class _SignedInAccountHub extends StatelessWidget {
               subtitle: 'Update your personal information',
               onTap: () => context.push(AppRoutes.profileEdit),
             ),
+            _AccountTile(
+  icon: _isArtist
+      ? Icons.person_outline
+      : Icons.brush_outlined,
+  title: _isArtist
+      ? 'Switch to Customer'
+      : 'Become an Artist',
+  subtitle: _isArtist
+      ? 'Use LOVEN as a customer account'
+      : 'Create and showcase your artwork',
+  onTap: () => _changeRole(context),
+),
             _AccountTile(
               icon: Icons.location_on_outlined,
               title: 'Saved Addresses',

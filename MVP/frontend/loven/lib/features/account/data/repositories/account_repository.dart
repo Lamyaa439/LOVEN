@@ -41,4 +41,18 @@ class AccountRepository {
 
     return AuthUser.fromJson(_asMap(response.data));
   }
+
+  /// Updates the authenticated user's system role.
+  Future<AuthUser> updateRole({
+  required String systemRole,
+}) async {
+  final response = await _apiClient.patch(
+    ApiConstants.currentUserRole,
+    data: {
+      'system_role': systemRole,
+    },
+  );
+
+  return AuthUser.fromJson(_asMap(response.data));
+}
 }

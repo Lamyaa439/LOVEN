@@ -194,6 +194,13 @@ def create_artwork(user_id, data):
     if not title or price is None:
         return {"error": "title and price are required"}, 400
     
+    requested_status = payload.get("status", "available")
+
+    if requested_status == "available" and not profile.is_verified:
+        return {
+            "error": "Only verified artists can publish artworks for sale. You can save the artwork as hidden until verification is approved."
+        }, 403
+
     # create an artwork object
     try:
         artwork = Artwork(
@@ -378,6 +385,16 @@ def update_artwork(user_id, artwork_id, data):
     payload = _filter_writable_payload(data or {})
     if not payload:
         return {"error": "No valid fields to update"}, 400
+    
+    new_status = payload.get("status")
+    
+    if new_status == "available":
+        profile = _profile_for_user(user_id)
+        
+        if not profile or not profile.is_verified:
+            return {
+                "error": "Only verified artists can publish artworks for sale."
+            }, 403
 
     try:
         updated = artwork_repo.update(artwork.id, payload)

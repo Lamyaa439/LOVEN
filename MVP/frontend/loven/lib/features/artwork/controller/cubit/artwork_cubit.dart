@@ -89,6 +89,7 @@ class ArtworkCubit extends Cubit<ArtworkState> {
     required int quantityAvailable,
     required double shippingFee,
     required String artworkImageUrl,
+    required String status,
     }) async {
       emit(ArtworkLoading());
       
@@ -100,6 +101,7 @@ class ArtworkCubit extends Cubit<ArtworkState> {
           quantityAvailable: quantityAvailable,
           shippingFee: shippingFee,
           artworkImageUrl: artworkImageUrl,
+          status: status,
         );
         
         emit(ArtworkLoaded(artwork));
