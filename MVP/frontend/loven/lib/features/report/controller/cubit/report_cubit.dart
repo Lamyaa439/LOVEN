@@ -8,7 +8,7 @@ class ReportCubit extends Cubit<ReportState> {
 
   ReportCubit(this._reportRepository) : super(ReportInitial());
 
-  Future<void> submitReport({
+  Future<bool> submitReport({
     required String targetType,
     required String targetId,
     required String reason,
@@ -25,8 +25,10 @@ class ReportCubit extends Cubit<ReportState> {
       );
 
       emit(ReportSuccess());
+      return true;
     } catch (e) {
       emit(ReportFailure(e.toString()));
+      return false;
     }
   }
 }

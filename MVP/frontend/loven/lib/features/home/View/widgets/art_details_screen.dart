@@ -72,47 +72,121 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
     return;
   }
 
-  final controller = TextEditingController();
+  String selectedReason = 'Copyright infringement';
+
+  final detailsController = TextEditingController();
 
   await showDialog(
     context: context,
     builder: (_) {
-      return AlertDialog(
-        title: const Text('Report Artwork'),
-        content: TextField(
-          controller: controller,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: 'Describe the issue',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await context.read<ReportCubit>().submitReport(
-                    targetType: 'artwork',
-                    targetId: widget.artItem.id,
-                    reason: 'reported_by_user',
-                    details: controller.text.trim(),
-                  );
-
-              if (!mounted) return;
-
-              Navigator.pop(context);
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Report submitted'),
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Report Artwork'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedReason,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Copyright infringement',
+                      child: Text('Copyright infringement'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Offensive content',
+                      child: Text('Offensive content'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Spam',
+                      child: Text('Spam'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Fake artwork',
+                      child: Text('Fake artwork'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Misleading description',
+                      child: Text('Misleading description'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Other',
+                      child: Text('Other'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() {
+                        selectedReason = value;
+                      });
+                    }
+                  },
                 ),
-              );
-            },
-            child: const Text('Submit'),
-          ),
-        ],
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: detailsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Additional details (optional)',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+onPressed: () async {
+  try {
+final success =
+    await context.read<ReportCubit>().submitReport(
+          targetType: 'artwork',
+          targetId: widget.artItem.id,
+          reason: selectedReason,
+          details: detailsController.text.trim().isEmpty
+              ? null
+              : detailsController.text.trim(),
+        );
+
+if (!mounted) return;
+
+if (success) {
+  Navigator.pop(context);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Report submitted'),
+    ),
+  );
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Failed to submit report'),
+    ),
+  );
+}
+  } catch (_) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to submit report'),
+      ),
+    );
+  }
+},
+                child: const Text('Submit'),
+              ),
+            ],
+          );
+        },
       );
     },
   );
