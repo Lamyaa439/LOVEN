@@ -35,15 +35,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             await _artworkRepository
                 .getArtworks();
 
-        final artworks =
-            rawArtworks
-                .map(
-                  (json) =>
-                      ArtworkModel.fromJson(
-                    json,
-                  ),
-                )
-                .toList();
+        final artworks = rawArtworks
+            .whereType<Map>()
+            .map(
+              (json) => ArtworkModel.fromJson(
+                Map<String, dynamic>.from(json),
+              ),
+            )
+            .toList();
 
         emit(
           HomeLoaded(

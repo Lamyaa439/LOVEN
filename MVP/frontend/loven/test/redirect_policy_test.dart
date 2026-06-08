@@ -217,6 +217,18 @@ void main() {
         isNull,
       );
     });
+
+    test('signup success stays public for guest before login', () async {
+      final prefs = await appPreferences(onboardingCompleted: true);
+      expect(
+        redirect(
+          authState: const AuthGuest(),
+          appPreferences: prefs,
+          path: AppRoutes.signupSuccess,
+        ),
+        isNull,
+      );
+    });
   });
 
   group('resolveRedirect — authenticated', () {

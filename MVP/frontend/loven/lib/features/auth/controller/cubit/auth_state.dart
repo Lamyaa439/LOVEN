@@ -32,6 +32,9 @@ class AuthInitial extends AuthState {
 }
 
 /// Auth operation or session restore in progress.
+///
+/// Emitted only during boot-time [AuthCubit.restoreSession]. Login and signup
+/// use local UI loading state and must not emit this state.
 class AuthLoading extends AuthState {
   const AuthLoading();
 }

@@ -25,6 +25,7 @@ abstract final class ApiEndpoints {
   static const String logout = '/logout';
   static const String changePassword = '/change-password'; // Backend legacy — unused by Flutter
   static const String currentUser = '/account/me';
+  static const String currentUserRole = '/account/me/role';
 
   // ---------------------------------------------------------------------------
   // Artist profiles (mounted on /api/v1)
@@ -63,6 +64,19 @@ abstract final class ApiEndpoints {
       '${orders}artist/$artistProfileId';
 
   static String orderStatus(String orderId) => '$orders$orderId/status';
+
+  static String orderById(String orderId) => '$orders$orderId';
+
+  // ---------------------------------------------------------------------------
+  // Notifications (/api/v1/notifications/…)
+  // ---------------------------------------------------------------------------
+
+  static const String notifications = '/notifications/';
+
+  static String notificationRead(String notificationId) =>
+      '/notifications/$notificationId/read';
+
+  static const String notificationsReadAll = '/notifications/read-all';
 
   // ---------------------------------------------------------------------------
   // Artworks (/api/v1/artworks/…)

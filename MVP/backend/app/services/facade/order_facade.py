@@ -2,6 +2,7 @@ from app.services.order_service import (
     create_user_order,
     get_user_orders,
     get_artist_orders,
+    get_order_by_id,
     change_order_status,
 )
 
@@ -42,6 +43,13 @@ class OrderFacade:
         Retrieve incoming orders for an artist.
         """
         return get_artist_orders(artist_profile_id)
+
+    @staticmethod
+    def get_order(order_id, user_id, role=None):
+        """
+        Retrieve a single order when the caller is authorized.
+        """
+        return get_order_by_id(order_id, user_id, role=role)
 
     @staticmethod
     def update_status(

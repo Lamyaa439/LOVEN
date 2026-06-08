@@ -40,3 +40,17 @@ class AccountService:
             "system_role": user.system_role,
             "profile_image_url": user.profile_image_url,
         }
+    
+    def update_current_account_role(self, user_id, system_role):
+        if system_role not in ["customer", "artist"]:
+            raise ValueError("system_role must be customer or artist")
+        
+        user = self.user_repo.update_role(
+            user_id=user_id,
+            system_role=system_role,
+        )
+        
+        if not user:
+            raise ValueError("User not found")
+        
+        return self._serialize_user(user)

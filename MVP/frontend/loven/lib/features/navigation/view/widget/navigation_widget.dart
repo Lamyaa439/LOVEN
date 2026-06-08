@@ -4,6 +4,7 @@ import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 
+/// Bottom navigation bar — tab 4 (index 3) is the [AccountScreen] hub, not artist storefront.
 class NavigationWidget extends StatelessWidget {
   const NavigationWidget({super.key});
 
@@ -75,9 +76,9 @@ class NavigationWidget extends StatelessWidget {
               label: 'Cart',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: Icon(Icons.manage_accounts_outlined),
+              activeIcon: Icon(Icons.manage_accounts),
+              label: 'Account',
             ),
           ],
         );

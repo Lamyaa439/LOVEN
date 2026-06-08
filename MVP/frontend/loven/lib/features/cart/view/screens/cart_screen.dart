@@ -23,23 +23,14 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CartCubit>().getCart();
-  }
 
-  Future<void> _checkout(CartModel cart) async {
-    final items = cart.items.map((item) {
-      return {
-        'artwork_id': item.artworkId,
-        'quantity': item.quantity,
-      };
-    }).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
 
-    await context.read<OrderCubit>().createOrder(
-          subtotal: cart.subtotal,
-          shippingFee: cart.shippingFee,
-          totalAmount: cart.totalAmount,
-          items: items,
-        );
+      context.read<CartCubit>().getCart();
+    });
   }
 
   @override
@@ -224,7 +215,9 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   _CartSummary(
                     cart: cart,
-                    onCheckout: () => _checkout(cart),
+                    onCheckout: () {
+                      context.push(AppRoutes.checkout, extra: cart);
+                      },
                   ),
                 ],
               );

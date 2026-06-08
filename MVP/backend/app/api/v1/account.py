@@ -35,3 +35,16 @@ def update_current_account():
     )
 
     return jsonify(user), 200
+
+@account_bp.patch("/account/me/role")
+@jwt_required()
+def update_current_account_role():
+    user_id = get_jwt_identity()
+    data = request.get_json() or {}
+
+    user = account_service.update_current_account_role(
+        user_id=user_id,
+        system_role=data.get("system_role"),
+    )
+
+    return jsonify(user), 200

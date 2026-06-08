@@ -1,33 +1,51 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:loven/core/error/app_exception.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
 import 'package:loven/features/auth/data/models/auth_error_codes.dart';
 import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
 import 'package:loven/features/auth/data/services/firebase_auth_service.dart';
 import 'auth_state.dart';
 
-/// LOVEN session orchestration — JWT state only; Firebase owns credentials.
+/// LOVEN session orchestration — JWT state and credential flows; Firebase owns credentials.
 ///
 /// **Session ownership:**
-/// - [restoreSession] — boot entry; reads stored LOVEN JWT via [AuthRepository].
+/// - [restoreSession] — boot entry; JWT via [AuthRepository], initial user via [AccountRepository].
 /// - [loginWithFirebase] / [signupWithFirebase] — Firebase credential flows.
+/// - [syncSessionUser] — narrow session user refresh after [AccountCubit] mutations.
 /// - [ApiClient] — JWT refresh; calls [handleSessionExpired] when refresh fails.
+///
+/// Profile load/update UI orchestration lives in [AccountCubit].
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
+  final AccountRepository _accountRepository;
   final FirebaseAuthService _firebaseAuthService;
 
   Future<void>? _bootstrapFuture;
+  bool _sessionExpiryInProgress = false;
+  StreamSubscription<String>? _fcmTokenRefreshSubscription;
 
   AuthCubit({
     required AuthRepository authRepository,
-    FirebaseAuthService? firebaseAuthService,
+    required AccountRepository accountRepository,
+    required FirebaseAuthService firebaseAuthService,
   })  : _authRepository = authRepository,
-        _firebaseAuthService = firebaseAuthService ?? FirebaseAuthService(),
+        _accountRepository = accountRepository,
+        _firebaseAuthService = firebaseAuthService,
         super(const AuthInitial());
+
+  void _emit(AuthState state) {
+    if (isClosed) {
+      return;
+    }
+    emit(state);
+  }
 
   /// Boot-time session restore — invoke once per app launch from [main].
   Future<void> restoreSession() {
@@ -37,27 +55,53 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> _restoreSession() async {
     if (!await _authRepository.isLoggedIn()) {
-      emit(const AuthGuest());
+      if (isClosed) {
+        return;
+      }
+      _emit(const AuthGuest());
       return;
     }
 
-    emit(const AuthLoading());
+    if (isClosed) {
+      return;
+    }
+    _emit(const AuthLoading());
 
     try {
-      final user = await _authRepository.restoreAuthenticatedUser();
-      emit(AuthSuccess(user: user));
+      final user = await _accountRepository.getAccount();
+      if (isClosed) {
+        return;
+      }
+      _emit(AuthSuccess(user: user));
+      unawaited(syncFcmTokenIfSessionActive());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Session restore failed: $e');
       }
       await _authRepository.clearLocalSession();
-      emit(const AuthGuest());
+      if (isClosed) {
+        return;
+      }
+      _emit(const AuthGuest());
     }
   }
 
   Future<void> _completeAuthenticatedSession() async {
-    final user = await _authRepository.getCurrentUser();
-    emit(AuthSuccess(user: user));
+    final user = await _accountRepository.getAccount();
+    if (isClosed) {
+      return;
+    }
+    _emit(AuthSuccess(user: user));
+  }
+
+  /// Refreshes [AuthSuccess.user] after account profile changes elsewhere.
+  ///
+  /// No-op when there is no active session. Does not fetch from the network.
+  void syncSessionUser(AuthUser user) {
+    if (isClosed || !authStateHasSession(state)) {
+      return;
+    }
+    _emit(AuthSuccess(user: user));
   }
 
   AuthUser? get _sessionUser {
@@ -71,15 +115,38 @@ class AuthCubit extends Cubit<AuthState> {
     return null;
   }
 
+  /// Clears LOVEN + Firebase session after [ApiClient] refresh failure.
+  ///
+  /// Coalesced and lifecycle-safe — safe to call from the ApiClient interceptor
+  /// and during app teardown after the handler is detached.
   Future<void> handleSessionExpired() async {
-    try {
-      await _firebaseAuthService.signOut();
-    } catch (_) {
-      // Best-effort Firebase cleanup.
+    if (isClosed || _sessionExpiryInProgress) {
+      return;
     }
 
-    await _authRepository.clearLocalSession();
-    emit(const AuthGuest());
+    _sessionExpiryInProgress = true;
+
+    try {
+      try {
+        await _firebaseAuthService.signOut();
+      } catch (_) {
+        // Best-effort Firebase cleanup.
+      }
+
+      if (isClosed) {
+        return;
+      }
+
+      await _authRepository.clearLocalSession();
+
+      if (isClosed) {
+        return;
+      }
+
+      _emit(const AuthGuest());
+    } finally {
+      _sessionExpiryInProgress = false;
+    }
   }
 
   /// Guest browsing — LOVEN unauthenticated state only; no Firebase credentials.
@@ -92,26 +159,36 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (_) {
       // Guest mode does not depend on Firebase; ignore cleanup failures.
     }
-    emit(const AuthGuest());
+    if (isClosed) {
+      return;
+    }
+    _emit(const AuthGuest());
   }
 
   /// Firebase sign-in → verification check → LOVEN JWT exchange → [AuthSuccess].
+  ///
+  /// Does not emit [AuthLoading]; the login screen owns submit loading UI.
   Future<void> loginWithFirebase({
     required String email,
     required String password,
   }) async {
-    emit(const AuthLoading());
-
     try {
       await _firebaseAuthService.signIn(
         email: email,
         password: password,
       );
 
+      if (isClosed) {
+        return;
+      }
+
       final user = await _firebaseAuthService.reloadUser();
       if (!(user?.emailVerified ?? false)) {
         await _firebaseAuthService.signOut();
-        emit(const AuthFailure(
+        if (isClosed) {
+          return;
+        }
+        _emit(const AuthFailure(
           'Please verify your email. Check your inbox for the verification link.',
         ));
         return;
@@ -120,6 +197,10 @@ class AuthCubit extends Cubit<AuthState> {
       final idToken = await _firebaseAuthService.getIdToken();
       final fcmToken = await _getFcmTokenSafely();
 
+      if (isClosed) {
+        return;
+      }
+
       try {
         await _authRepository.loginWithFirebase(
           idToken: idToken,
@@ -127,33 +208,42 @@ class AuthCubit extends Cubit<AuthState> {
         );
       } on EmailNotVerifiedException catch (e) {
         await _firebaseAuthService.signOut();
-        emit(AuthFailure(e.message));
+        if (isClosed) {
+          return;
+        }
+        _emit(AuthFailure(e.message));
         return;
       }
 
       await _completeAuthenticatedSession();
     } on FirebaseAuthException catch (e) {
-      emit(AuthFailure(_mapFirebaseAuthError(e)));
+      if (isClosed) {
+        return;
+      }
+      _emit(AuthFailure(_mapFirebaseAuthError(e)));
     } catch (e) {
       await _firebaseAuthService.signOut();
       if (kDebugMode) {
         debugPrint('Login error: $e');
       }
-      emit(AuthFailure(_extractMessage(e)));
+      if (isClosed) {
+        return;
+      }
+      _emit(AuthFailure(_extractMessage(e)));
     }
   }
 
   /// Firebase signup + LOVEN register-sync without issuing a LOVEN session.
   ///
   /// Returns email for verification navigation; re-emits [AuthGuest] on success.
+  ///
+  /// Does not emit [AuthLoading]; the signup screen owns submit loading UI.
   Future<String?> signupWithFirebase({
     required String name,
     required String email,
     required String password,
     required String systemRole,
   }) async {
-    emit(const AuthLoading());
-
     try {
       await _firebaseAuthService.signUp(
         email: email,
@@ -161,8 +251,16 @@ class AuthCubit extends Cubit<AuthState> {
       );
       await _firebaseAuthService.sendEmailVerification();
 
+      if (isClosed) {
+        return null;
+      }
+
       final idToken = await _firebaseAuthService.getIdToken();
       final fcmToken = await _getFcmTokenSafely();
+
+      if (isClosed) {
+        return null;
+      }
 
       final result = await _authRepository.registerSync(
         idToken: idToken,
@@ -171,17 +269,27 @@ class AuthCubit extends Cubit<AuthState> {
         fcmToken: fcmToken,
       );
 
-      emit(const AuthGuest());
+      if (isClosed) {
+        return null;
+      }
+
+      _emit(const AuthGuest());
       return result.email.isNotEmpty ? result.email : email;
     } on FirebaseAuthException catch (e) {
-      emit(AuthFailure(_mapFirebaseAuthError(e)));
+      if (isClosed) {
+        return null;
+      }
+      _emit(AuthFailure(_mapFirebaseAuthError(e)));
       return null;
     } catch (e) {
       await _firebaseAuthService.signOut();
       if (kDebugMode) {
         debugPrint('Signup error: $e');
       }
-      emit(AuthFailure(_extractMessage(e)));
+      if (isClosed) {
+        return null;
+      }
+      _emit(AuthFailure(_extractMessage(e)));
       return null;
     }
   }
@@ -191,6 +299,18 @@ class AuthCubit extends Cubit<AuthState> {
       await _firebaseAuthService.sendEmailVerification();
     } on FirebaseAuthException catch (e) {
       throw AppException(_mapFirebaseAuthError(e));
+    }
+  }
+
+  /// Sends a Firebase password-reset email.
+  ///
+  /// Failures are swallowed so UI can always show generic success copy and
+  /// avoid email enumeration.
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      await _firebaseAuthService.sendPasswordResetEmail(email: email);
+    } catch (_) {
+      // Generic success UX — do not reveal whether the email exists.
     }
   }
 
@@ -205,11 +325,17 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       await _authRepository.logout();
       await _firebaseAuthService.signOut();
-      emit(const AuthGuest());
+      if (isClosed) {
+        return;
+      }
+      _emit(const AuthGuest());
     } catch (_) {
       await _authRepository.clearLocalSession();
       await _firebaseAuthService.signOut();
-      emit(const AuthGuest());
+      if (isClosed) {
+        return;
+      }
+      _emit(const AuthGuest());
     }
   }
 
@@ -222,7 +348,7 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     final sessionUser = _sessionUser;
     if (sessionUser == null) {
-      emit(const AuthFailure('You must be signed in to change your password.'));
+      _emit(const AuthFailure('You must be signed in to change your password.'));
       return;
     }
 
@@ -233,37 +359,21 @@ class AuthCubit extends Cubit<AuthState> {
         newPassword: newPassword,
       );
 
-      emit(AuthSuccess(user: sessionUser));
+      if (isClosed) {
+        return;
+      }
+
+      _emit(AuthSuccess(user: sessionUser));
     } on FirebaseAuthException catch (e) {
-      emit(_operationFailure(_mapFirebaseAuthError(e)));
+      if (isClosed) {
+        return;
+      }
+      _emit(_operationFailure(_mapFirebaseAuthError(e)));
     } catch (e) {
-      emit(_operationFailure(_extractMessage(e)));
-    }
-  }
-
-  Future<void> loadCurrentUser() async {
-    try {
-      await _completeAuthenticatedSession();
-    } catch (e) {
-      emit(_operationFailure(_extractMessage(e)));
-    }
-  }
-
-  Future<void> updateProfile({
-    required String name,
-    required String email,
-    String? profileImageUrl,
-  }) async {
-    try {
-      final user = await _authRepository.updateProfile(
-        name: name,
-        email: email,
-        profileImageUrl: profileImageUrl,
-      );
-
-      emit(AuthSuccess(user: user));
-    } catch (e) {
-      emit(_operationFailure(_extractMessage(e)));
+      if (isClosed) {
+        return;
+      }
+      _emit(_operationFailure(_extractMessage(e)));
     }
   }
 
@@ -287,6 +397,73 @@ class AuthCubit extends Cubit<AuthState> {
       }
       return false;
     }
+  }
+
+  /// Listens for FCM token rotation and syncs to the backend when signed in.
+  void startPushTokenSync() {
+    _fcmTokenRefreshSubscription ??=
+        FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+      unawaited(_syncFcmTokenToBackend(fcmToken: token));
+    });
+  }
+
+  /// Best-effort FCM token sync after session restore or explicit refresh.
+  Future<void> syncFcmTokenIfSessionActive() async {
+    if (!authStateHasSession(state) || isClosed) {
+      return;
+    }
+
+    try {
+      final firebaseUser = await _firebaseAuthService.reloadUser();
+      if (firebaseUser == null || isClosed) {
+        return;
+      }
+
+      final fcmToken = await _getFcmTokenSafely();
+      if (fcmToken == null || isClosed) {
+        return;
+      }
+
+      await _syncFcmTokenToBackend(fcmToken: fcmToken);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM token sync skipped: $e');
+      }
+    }
+  }
+
+  Future<void> _syncFcmTokenToBackend({required String fcmToken}) async {
+    if (!authStateHasSession(state) || isClosed) {
+      return;
+    }
+
+    try {
+      final firebaseUser = await _firebaseAuthService.reloadUser();
+      if (firebaseUser == null || isClosed) {
+        return;
+      }
+
+      final idToken = await _firebaseAuthService.getIdToken();
+      if (isClosed) {
+        return;
+      }
+
+      await _authRepository.loginWithFirebase(
+        idToken: idToken,
+        fcmToken: fcmToken,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM token sync failed: $e');
+      }
+    }
+  }
+
+  @override
+  Future<void> close() {
+    unawaited(_fcmTokenRefreshSubscription?.cancel());
+    _fcmTokenRefreshSubscription = null;
+    return super.close();
   }
 
   Future<String?> _getFcmTokenSafely() async {

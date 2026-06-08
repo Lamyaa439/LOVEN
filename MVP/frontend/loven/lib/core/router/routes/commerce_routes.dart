@@ -4,7 +4,6 @@ import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/cart/view/screens/confirm_order_screen.dart';
 import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
 import 'package:loven/features/location/view/screens/address_form_screen.dart';
@@ -16,6 +15,8 @@ import 'package:loven/features/order/view/screens/order_details_screen.dart';
 import 'package:loven/features/order/view/screens/order_history_screen.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'package:loven/features/verification_request/view/screens/verification_request_screen.dart';
+import 'package:loven/features/cart/data/models/cart_model.dart';
+import 'package:loven/features/cart/view/screens/checkout_screen.dart';
 
 /// Account hub, orders, cart, checkout, and related signed-in flows.
 List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
@@ -84,20 +85,26 @@ List<RouteBase> buildCommerceRoutesCart(AppRouterDeps deps) {
   return [
     GoRoute(
       path: AppRoutes.cart,
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final isGuest =
-            extra?['isGuest'] as bool? ?? deps.authCubit.state is AuthGuest;
-
-        return NavigationScreen(
-          isGuest: isGuest,
-          initialIndex: 2,
-        );
-      },
+      builder: (context, state) => const NavigationScreen(initialIndex: 2),
     ),
     GoRoute(
       path: AppRoutes.artworksCreate,
       builder: (context, state) => const CreateArtworkScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.checkout,
+      builder: (context, state) {
+        final raw = state.extra;
+
+        if (raw is! CartModel) {
+          return invalidRouteExtraFallback(
+            title: 'Checkout',
+            message: 'Unable to open checkout. Cart data is missing.',
+          );
+        }
+
+        return CheckoutScreen(cart: raw);
+      },
     ),
   ];
 }

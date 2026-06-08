@@ -1,16 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
+import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
 
-/// Account hub for guests and signed-in users (`/profile`).
+/// Single account hub for guests and signed-in users (`/profile`).
 ///
-/// Authentication lifecycle is owned by [AuthCubit]; this screen only reads
-/// session state and delegates logout to [AuthCubit.logout].
-class AccountScreen extends StatelessWidget {
+/// Consolidates account, settings, and role-gated artist tools in one surface.
+/// Session identity from [AuthCubit]; profile edits via [AccountCubit] on the edit route.
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      final user = authStateSessionUser(context.read<AuthCubit>().state);
+      if (user?.systemRole == 'artist') {
+        context.read<ArtistProfileCubit>().fetchMyProfileData();
+      }
+    });
+  }
+
+  Future<void> _confirmLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true && mounted) {
+      await context.read<AuthCubit>().logout();
+    }
+  }
+
+  void _openFavoritesTab() {
+    context.go(AppRoutes.home);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<NavigationBarCubit>().navigateTo(1);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,77 +83,194 @@ class AccountScreen extends StatelessWidget {
           return const _GuestAccountView();
         }
 
-        if (state is AuthSuccess) {
-          final user = state.user;
-
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _AccountHeader(
-                    name: user.name,
-                    email: user.email,
-                    imageUrl: user.profileImageUrl,
-                    role: user.systemRole,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'My Account',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  _AccountTile(
-                    icon: Icons.person_outline,
-                    title: 'Edit Profile',
-                    subtitle: 'Update your personal information',
-                    onTap: () => context.push(AppRoutes.profileEdit),
-                  ),
-                  _AccountTile(
-                    icon: Icons.shopping_bag_outlined,
-                    title: 'Order History',
-                    subtitle: 'View your previous orders',
-                    onTap: () => context.push(AppRoutes.ordersHistory),
-                  ),
-                  _AccountTile(
-                    icon: Icons.location_on_outlined,
-                    title: 'Address',
-                    subtitle: 'Manage your delivery location',
-                    onTap: () => context.push(AppRoutes.location),
-                  ),
-                  _AccountTile(
-                    icon: Icons.lock_outline,
-                    title: 'Change Password',
-                    subtitle: 'Update your account password',
-                    onTap: () => context.push(AppRoutes.changePassword),
-                  ),
-                  _AccountTile(
-                    icon: Icons.feedback_outlined,
-                    title: 'Feedback',
-                    subtitle: 'Send us your thoughts',
-                    onTap: () => context.push(AppRoutes.feedback),
-                  ),
-                  const SizedBox(height: 24),
-                  _AccountTile(
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    subtitle: 'Sign out of your account',
-                    isDanger: true,
-                    onTap: () => context.read<AuthCubit>().logout(),
-                  ),
-                ],
-              ),
-            ),
+        final user = authStateSessionUser(state);
+        if (user != null) {
+          return _SignedInAccountHub(
+            user: user,
+            onLogout: _confirmLogout,
+            onOpenFavorites: _openFavoritesTab,
           );
         }
 
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
+        return const Center(child: CircularProgressIndicator());
       },
+    );
+  }
+}
+
+class _SignedInAccountHub extends StatelessWidget {
+  const _SignedInAccountHub({
+    required this.user,
+    required this.onLogout,
+    required this.onOpenFavorites,
+  });
+
+  final AuthUser user;
+  final VoidCallback onLogout;
+  final VoidCallback onOpenFavorites;
+
+  bool get _isArtist => user.systemRole == 'artist';
+
+  Future<void> _changeRole(BuildContext context) async {
+    final nextRole = _isArtist ? 'customer' : 'artist';
+
+    await context.read<AccountCubit>().updateRole(
+      systemRole: nextRole,
+    );
+
+    if (nextRole == 'artist') {
+      context.read<ArtistProfileCubit>().fetchMyProfileData();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _AccountHeader(
+              name: user.name,
+              email: user.email,
+              imageUrl: user.profileImageUrl,
+              role: user.systemRole,
+            ),
+            const SizedBox(height: 28),
+            _AccountSectionHeader(theme: theme, title: 'Account'),
+            _AccountTile(
+              icon: Icons.person_outline,
+              title: 'Edit Profile',
+              subtitle: 'Update your personal information',
+              onTap: () => context.push(AppRoutes.profileEdit),
+            ),
+            _AccountTile(
+  icon: _isArtist
+      ? Icons.person_outline
+      : Icons.brush_outlined,
+  title: _isArtist
+      ? 'Switch to Customer'
+      : 'Become an Artist',
+  subtitle: _isArtist
+      ? 'Use LOVEN as a customer account'
+      : 'Create and showcase your artwork',
+  onTap: () => _changeRole(context),
+),
+            _AccountTile(
+              icon: Icons.location_on_outlined,
+              title: 'Saved Addresses',
+              subtitle: 'Manage your delivery locations',
+              onTap: () => context.push(AppRoutes.location),
+            ),
+            _AccountTile(
+              icon: Icons.lock_outline,
+              title: 'Change Password',
+              subtitle: 'Update your account password',
+              onTap: () => context.push(AppRoutes.changePassword),
+            ),
+            if (_isArtist) ...[
+              const SizedBox(height: 20),
+              _AccountSectionHeader(theme: theme, title: 'Artist'),
+              _AccountTile(
+                icon: Icons.storefront_outlined,
+                title: 'My Artist Profile',
+                subtitle: 'Manage your storefront and portfolio',
+                onTap: () => context.push(AppRoutes.myProfile),
+              ),
+              BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
+                builder: (context, artistState) {
+                  final artist = artistState.artist;
+                  if (artist == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Column(
+                    children: [
+                      _AccountTile(
+                        icon: Icons.inventory_2_outlined,
+                        title: 'Incoming Orders',
+                        subtitle: 'Review and fulfill buyer orders',
+                        onTap: () {
+                          context.push(
+                            AppRoutes.ordersIncoming,
+                            extra: artist.id,
+                          );
+                        },
+                      ),
+                      if (!artist.isVerified)
+                        _AccountTile(
+                          icon: Icons.verified_outlined,
+                          title: 'Request Verification',
+                          subtitle: 'Apply for a verified artist badge',
+                          onTap: () {
+                            context.push(AppRoutes.verificationRequest);
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+            const SizedBox(height: 20),
+            _AccountSectionHeader(theme: theme, title: 'Activity'),
+            _AccountTile(
+              icon: Icons.favorite_border,
+              title: 'Your Favorites',
+              subtitle: 'Artworks you have saved',
+              onTap: onOpenFavorites,
+            ),
+            _AccountTile(
+              icon: Icons.shopping_bag_outlined,
+              title: 'Order History',
+              subtitle: 'View your previous orders',
+              onTap: () => context.push(AppRoutes.ordersHistory),
+            ),
+            const SizedBox(height: 20),
+            _AccountSectionHeader(theme: theme, title: 'Support'),
+            _AccountTile(
+              icon: Icons.feedback_outlined,
+              title: 'Send Feedback',
+              subtitle: 'Share your thoughts with us',
+              onTap: () => context.push(AppRoutes.feedback),
+            ),
+            const SizedBox(height: 24),
+            _AccountTile(
+              icon: Icons.logout,
+              title: 'Logout',
+              subtitle: 'Sign out of your account',
+              isDanger: true,
+              onTap: onLogout,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountSectionHeader extends StatelessWidget {
+  const _AccountSectionHeader({
+    required this.theme,
+    required this.title,
+  });
+
+  final ThemeData theme;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      child: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: AppColors.primaryPurple,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

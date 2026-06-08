@@ -211,6 +211,27 @@ CREATE TABLE IF NOT EXISTS "payments" (
     "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+/* =======================================================================
+TABLE: notifications
+Description: In-app notifications delivered to a user (welcome, orders,
+feedback confirmations, cart/order reminders).
+Relationships: Each notification belongs to one user. reference_id and
+reference_type optionally point at related entities (order, cart, feedback)
+without enforcing polymorphic foreign keys.
+=========================================================================*/
+CREATE TABLE IF NOT EXISTS "notifications" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" UUID NOT NULL,
+    "type" VARCHAR(100) NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "body" TEXT NOT NULL,
+    "reference_id" UUID,
+    "reference_type" VARCHAR(50),
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 
 /* ==============================================================================
@@ -241,5 +262,16 @@ ALTER TABLE "payments" ADD FOREIGN KEY("order_id") REFERENCES "orders"("id") ON 
 -- Support links
 ALTER TABLE "verification_requests" ADD FOREIGN KEY("artist_profile_id") REFERENCES "artist_profiles"("id") ON DELETE CASCADE;
 ALTER TABLE "feedback" ADD FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
+ALTER TABLE "notifications" ADD FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE "reports" ADD FOREIGN KEY("reporter_id") REFERENCES "users"("id") ON DELETE CASCADE;
 ALTER TABLE "reports" ADD FOREIGN KEY("target_artwork_id") REFERENCES "artworks"("id") ON DELETE CASCADE;
+
+/* ==============================================================================
+   INDEXES
+============================================================================== */
+
+CREATE INDEX IF NOT EXISTS "ix_notifications_user_id_created_at"
+    ON "notifications" ("user_id", "created_at" DESC);
+
+CREATE INDEX IF NOT EXISTS "ix_notifications_user_id_is_read"
+    ON "notifications" ("user_id", "is_read");

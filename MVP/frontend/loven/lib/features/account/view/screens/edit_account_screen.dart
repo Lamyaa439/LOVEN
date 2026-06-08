@@ -4,13 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/features/account/controller/cubit/account_cubit.dart';
+import 'package:loven/features/account/controller/cubit/account_state.dart';
 import 'package:loven/features/account/data/services/profile_image_storage_service.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/auth/data/models/auth_user.dart';
 
 /// Edit signed-in account profile (`/profile/edit`).
 ///
-/// Persists via [AuthCubit.updateProfile]; image upload via account storage service.
+/// Persists via [AccountCubit.updateAccount]; image upload via account storage service.
 class EditAccountScreen extends StatefulWidget {
   const EditAccountScreen({super.key});
 
@@ -24,23 +27,23 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   XFile? _selectedImage;
   final _imagePicker = ImagePicker();
-  final _storageService = ProfileImageStorageService();
   bool initialized = false;
   bool _isLoadingInitial = false;
 
   @override
   void initState() {
     super.initState();
-    final state = context.read<AuthCubit>().state;
-    if (state is AuthSuccess) {
+    final sessionUser =
+        authStateSessionUser(context.read<AuthCubit>().state);
+    if (sessionUser != null) {
       initialized = true;
-      nameController.text = state.user.name;
-      emailController.text = state.user.email;
+      nameController.text = sessionUser.name;
+      emailController.text = sessionUser.email;
       return;
     }
 
     _isLoadingInitial = true;
-    context.read<AuthCubit>().loadCurrentUser().whenComplete(() {
+    context.read<AccountCubit>().loadAccount().whenComplete(() {
       if (mounted) {
         setState(() => _isLoadingInitial = false);
       }
@@ -68,6 +71,14 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     });
   }
 
+  AuthUser? _profileFromState(AccountState accountState) {
+    return switch (accountState) {
+      AccountLoaded(:final user) => user,
+      AccountFailure(:final user) => user,
+      _ => authStateSessionUser(context.read<AuthCubit>().state),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -85,29 +96,28 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
           ),
         ),
       ),
-      body: BlocConsumer<AuthCubit, AuthState>(
+      body: BlocConsumer<AccountCubit, AccountState>(
         listener: (context, state) {
-          if (state is AuthFailure || state is AuthOperationFailure) {
-            final message = state is AuthFailure
-                ? state.message
-                : (state as AuthOperationFailure).message;
+          if (state is AccountFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message)),
+              SnackBar(content: Text(state.message)),
             );
           }
 
-          if (state is AuthSuccess && !initialized) {
+          if (state is AccountLoaded && !initialized) {
             initialized = true;
             nameController.text = state.user.name;
             emailController.text = state.user.email;
           }
         },
-        builder: (context, state) {
+        builder: (context, accountState) {
           if (_isLoadingInitial && !initialized) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
+
+          final profile = _profileFromState(accountState);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
@@ -118,12 +128,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                   child: FutureBuilder<Uint8List?>(
                     future: _selectedImage?.readAsBytes(),
                     builder: (context, snapshot) {
-                      String? currentImageUrl;
-
-                      if (state is AuthSuccess) {
-                        currentImageUrl = state.user.profileImageUrl;
-                      }
-
+                      final currentImageUrl = profile?.profileImageUrl;
                       final hasCurrentImage =
                           currentImageUrl != null && currentImageUrl.isNotEmpty;
 
@@ -171,11 +176,12 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                     onPressed: () async {
                       String? profileImageUrl;
 
-                      final authState = context.read<AuthCubit>().state;
-                      final sessionUser = authStateSessionUser(authState);
+                      final sessionUser =
+                          authStateSessionUser(context.read<AuthCubit>().state);
                       if (_selectedImage != null && sessionUser != null) {
-                        profileImageUrl =
-                            await _storageService.uploadProfileImage(
+                        profileImageUrl = await context
+                            .read<ProfileImageStorageService>()
+                            .uploadProfileImage(
                           imageFile: _selectedImage!,
                           userId: sessionUser.id,
                         );
@@ -185,7 +191,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                         return;
                       }
 
-                      context.read<AuthCubit>().updateProfile(
+                      context.read<AccountCubit>().updateAccount(
                             name: nameController.text.trim(),
                             email: emailController.text.trim(),
                             profileImageUrl: profileImageUrl,

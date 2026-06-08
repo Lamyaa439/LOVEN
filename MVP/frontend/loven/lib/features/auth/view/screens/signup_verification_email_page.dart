@@ -10,7 +10,7 @@ import '../../controller/cubit/auth_cubit.dart';
 /// Link-based email verification after Firebase signup.
 ///
 /// **Architectural rule:** Firebase owns verification; LOVEN JWT is not issued
-/// here. On success the user is sent to login for the token exchange (M3).
+/// here. On success the user is sent to [SignupSuccessPage], then login (M3).
 class SignupVerificationEmailPage extends StatefulWidget {
   final String email;
 
@@ -60,7 +60,7 @@ class _SignupVerificationEmailPageState
     }
   }
 
-  /// Reloads Firebase user after the user taps the email link, then routes to login.
+  /// Reloads Firebase user after the user taps the email link, then routes to success.
   Future<void> _checkVerification() async {
     if (_isChecking) return;
 
@@ -80,10 +80,10 @@ class _SignupVerificationEmailPageState
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Email verified. Sign in to continue.'),
+            content: Text('Email verified successfully.'),
           ),
         );
-        context.go(AppRoutes.login);
+        context.go(AppRoutes.signupSuccess);
         return;
       }
 
@@ -125,7 +125,15 @@ class _SignupVerificationEmailPageState
             children: [
               const SizedBox(height: 4),
               IconButton(
-                onPressed: isBusy ? null : () => context.pop(),
+                onPressed: isBusy
+                    ? null
+                    : () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go(AppRoutes.auth);
+                        }
+                      },
                 icon: const Icon(Icons.arrow_back),
               ),
               const SizedBox(height: 30),

@@ -17,6 +17,7 @@ from app.api.v1.artworks import artwork_bp
 from app.api.v1.feedback import feedback_bp
 from app.api.v1.reports import report_bp
 from app.api.v1.favorites import favorites_bp
+from app.api.v1.notifications import notifications_bp
 from app.api.v1.payments import payments_bp
 from app.api.v1.account import account_bp
 from flask_migrate import Migrate
@@ -127,8 +128,19 @@ def create_app():
     def home():
         """
         Health check route.
+
+        ``notifications_routes`` helps verify production deploys include the
+        notifications blueprint (GET/PATCH /api/v1/notifications/...).
         """
-        return {"status": "success", "message": "LOVEN Backend API is running on AWS"}
+        notifications_routes = any(
+            rule.rule.startswith("/api/v1/notifications")
+            for rule in app.url_map.iter_rules()
+        )
+        return {
+            "status": "success",
+            "message": "LOVEN Backend API is running on Render",
+            "notifications_routes": notifications_routes,
+        }
     # =========================================================
     # Register API Blueprints
     # =========================================================
@@ -162,6 +174,12 @@ def create_app():
 
     # Favorites routes
     app.register_blueprint(favorites_bp, url_prefix="/api/v1/favorites")
+
+    # Notifications routes
+    app.register_blueprint(
+        notifications_bp,
+        url_prefix="/api/v1/notifications",
+    )
     
     # Account routes
     app.register_blueprint(account_bp, url_prefix="/api/v1")
@@ -172,5 +190,9 @@ def create_app():
     # print(app.url_map)
 
     logger.debug("Registered routes: %s", app.url_map)
+
+    from app.cli import register_cli_commands
+
+    register_cli_commands(app)
 
     return app

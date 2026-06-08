@@ -157,6 +157,29 @@ def view_artist_orders(artist_profile_id):
     return jsonify(result), status_code
 
 
+@order_bp.get("/<order_id>")
+@jwt_required()
+def view_order(order_id):
+    """
+    Retrieve a single order by ID for deep linking and order details.
+
+    Authorized callers:
+    - the buyer who placed the order
+    - an artist whose artworks appear in the order
+    - admin
+    """
+    user_id = get_authenticated_user_id()
+    role = get_authenticated_user_role()
+
+    result, status_code = OrderFacade.get_order(
+        order_id=order_id,
+        user_id=user_id,
+        role=role,
+    )
+
+    return jsonify(result), status_code
+
+
 @order_bp.patch("/<order_id>/status")
 @jwt_required()
 def update_status(order_id):

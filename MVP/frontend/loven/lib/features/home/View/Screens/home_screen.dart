@@ -11,16 +11,14 @@ import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import '../widgets/art_card.dart';
+import 'package:loven/core/session/app_session.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
+import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 
 class HomeScreen extends StatelessWidget {
-  final bool isGuest;
-
-  const HomeScreen({
-    super.key,
-    this.isGuest = false,
-  });
+  const HomeScreen({super.key});
 
   void _goToSignup(BuildContext context) {
     context.push(AppRoutes.signupFromGuest());
@@ -71,7 +69,9 @@ class HomeScreen extends StatelessWidget {
           quantity: 1,
         );
 
-    await context.read<CartCubit>().getCart();
+    if (!context.mounted) {
+      return;
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${art.title} added to cart')),
@@ -88,17 +88,60 @@ class HomeScreen extends StatelessWidget {
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             if (state is HomeLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 18),
+                  _buildHeader(context),
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              );
             }
 
             if (state is HomeError) {
-              return Center(child: Text(state.message));
+              return SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 110),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 18),
+                    _buildHeader(context),
+                    const SizedBox(height: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
+                      child: Column(
+                        children: [
+                          Text(
+                            state.message,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.read<HomeBloc>().add(FetchHomeData());
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (state is HomeLoaded) {
               final artworks = state.artPieces;
               final featured = artworks.take(5).toList();
-              final newArrivals = artworks.skip(1).take(5).toList();
+              final featuredIds =
+                  featured.map((artwork) => artwork.id).toSet();
+              final newArrivals = artworks
+                  .where((artwork) => !featuredIds.contains(artwork.id))
+                  .take(5)
+                  .toList();
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 110),
@@ -141,7 +184,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildArtworkList(
                       context: context,
-                      artworks: newArrivals.isEmpty ? featured : newArrivals,
+                      artworks: newArrivals,
                     ),
                     const SizedBox(height: 28),
                     _buildArtistPreviewSection(
@@ -186,14 +229,32 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            onPressed: () {
-              context.push(AppRoutes.notifications);
+          BlocBuilder<NotificationsCubit, NotificationsState>(
+            builder: (context, notificationsState) {
+              final hasSession = authStateHasSession(
+                context.read<AuthCubit>().state,
+              );
+              final unreadCount = notificationsState is NotificationsLoaded
+                  ? notificationsState.unreadCount
+                  : 0;
+              final showBadge = hasSession && unreadCount > 0;
+              final badgeLabel =
+                  unreadCount > 99 ? '99+' : unreadCount.toString();
+
+              return IconButton(
+                onPressed: () {
+                  context.push(AppRoutes.notifications);
+                },
+                icon: Badge(
+                  isLabelVisible: showBadge,
+                  label: Text(badgeLabel),
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              );
             },
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              color: theme.colorScheme.onSurface,
-            ),
           ),
         ],
       ),
@@ -340,12 +401,8 @@ class HomeScreen extends StatelessWidget {
 
           return ArtCard(
             artwork: art,
-            isGuest: isGuest,
             onActionPressed: () async {
-              final isActuallyGuest =
-                  isGuest || context.read<AuthCubit>().state is AuthGuest;
-
-              if (isActuallyGuest) {
+              if (!AppSession.hasSessionFromContext(context)) {
                 context.push(AppRoutes.auth);
                 return;
               }

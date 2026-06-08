@@ -23,7 +23,9 @@ abstract final class AppEnv {
   /// Version-controlled fallback when [load] fails or `BASE_URL` is unset.
   ///
   /// Prefer setting `BASE_URL` in [envAssetPath] for team/staging hosts.
-  static const String defaultBaseUrl = 'http://34.224.37.128:5001/api/v1';
+  ///
+  /// HTTPS is required for iOS ATS when the bundled asset fails to load.
+  static const String defaultBaseUrl = 'https://loven.onrender.com/api/v1';
 
   /// Maximum wait for TCP connect before Dio reports a timeout.
   static const Duration connectTimeout = Duration(seconds: 15);
@@ -66,6 +68,20 @@ abstract final class AppEnv {
   }
 
   static String _normalizeBaseUrl(String url) {
-    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+    var normalized = url.trim();
+
+    if (normalized.length >= 2) {
+      final first = normalized[0];
+      final last = normalized[normalized.length - 1];
+      if ((first == '"' && last == '"') || (first == "'" && last == "'")) {
+        normalized = normalized.substring(1, normalized.length - 1).trim();
+      }
+    }
+
+    if (normalized.endsWith('/')) {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+
+    return normalized;
   }
 }

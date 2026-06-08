@@ -80,92 +80,49 @@ def _ensure_firebase() -> bool:
 # 1. Cloud Messaging (Notifications)
 # ==========================================
 
-def send_welcome_notification(fcm_token: str, user_name: str) -> bool:
-    """
-    Dispatches a personalized welcome push notification to new users.
-
-    Args:
-        fcm_token (str): The FCM device token provided by the frontend.
-        user_name (str): The user's name for personalizing the message.
-
-    Returns:
-        bool: True if the notification was sent successfully, False otherwise.
-    """
-    if not fcm_token:
-        logger.warning("No token provided. Skipping welcome notification.")
-        return False
-
-    if not _ensure_firebase():
-        logger.warning("Firebase unavailable. Skipping welcome notification.")
-        return False
-
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="Welcome to LOVEN! 🎨 ",
-            body=f"Hi {user_name}, we're happy you're here!!",
-        ),
-        data={
-            "type": "welcome_alert",
-            "action": "open_home_screen",
-        },
-        token=fcm_token,
-    )
-
-    try:
-        message_id = messaging.send(message)
-        logger.info("Welcome notification sent. ID: %s", message_id)
-        return True
-    except Exception as exc:
-        logger.error("FCM welcome notification failed: %s", exc)
-        return False
-
-
-def send_order_status_notification(
+def send_push_notification(
     fcm_token: str,
-    user_name: str,
-    order_id: str,
-    status: str,
+    *,
+    title: str,
+    body: str,
+    data: dict | None = None,
 ) -> bool:
     """
-    Sends an order status update push notification to the user.
+    Canonical FCM transport for all app push notifications.
 
-    Args:
-        fcm_token (str): The user's FCM device token.
-        user_name (str): The user's name.
-        order_id (str): The order ID.
-        status (str): The updated order status.
-
-    Returns:
-        bool: True if sent successfully, False otherwise.
+    Callers (typically NotificationService) own business copy and payload
+    keys; this function only initializes Firebase, stringifies data values,
+    and sends the message. Failures are logged and return False — never raised.
     """
     if not fcm_token:
-        logger.warning("No token provided. Skipping order notification.")
+        logger.debug("No FCM token; skipping push notification.")
         return False
 
     if not _ensure_firebase():
-        logger.warning("Firebase unavailable. Skipping order notification.")
+        logger.warning("Firebase unavailable; skipping push notification.")
         return False
+
+    payload = {
+        key: str(value)
+        for key, value in (data or {}).items()
+        if value is not None
+    }
 
     message = messaging.Message(
         notification=messaging.Notification(
-            title="Order Update from LOVEN 🎨",
-            body=f"Hi {user_name}, your order #{order_id} is now {status}.",
+            title=title,
+            body=body,
         ),
-        data={
-            "type": "order_status_update",
-            "action": "open_order_details",
-            "order_id": str(order_id),
-            "status": status,
-        },
+        data=payload,
         token=fcm_token,
     )
 
     try:
         message_id = messaging.send(message)
-        logger.info("Order notification sent. ID: %s", message_id)
+        logger.info("Push notification sent. ID: %s", message_id)
         return True
     except Exception as exc:
-        logger.error("FCM order notification failed: %s", exc)
+        logger.warning("Push notification failed (non-fatal): %s", exc)
         return False
 
 

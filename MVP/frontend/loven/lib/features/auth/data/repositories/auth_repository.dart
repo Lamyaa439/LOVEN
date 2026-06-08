@@ -3,11 +3,11 @@ import 'package:dio/dio.dart';
 import 'package:loven/core/error/app_exception.dart';
 import 'package:loven/core/network/api_constants.dart';
 import 'package:loven/core/storage/token_storage.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
 import 'package:loven/features/auth/data/models/auth_error_codes.dart';
-import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/auth/data/models/register_sync_result.dart';
 
-/// LOVEN session and profile data access for authenticated users.
+/// LOVEN session and credential exchange for authenticated users.
 ///
 /// **Credential ownership:** Firebase Auth owns email/password. This repository
 /// exchanges verified Firebase ID tokens for LOVEN JWTs and manages session storage.
@@ -15,8 +15,9 @@ import 'package:loven/features/auth/data/models/register_sync_result.dart';
 /// **Session ownership:**
 /// - Persists JWTs on [loginWithFirebase]; clears on [logout] / [clearLocalSession].
 /// - [isLoggedIn] — local access token present (no expiry check).
-/// - [restoreAuthenticatedUser] — boot profile load (`GET /account/me`).
 /// - Does **not** refresh tokens — [ApiClient] interceptors own `POST /refresh`.
+///
+/// Account profile (`GET/PATCH /account/me`) lives in [AccountRepository].
 class AuthRepository {
   final ApiClient _apiClient;
   final TokenStorage _tokenStorage;
@@ -51,11 +52,6 @@ class AuthRepository {
 
   /// Clears local JWT credentials (e.g. logout fallback or failed restore).
   Future<void> clearLocalSession() => _tokenStorage.clearAllTokens();
-
-  /// Loads the authenticated profile during boot restore.
-  Future<AuthUser> restoreAuthenticatedUser() async {
-    return getCurrentUser();
-  }
 
   /// Syncs a newly created Firebase user with LOVEN after client-side signup.
   ///
@@ -149,29 +145,6 @@ class AuthRepository {
     }
 
     await clearLocalSession();
-  }
-
-  Future<AuthUser> getCurrentUser() async {
-    final response = await _apiClient.get(ApiConstants.currentUser);
-
-    return AuthUser.fromJson(_asMap(response.data));
-  }
-
-  Future<AuthUser> updateProfile({
-    required String name,
-    required String email,
-    String? profileImageUrl,
-  }) async {
-    final response = await _apiClient.patch(
-      ApiConstants.currentUser,
-      data: {
-        'name': name,
-        'email': email,
-        if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
-      },
-    );
-
-    return AuthUser.fromJson(_asMap(response.data));
   }
 
   Future<bool> checkEmailDuplication(String email) async {

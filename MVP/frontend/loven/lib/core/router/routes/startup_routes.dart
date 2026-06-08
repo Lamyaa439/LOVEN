@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/navigation/view/Screens/navigation_screen.dart';
 import 'package:loven/features/splash/onboarding_screen.dart';
 import 'package:loven/features/splash/splash_screen.dart';
@@ -23,13 +22,7 @@ List<RouteBase> buildStartupRoutes(AppRouterDeps deps) {
     ),
     GoRoute(
       path: AppRoutes.home,
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final isGuest =
-            extra?['isGuest'] as bool? ?? deps.authCubit.state is AuthGuest;
-
-        return NavigationScreen(isGuest: isGuest);
-      },
+      builder: (context, state) => const NavigationScreen(),
     ),
   ];
 }

@@ -176,3 +176,14 @@ class UserRepository(SQLAlchemyRepository):
         db.session.add(user)
         db.session.commit()
         return user
+    
+    def update_role(self, user_id, system_role):
+        user = self.get_by_id(user_id)
+        
+        if not user:
+            return None
+        
+        user.system_role = system_role
+        db.session.commit()
+        
+        return user

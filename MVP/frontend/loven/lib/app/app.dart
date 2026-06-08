@@ -7,6 +7,8 @@ import 'package:loven/core/res/theme/app_theme.dart';
 import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
 import 'package:loven/core/theme/theme_bloc.dart';
+import 'package:loven/features/account/data/repositories/account_repository.dart';
+import 'package:loven/features/account/data/services/profile_image_storage_service.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/auth/data/repositories/auth_repository.dart';
@@ -17,6 +19,7 @@ import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
+import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 
@@ -40,6 +43,15 @@ class _LovenAppState extends State<LovenApp> {
   void initState() {
     super.initState();
     _deps = AppDependencies.create(widget.appPreferences);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _deps.pushNotificationService.initialize(
+        router: _deps.appRouter.router,
+        authCubit: _deps.authCubit,
+        notificationsCubit: _deps.notificationsCubit,
+        orderRepository: _deps.orderRepository,
+      );
+      _deps.authCubit.startPushTokenSync();
+    });
   }
 
   @override
@@ -61,12 +73,23 @@ class _LovenAppState extends State<LovenApp> {
         RepositoryProvider<AuthRepository>.value(
           value: _deps.authRepository,
         ),
+        RepositoryProvider<AccountRepository>.value(
+          value: _deps.accountRepository,
+        ),
+        RepositoryProvider<ProfileImageStorageService>.value(
+          value: _deps.profileImageStorageService,
+        ),
+        RepositoryProvider<OrderRepository>.value(
+          value: _deps.orderRepository,
+        ),
       ],
       child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
         value: _deps.splashMinDurationNotifier,
         child: MultiBlocProvider(
           providers: [
           BlocProvider.value(value: _deps.authCubit),
+          BlocProvider.value(value: _deps.accountCubit),
+          BlocProvider.value(value: _deps.notificationsCubit),
           BlocProvider(create: (context) => NavigationBarCubit()),
           BlocProvider(
             create: (context) => HomeBloc(
@@ -75,7 +98,10 @@ class _LovenAppState extends State<LovenApp> {
           ),
           BlocProvider(create: (context) => ThemeBloc()),
           BlocProvider(
-            create: (context) => CartCubit(_deps.cartRepository),
+            create: (_) => CartCubit(
+              _deps.cartRepository,
+              authCubit: _deps.authCubit,
+            ),
           ),
           BlocProvider(
             create: (context) => ArtworkCubit(_deps.artworkRepository),
@@ -90,7 +116,10 @@ class _LovenAppState extends State<LovenApp> {
             create: (context) => ReportCubit(_deps.reportRepository),
           ),
           BlocProvider(
-            create: (_) => FavoritesCubit(_deps.favoritesRepository),
+            create: (_) => FavoritesCubit(
+              _deps.favoritesRepository,
+              authCubit: _deps.authCubit,
+            ),
           ),
           BlocProvider(
             create: (_) => VerificationRequestCubit(

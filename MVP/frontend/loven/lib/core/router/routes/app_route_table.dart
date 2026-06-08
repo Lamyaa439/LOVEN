@@ -20,7 +20,6 @@ List<RouteBase> buildAppRouteList(AppRouterDeps deps) {
     ...buildAuthRoutesPrimary(deps),
     ...buildDiscoveryRoutesBrowse(deps),
     ...buildCommerceRoutesCheckout(deps),
-    ...buildDiscoveryRoutesSettings(deps),
     ...buildAccountRoutesEdit(deps),
     ...buildCommerceRoutesCart(deps),
     ...buildDiscoveryRoutesArtistEdit(deps),

@@ -3,7 +3,8 @@
 // **Session ownership:**
 // - [TokenStorage]: persists JWT access/refresh tokens only.
 // - [ApiClient]: sole owner of access-token refresh (`POST /refresh` on 401).
-// - [AuthRepository]: login/register/logout and profile calls; no refresh implementation.
+// - [AuthRepository]: login/register/logout and token persistence; no refresh implementation.
+// - [AccountRepository]: `GET/PATCH /account/me` profile access.
 // - [AuthCubit]: orchestrates boot [restoreSession] and auth state emissions.
 //
 // Wire [attachSessionExpiredHandler] to [AuthCubit.handleSessionExpired] from [main].
@@ -70,6 +71,11 @@ class ApiClient {
   /// Coalesces concurrent refresh attempts into one in-flight request.
   Future<void>? _refreshInFlight;
 
+  /// Removes the session-expired callback — call before [AuthCubit.close] on teardown.
+  void detachSessionExpiredHandler() {
+    _onSessionExpired = null;
+  }
+
   /// @deprecated Use [AppEnv.defaultBaseUrl].
   static const String defaultBaseUrl = AppEnv.defaultBaseUrl;
 
@@ -82,7 +88,11 @@ class ApiClient {
   }
 
   void _notifySessionExpired() {
-    _onSessionExpired?.call();
+    final handler = _onSessionExpired;
+    if (handler == null) {
+      return;
+    }
+    handler();
   }
 
   /// Exchanges the stored refresh JWT for a new access token (`POST /refresh`).
