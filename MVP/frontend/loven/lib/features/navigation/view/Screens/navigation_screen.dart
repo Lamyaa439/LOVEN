@@ -141,33 +141,38 @@ class _NavigationScreenState extends State<NavigationScreen> {
           },
         ),
       ],
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Image.asset(
-            'assets/images/loven-logo.png',
-            height: 40,
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(
-                context.watch<ThemeBloc>().state == ThemeMode.light
-                    ? Icons.nightlight_outlined
-                    : Icons.light_mode_outlined,
-              ),
-              onPressed: () => context.read<ThemeBloc>().toggleTheme(),
-            ),
-          ],
-        ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        extendBody: true,
-        body: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, authState) {
-            final hasSession = authStateHasSession(authState);
+      child: BlocBuilder<NavigationBarCubit, NavigationBarState>(
+        builder: (context, navState) {
+          final isHomeTab = navState.currentIndex == 0;
 
-            return BlocBuilder<NavigationBarCubit, NavigationBarState>(
-              builder: (context, navState) {
+          return Scaffold(
+            appBar: isHomeTab
+                ? null
+                : AppBar(
+                    automaticallyImplyLeading: false,
+                    title: Image.asset(
+                      'assets/images/loven-logo.png',
+                      height: 40,
+                    ),
+                    centerTitle: true,
+                    actions: [
+                      IconButton(
+                        icon: Icon(
+                          context.watch<ThemeBloc>().state == ThemeMode.light
+                              ? Icons.nightlight_outlined
+                              : Icons.light_mode_outlined,
+                        ),
+                        onPressed: () =>
+                            context.read<ThemeBloc>().toggleTheme(),
+                      ),
+                    ],
+                  ),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            extendBody: true,
+            body: BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                final hasSession = authStateHasSession(authState);
+
                 return IndexedStack(
                   index: navState.currentIndex,
                   children: [
@@ -195,10 +200,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   ],
                 );
               },
-            );
-          },
-        ),
-        bottomNavigationBar: const NavigationWidget(),
+            ),
+            bottomNavigationBar: const NavigationWidget(),
+          );
+        },
       ),
     );
   }

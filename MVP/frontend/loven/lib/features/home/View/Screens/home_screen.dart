@@ -1,232 +1,448 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
-
-import '../../controller/bloc/home_bloc.dart';
-import '../../controller/bloc/home_state.dart';
-import '../../controller/bloc/home_event.dart';
-
-import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
-import 'package:loven/features/cart/controller/cubit/cart_state.dart';
+import 'package:loven/core/theme/theme_bloc.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
-import '../widgets/art_card.dart';
-import 'package:loven/core/session/app_session.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/home/View/widgets/home_discover_artist_row.dart';
+import 'package:loven/features/home/View/widgets/home_discover_hero.dart';
+import 'package:loven/features/home/View/widgets/home_discover_masterpieces_mosaic.dart';
+import 'package:loven/features/home/View/widgets/home_discover_overlay_card.dart';
+import 'package:loven/features/home/View/widgets/home_discover_section_header.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
+import 'package:loven/features/home/controller/bloc/home_state.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 
-class HomeScreen extends StatelessWidget {
+/// LOVEN Discover home — editorial layout aligned with reference composition.
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  void _goToSignup(BuildContext context) {
-    context.push(AppRoutes.signupFromGuest());
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  Future<void> _addArtworkToCart({
-    required BuildContext context,
-    required ArtworkModel art,
-  }) async {
-    final artworkId = art.id;
-
-    if (artworkId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Artwork ID missing')),
-      );
-      return;
-    }
-
-    final stock = art.quantityAvailable ?? 0;
-    int currentCartQuantity = 0;
-
-    final cartState = context.read<CartCubit>().state;
-
-    if (cartState is CartLoaded) {
-      for (final item in cartState.cart.items) {
-        if (item.artworkId == artworkId) {
-          currentCartQuantity = item.quantity;
-          break;
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        if (state is HomeLoading) {
+          return const GalleryLoadingState(message: 'Preparing discovery…');
         }
+
+        if (state is HomeError) {
+          return GalleryEmptyState(
+            icon: Icons.wifi_off_rounded,
+            title: 'Could not load artworks',
+            subtitle: state.message,
+            actionLabel: 'Try again',
+            onAction: () => context.read<HomeBloc>().add(FetchHomeData()),
+            usePrimaryAction: true,
+          );
+        }
+
+        if (state is HomeLoaded) {
+          return _HomeDiscoverBody(
+            state: state,
+            searchController: _searchController,
+            onClearAllFilters: _clearAllFilters,
+          );
+        }
+
+        return const GalleryEmptyState(
+          icon: Icons.palette_outlined,
+          title: 'The gallery awaits',
+          subtitle: 'Original works from our artists will appear here soon.',
+        );
+      },
+    );
+  }
+
+  void _clearAllFilters() {
+    _searchController.clear();
+    context.read<HomeBloc>().add(
+          FilterArtworks(searchText: '', category: 'All'),
+        );
+  }
+}
+
+class _HomeDiscoverBody extends StatelessWidget {
+  const _HomeDiscoverBody({
+    required this.state,
+    required this.searchController,
+    required this.onClearAllFilters,
+  });
+
+  final HomeLoaded state;
+  final TextEditingController searchController;
+  final VoidCallback onClearAllFilters;
+
+  bool get _isFiltered =>
+      state.searchQuery.isNotEmpty || state.selectedCategory != 'All';
+
+  @override
+  Widget build(BuildContext context) {
+    final artworks = state.artPieces;
+    final allArtworks = state.allArtworks;
+
+    return SafeArea(
+      bottom: false,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        slivers: [
+          SliverToBoxAdapter(
+            child: _DiscoverPageHeader(
+              onSearchTap: () => _openSearchSheet(context),
+            ),
+          ),
+          if (_isFiltered)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPadding,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: GalleryChip(
+                    label: state.selectedCategory == 'All'
+                        ? 'Clear filters'
+                        : '${state.selectedCategory} · Clear',
+                    selected: true,
+                    onTap: onClearAllFilters,
+                  ),
+                ),
+              ),
+            ),
+          if (artworks.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: GalleryEmptyState(
+                icon: Icons.search_off_rounded,
+                title: _isFiltered ? 'No matching works' : 'Gallery is quiet',
+                subtitle: _isFiltered
+                    ? 'Try a different search or style.'
+                    : 'New artworks will be added soon.',
+                actionLabel: _isFiltered ? 'Reset' : null,
+                onAction: _isFiltered ? onClearAllFilters : null,
+              ),
+            )
+          else if (_isFiltered)
+            ..._buildFilteredSlivers(context, artworks)
+          else
+            ..._buildDiscoverSlivers(context, artworks, allArtworks),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppSpacing.bottomNavClearance),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildFilteredSlivers(
+    BuildContext context,
+    List<ArtworkModel> artworks,
+  ) {
+    return [
+      SliverToBoxAdapter(
+        child: HomeDiscoverSectionHeader(
+          label: 'Results',
+          onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: _DiscoverHorizontalRail(
+          artworks: artworks,
+          badge: 'Match',
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+        ),
+        sliver: SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: AppSpacing.md,
+            crossAxisSpacing: AppSpacing.md,
+            mainAxisExtent: AppSizes.discoverRailCardHeight,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final art = artworks[index];
+              return HomeDiscoverOverlayCard(
+                title: art.title,
+                imageUrl: art.artworkImageUrl,
+                artwork: art,
+                width: double.infinity,
+                height: AppSizes.discoverRailCardHeight,
+                onTap: () {},
+              );
+            },
+            childCount: artworks.length.clamp(0, 12),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildDiscoverSlivers(
+    BuildContext context,
+    List<ArtworkModel> artworks,
+    List<ArtworkModel> allArtworks,
+  ) {
+    final heroItems = artworks.take(5).toList();
+    final mosaicItems = artworks.take(4).toList();
+    final artists = _uniqueArtists(allArtworks);
+    final genres = state.categories.where((c) => c != 'All').toList();
+    final collections = artworks.skip(4).take(8).toList();
+    final trending = _trendingWorks(artworks);
+
+    return [
+      SliverToBoxAdapter(child: HomeDiscoverHero(artworks: heroItems)),
+      const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sectionGap)),
+      SliverToBoxAdapter(
+        child: HomeDiscoverSectionHeader(
+          label: 'Masterpieces',
+          onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
+        ),
+      ),
+      SliverToBoxAdapter(
+        child: HomeDiscoverMasterpiecesMosaic(artworks: mosaicItems),
+      ),
+      if (artists.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: HomeDiscoverSectionHeader(
+            label: 'Artists',
+            onSeeAll: () => context.push(AppRoutes.artists),
+          ),
+        ),
+        SliverToBoxAdapter(child: HomeDiscoverArtistRow(artworks: artists)),
+      ],
+      if (genres.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: HomeDiscoverSectionHeader(
+            label: 'Genres',
+            showDivider: true,
+            onSeeAll: () => _openGenreSheet(context),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _GenreRail(
+            genres: genres,
+            allArtworks: allArtworks,
+            onGenreTap: (genre) {
+              context.read<HomeBloc>().add(FilterArtworks(category: genre));
+            },
+          ),
+        ),
+      ],
+      if (collections.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: HomeDiscoverSectionHeader(
+            label: 'Collections',
+            onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _DiscoverHorizontalRail(
+            artworks: collections,
+            badge: 'Collection',
+          ),
+        ),
+      ],
+      if (trending.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: HomeDiscoverSectionHeader(
+            label: 'Trending works',
+            onSeeAll: () => context.push(AppRoutes.artworksListPath('trending')),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _DiscoverHorizontalRail(
+            artworks: trending,
+            badge: 'Trending',
+          ),
+        ),
+      ],
+    ];
+  }
+
+  List<ArtworkModel> _uniqueArtists(List<ArtworkModel> all) {
+    final seen = <String>{};
+    final result = <ArtworkModel>[];
+
+    for (final art in all) {
+      if (art.artistProfileId.isEmpty) {
+        continue;
+      }
+      if (seen.add(art.artistProfileId)) {
+        result.add(art);
+      }
+      if (result.length >= 10) {
+        break;
       }
     }
 
-    if (currentCartQuantity >= stock) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            stock == 1
-                ? 'Only 1 item is available in stock.'
-                : 'Only $stock items are available in stock.',
+    return result;
+  }
+
+  List<ArtworkModel> _trendingWorks(List<ArtworkModel> all) {
+    if (all.length <= 3) {
+      return all;
+    }
+    return all.skip(all.length ~/ 3).take(8).toList();
+  }
+
+  void _openSearchSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
           ),
-        ),
-      );
-      return;
-    }
-
-    await context.read<CartCubit>().addItem(
-          artworkId: artworkId,
-          quantity: 1,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Search the gallery',
+                    style: Theme.of(sheetContext).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  LovenSearchField(
+                    controller: searchController,
+                    hintText: 'Artworks, artists, styles…',
+                    onChanged: (text) {
+                      context.read<HomeBloc>().add(
+                            FilterArtworks(searchText: text),
+                          );
+                    },
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.tune_rounded),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _openGenreSheet(context);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+              ),
+            ),
+          ),
         );
-
-    if (!context.mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${art.title} added to cart')),
+      },
     );
   }
+
+  void _openGenreSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Browse by style',
+                  style: Theme.of(sheetContext).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Wrap(
+                  spacing: AppSpacing.chipGap,
+                  runSpacing: AppSpacing.chipGap,
+                  children: state.categories.map((category) {
+                    return GalleryChip(
+                      label: category,
+                      selected: category == state.selectedCategory,
+                      onTap: () {
+                        context.read<HomeBloc>().add(
+                              FilterArtworks(category: category),
+                            );
+                        Navigator.pop(sheetContext);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DiscoverPageHeader extends StatelessWidget {
+  const _DiscoverPageHeader({required this.onSearchTap});
+
+  final VoidCallback onSearchTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, state) {
-            if (state is HomeLoading) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 18),
-                  _buildHeader(context),
-                  const Expanded(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                ],
-              );
-            }
-
-            if (state is HomeError) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 18),
-                    _buildHeader(context),
-                    const SizedBox(height: 32),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      child: Column(
-                        children: [
-                          Text(
-                            state.message,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              context.read<HomeBloc>().add(FetchHomeData());
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            if (state is HomeLoaded) {
-              final artworks = state.artPieces;
-              final featured = artworks.take(5).toList();
-              final featuredIds =
-                  featured.map((artwork) => artwork.id).toSet();
-              final newArrivals = artworks
-                  .where((artwork) => !featuredIds.contains(artwork.id))
-                  .take(5)
-                  .toList();
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.only(bottom: 110),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 18),
-                    _buildHeader(context),
-                    const SizedBox(height: 18),
-                    _buildSearchBar(theme, context),
-                    const SizedBox(height: 18),
-                    _buildHeroBanner(context),
-                    const SizedBox(height: 22),
-                    _buildCategories(
-                      context,
-                      state.categories,
-                      state.selectedCategory,
-                    ),
-                    const SizedBox(height: 26),
-                    _buildSectionHeader(
-                      context: context,
-                      title: 'Featured Artworks',
-                      onSeeAll: () {
-                        context.push(AppRoutes.artworksListPath('featured'));
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildArtworkList(
-                      context: context,
-                      artworks: featured,
-                    ),
-                    const SizedBox(height: 28),
-                    _buildSectionHeader(
-                      context: context,
-                      title: 'New Arrivals',
-                      onSeeAll: () {
-                        context.push(AppRoutes.artworksListPath('new-arrivals'));
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildArtworkList(
-                      context: context,
-                      artworks: newArrivals,
-                    ),
-                    const SizedBox(height: 28),
-                    _buildArtistPreviewSection(
-                      context,
-                      artworks,
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return const Center(
-              child: Text('Start exploring art!'),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.lg,
+        AppSpacing.screenPadding,
+        AppSpacing.md,
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Expanded(
+            child: Text(
+              'Discovery',
+              style: theme.textTheme.displayLarge,
+            ),
+          ),
           IconButton(
-            onPressed: () {},
+            tooltip: 'Search',
+            visualDensity: VisualDensity.compact,
+            onPressed: onSearchTap,
             icon: Icon(
-              Icons.menu_rounded,
+              Icons.search_rounded,
               color: theme.colorScheme.onSurface,
             ),
           ),
-          Expanded(
-            child: Center(
-              child: Text(
-                'Home',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+          IconButton(
+            tooltip: 'Toggle theme',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => context.read<ThemeBloc>().toggleTheme(),
+            icon: Icon(
+              context.watch<ThemeBloc>().state == ThemeMode.light
+                  ? Icons.nightlight_outlined
+                  : Icons.light_mode_outlined,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           BlocBuilder<NotificationsCubit, NotificationsState>(
@@ -242,9 +458,9 @@ class HomeScreen extends StatelessWidget {
                   unreadCount > 99 ? '99+' : unreadCount.toString();
 
               return IconButton(
-                onPressed: () {
-                  context.push(AppRoutes.notifications);
-                },
+                tooltip: 'Notifications',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => context.push(AppRoutes.notifications),
                 icon: Badge(
                   isLabelVisible: showBadge,
                   label: Text(badgeLabel),
@@ -260,383 +476,93 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildHeroBanner(BuildContext context) {
-    final theme = Theme.of(context);
+class _DiscoverHorizontalRail extends StatelessWidget {
+  const _DiscoverHorizontalRail({
+    required this.artworks,
+    this.badge,
+  });
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      child: Container(
-        height: 150,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withOpacity(0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Support Local Artists',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Discover original artworks from emerging creators.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      minimumSize: const Size(0, 34),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    child: const Text(
-                      'Explore Now',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 92,
-              height: 104,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Icon(
-                Icons.palette_outlined,
-                size: 48,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  final List<ArtworkModel> artworks;
+  final String? badge;
 
-  Widget _buildSectionHeader({
-    required BuildContext context,
-    required String title,
-    required VoidCallback onSeeAll,
-  }) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: onSeeAll,
-            child: Text(
-              'See all',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildArtworkList({
-    required BuildContext context,
-    required List<ArtworkModel> artworks,
-  }) {
-    if (artworks.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 22),
-        child: Text('No artworks found.'),
-      );
-    }
-
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      height: 255,
-      child: ListView.builder(
+      height: AppSizes.discoverRailCardHeight,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 22),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+        ),
         itemCount: artworks.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
           final art = artworks[index];
-
-          return ArtCard(
+          return HomeDiscoverOverlayCard(
+            title: art.title,
+            imageUrl: art.artworkImageUrl,
+            badge: badge,
             artwork: art,
-            onActionPressed: () async {
-              if (!AppSession.hasSessionFromContext(context)) {
-                context.push(AppRoutes.auth);
-                return;
-              }
-
-              await _addArtworkToCart(
-                context: context,
-                art: art,
-              );
-            },
+            onTap: () {},
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildArtistPreviewSection(
-    BuildContext context,
-    List<ArtworkModel> artworks,
-  ) {
-    final theme = Theme.of(context);
+class _GenreRail extends StatelessWidget {
+  const _GenreRail({
+    required this.genres,
+    required this.allArtworks,
+    required this.onGenreTap,
+  });
 
-    final artistItems = artworks
-        .where(
-          (art) =>
-              art.artistProfileId != null && art.artistProfileId!.isNotEmpty,
-        )
-        .toList();
+  final List<String> genres;
+  final List<ArtworkModel> allArtworks;
+  final ValueChanged<String> onGenreTap;
 
-    if (artistItems.isEmpty) {
-      return const SizedBox.shrink();
+  ArtworkModel? _sampleForGenre(String genre) {
+    for (final art in allArtworks) {
+      final haystack =
+          '${art.title} ${art.description ?? ''}'.toLowerCase();
+      final normalized = genre.toLowerCase();
+      if (haystack.contains(normalized)) {
+        return art;
+      }
+      for (final word in normalized.split(RegExp(r'\s+'))) {
+        if (word.length >= 4 && haystack.contains(word)) {
+          return art;
+        }
+      }
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          context: context,
-          title: 'Artists',
-          onSeeAll: () {
-            context.push(AppRoutes.artists);
-          },
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 112,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 22),
-            itemCount: artistItems.length,
-            itemBuilder: (context, index) {
-              final artwork = artistItems[index];
-
-              return GestureDetector(
-                onTap: () {
-                  final artistId = artwork.artistProfileId;
-
-                  if (artistId == null || artistId.isEmpty) {
-                    return;
-                  }
-
-                  context.push(AppRoutes.artistPath(artistId));
-                },
-                child: Container(
-                  width: 92,
-                  margin: const EdgeInsets.only(right: 18),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 34,
-                        backgroundImage: artwork.artistProfileImageUrl != null
-                            ? NetworkImage(artwork.artistProfileImageUrl!)
-                            : null,
-                        backgroundColor:
-                            theme.colorScheme.primary.withOpacity(0.12),
-                        child: artwork.artistProfileImageUrl == null
-                            ? Icon(
-                                Icons.person_rounded,
-                                color: theme.colorScheme.primary,
-                                size: 34,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              artwork.artistDisplayName ?? 'Artist',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (artwork.artistIsVerified) ...[
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.verified_rounded,
-                              size: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ],
-                        ],
-                      ),
-                      Text(
-                        'Creator',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.55),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+    return allArtworks.isNotEmpty ? allArtworks.first : null;
   }
 
-  Widget _buildSearchBar(
-    ThemeData theme,
-    BuildContext context,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withOpacity(0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: TextField(
-          onChanged: (text) {
-            context.read<HomeBloc>().add(
-                  FilterArtworks(searchText: text),
-                );
-          },
-          decoration: InputDecoration(
-            hintText: 'Search artworks, artists, styles...',
-            hintStyle: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.45),
-              fontSize: 14,
-            ),
-            border: InputBorder.none,
-            prefixIcon: Icon(
-              Icons.search_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            suffixIcon: Icon(
-              Icons.tune_rounded,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategories(
-    BuildContext context,
-    List<String> categories,
-    String selectedCategory,
-  ) {
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
-      child: ListView.builder(
+      height: AppSizes.discoverRailCardHeight,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 22),
-        itemCount: categories.length,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenPadding,
+        ),
+        itemCount: genres.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
-          final categoryName = categories[index];
-          final isSelected = categoryName == selectedCategory;
+          final genre = genres[index];
+          final sample = _sampleForGenre(genre);
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: _buildCategoryCard(
-              context,
-              categoryName,
-              isSelected,
-            ),
+          return HomeDiscoverOverlayCard(
+            title: genre,
+            imageUrl: sample?.artworkImageUrl,
+            badge: 'Genre',
+            onTap: () => onGenreTap(genre),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildCategoryCard(
-    BuildContext context,
-    String title,
-    bool isSelected,
-  ) {
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: () {
-        context.read<HomeBloc>().add(
-              FilterArtworks(category: title),
-            );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.dividerColor.withOpacity(0.4),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: isSelected
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
       ),
     );
   }

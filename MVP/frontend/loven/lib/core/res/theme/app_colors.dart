@@ -72,6 +72,9 @@ class AppColors {
   static const Color badgeForeground = textOnBrand;
   static const Color notificationDot = Color(0xFFB84A42);
 
+  /// Discover section "See all" accent — LOVEN brand on light editorial surfaces.
+  static const Color discoverSeeAll = brandPrimary;
+
   // ── Shadows & overlays ─────────────────────────────────────────────────────
   static const Color shadowTint = Color(0x1A1A1A1A);
   static const Color scrim = Color(0x80000000);
