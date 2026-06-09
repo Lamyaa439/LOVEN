@@ -48,3 +48,36 @@ def submit_report(data):
         "message": "Report submitted successfully",
         "report": report.to_dict(),
     }, 201
+
+def get_all_reports():
+    reports = report_repo.list_all()
+
+    return {
+        "reports": [report.to_dict() for report in reports]
+    }, 200
+
+def update_report_status(report_id, status):
+    allowed_statuses = {"open", "resolved", "dismissed"}
+
+    if not status:
+        return {"error": "status is required"}, 400
+
+    if status not in allowed_statuses:
+        return {
+            "error": "status must be one of: open, resolved, dismissed"
+        }, 400
+
+    report = report_repo.get(report_id)
+
+    if not report:
+        return {"error": "Report not found"}, 404
+
+    updated_report = report_repo.update_status(
+        report,
+        status,
+    )
+
+    return {
+        "message": "Report status updated successfully",
+        "report": updated_report.to_dict(),
+    }, 200

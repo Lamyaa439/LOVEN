@@ -87,6 +87,8 @@ abstract final class ApiEndpoints {
   static const String myArtworks = '/artworks/mine';
 
   static String artworkById(String artworkId) => '$artworks$artworkId';
+  static String adminArtworkStatus(String artworkId) =>
+    '/artworks/admin/$artworkId/status';
 
   // ---------------------------------------------------------------------------
   // Feedback (/api/v1/feedback/…)
@@ -99,6 +101,8 @@ abstract final class ApiEndpoints {
   // ---------------------------------------------------------------------------
 
   static const String reports = '/reports/';
+  static String reportStatus(String reportId) =>
+    '/reports/$reportId/status';
 
   // ---------------------------------------------------------------------------
   // Favorites (/api/v1/favorites/…)
@@ -131,4 +135,16 @@ abstract final class ApiEndpoints {
       '/payments/orders/$orderId/verify';
 
   static String paymentsGet(String orderId) => '/payments/orders/$orderId';
+
+  // ---------------------------------------------------------------------------
+  // Admin (/api/v1/admin/…)
+  // ---------------------------------------------------------------------------
+  static const String adminDashboardStats = '/admin/dashboard/stats';
+
+  static const String adminUsers =
+    '/admin/users';
+    
+  static String adminUserStatus(String userId) =>
+    '/admin/users/$userId/status';
+
 }

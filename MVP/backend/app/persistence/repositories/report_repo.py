@@ -29,6 +29,27 @@ class ReportRepository(SQLAlchemyRepository):
             status=status,
         )
         return self.save(report)
-
+    
+    def list_all(self):
+        """Return all non-deleted moderation reports, newest first."""
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .order_by(self.model.created_at.desc())
+            .all()
+        )
+    
+    def update_status(self, report, status):
+        """Update moderation report lifecycle status."""
+        report.status = status
+        return self.save(report)
+    
+    def count_open_reports(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .filter(self.model.status == "open")
+            .count()
+        )
 
 report_repo = ReportRepository()
