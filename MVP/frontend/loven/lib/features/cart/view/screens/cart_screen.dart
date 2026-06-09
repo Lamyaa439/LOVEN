@@ -35,6 +35,8 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) async {
         if (state is OrderLoaded) {
@@ -58,7 +60,7 @@ class _CartScreenState extends State<CartScreen> {
               content: Text('Order created successfully'),
             ),
           );
-          
+
           context.go(AppRoutes.home);
         }
 
@@ -104,13 +106,16 @@ class _CartScreenState extends State<CartScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue,
+                        color: colorScheme.primary.withValues(alpha: 0.13),
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.18),
+                        ),
                       ),
                       child: Text(
                         '$itemCount',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.w900,
                           fontSize: 11,
                         ),
@@ -127,7 +132,7 @@ class _CartScreenState extends State<CartScreen> {
             if (state is CartLoading) {
               return const Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primaryBlue,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               );
             }
@@ -217,7 +222,7 @@ class _CartScreenState extends State<CartScreen> {
                     cart: cart,
                     onCheckout: () {
                       context.push(AppRoutes.checkout, extra: cart);
-                      },
+                    },
                   ),
                 ],
               );
@@ -358,14 +363,16 @@ class _QuantityControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple.withValues(alpha: 0.13),
+        color: colorScheme.primary.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: AppColors.primaryPurple.withValues(alpha: 0.18),
+          color: colorScheme.primary.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -373,12 +380,12 @@ class _QuantityControl extends StatelessWidget {
           InkWell(
             onTap: onDecrease,
             borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
               child: Icon(
                 Icons.remove,
                 size: 15,
-                color: AppColors.deepPurple,
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -393,12 +400,12 @@ class _QuantityControl extends StatelessWidget {
           InkWell(
             onTap: onIncrease,
             borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
               child: Icon(
                 Icons.add,
                 size: 15,
-                color: AppColors.deepPurple,
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -419,6 +426,9 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BlocBuilder<OrderCubit, OrderState>(
       builder: (context, orderState) {
         final isLoading = orderState is OrderLoading;
@@ -484,7 +494,7 @@ class _CartSummary extends StatelessWidget {
                           : 'Checkout — SAR ${cart.totalAmount.toStringAsFixed(2)}',
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(52),
                       shape: RoundedRectangleBorder(
@@ -563,20 +573,21 @@ class _ArtworkThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
 
     final gradients = [
       [
-        AppColors.primaryPurple,
-        AppColors.deepPurple,
+        colorScheme.primary,
+        colorScheme.secondary,
       ],
       [
         const Color(0xFFFFF4F7),
-        AppColors.primaryPurple,
+        colorScheme.primary,
       ],
       [
         const Color(0xFFEEF2FF),
-        AppColors.primaryBlue,
+        colorScheme.primary,
       ],
     ];
 
@@ -648,6 +659,8 @@ class _CartMessageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -656,10 +669,10 @@ class _CartMessageView extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 34,
-              backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.14),
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.14),
               child: Icon(
                 icon,
-                color: AppColors.primaryBlue,
+                color: colorScheme.primary,
                 size: 32,
               ),
             ),
@@ -684,7 +697,7 @@ class _CartMessageView extends StatelessWidget {
             FilledButton(
               onPressed: onAction,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
