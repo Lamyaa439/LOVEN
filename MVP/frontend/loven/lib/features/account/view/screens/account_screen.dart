@@ -145,7 +145,9 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.person_outline,
               title: 'Edit Profile',
               subtitle: 'Update your personal information',
-              onTap: () => context.push(AppRoutes.profileEdit),
+              onTap: () {
+                context.push(AppRoutes.profileEdit);
+              }
             ),
             _AccountTile(
   icon: _isArtist
@@ -178,7 +180,9 @@ class _SignedInAccountHub extends StatelessWidget {
                 icon: Icons.storefront_outlined,
                 title: 'My Artist Profile',
                 subtitle: 'Manage your storefront and portfolio',
-                onTap: () => context.push(AppRoutes.myProfile),
+                onTap: () {
+                  context.go(AppRoutes.myProfile);
+                },
               ),
               BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
                 builder: (context, artistState) {
@@ -194,7 +198,7 @@ class _SignedInAccountHub extends StatelessWidget {
                         title: 'Incoming Orders',
                         subtitle: 'Review and fulfill buyer orders',
                         onTap: () {
-                          context.push(
+                          context.go(
                             AppRoutes.ordersIncoming,
                             extra: artist.id,
                           );
@@ -206,7 +210,7 @@ class _SignedInAccountHub extends StatelessWidget {
                           title: 'Request Verification',
                           subtitle: 'Apply for a verified artist badge',
                           onTap: () {
-                            context.push(AppRoutes.verificationRequest);
+                            context.go(AppRoutes.verificationRequest);
                           },
                         ),
                     ],
@@ -226,7 +230,9 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.shopping_bag_outlined,
               title: 'Order History',
               subtitle: 'View your previous orders',
-              onTap: () => context.push(AppRoutes.ordersHistory),
+              onTap: () {
+                context.go(AppRoutes.ordersHistory);
+              },
             ),
             const SizedBox(height: 20),
             _AccountSectionHeader(theme: theme, title: 'Support'),
@@ -234,7 +240,9 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.feedback_outlined,
               title: 'Send Feedback',
               subtitle: 'Share your thoughts with us',
-              onTap: () => context.push(AppRoutes.feedback),
+              onTap: () {
+                context.go(AppRoutes.feedback);
+              },
             ),
             const SizedBox(height: 24),
             _AccountTile(

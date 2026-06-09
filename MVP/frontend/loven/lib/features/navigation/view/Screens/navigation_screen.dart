@@ -18,7 +18,7 @@ import 'package:loven/features/notifications/controller/cubit/notifications_cubi
 
 import 'package:loven/core/theme/theme_bloc.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
-import '../widget/navigation_widget.dart';
+import 'package:loven/features/navigation/view/widget/navigation_widget.dart';
 
 /// Bottom-nav tab indices aligned with [NavigationWidget].
 ///
@@ -31,10 +31,12 @@ const _firstProtectedTabIndex = _favoritesTabIndex;
 
 class NavigationScreen extends StatefulWidget {
   final int initialIndex;
+  final Widget? accountChild;
 
   const NavigationScreen({
     super.key,
     this.initialIndex = 0,
+    this.accountChild,
   });
 
   @override
@@ -54,8 +56,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
         return;
       }
 
-      context.read<NavigationBarCubit>().navigateTo(widget.initialIndex);
-      _activateProtectedTabIfNeeded(widget.initialIndex);
+      final startIndex =
+    widget.accountChild != null ? _accountTabIndex : widget.initialIndex;
+
+context.read<NavigationBarCubit>().navigateTo(startIndex);
+_activateProtectedTabIfNeeded(startIndex);
 
       if (authStateHasSession(context.read<AuthCubit>().state)) {
         context.read<NotificationsCubit>().loadNotifications(refresh: true);
@@ -160,30 +165,33 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
           ],
         ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: AppColors.backgroundGrey,
         extendBody: true,
-        body: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, authState) {
-            final hasSession = authStateHasSession(authState);
+        body: Stack(
+  children: [
+    BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final hasSession = authStateHasSession(authState);
 
-            return BlocBuilder<NavigationBarCubit, NavigationBarState>(
-              builder: (context, navState) {
-                return IndexedStack(
-                  index: navState.currentIndex,
-                  children: [
-                    const HomeScreen(),
-                    _buildProtectedTabSlot(
-                      tabIndex: _favoritesTabIndex,
-                      hasSession: hasSession,
-                      guestMessage: 'Sign in to view your favorites',
-                      child: const FavoritesScreen(),
-                    ),
-                    _buildProtectedTabSlot(
-                      tabIndex: _cartTabIndex,
-                      hasSession: hasSession,
-                      guestMessage: 'Sign in to view your cart',
-                      child: const CartScreen(),
-                    ),
+        return BlocBuilder<NavigationBarCubit, NavigationBarState>(
+          builder: (context, navState) {
+            return IndexedStack(
+              index: navState.currentIndex,
+              children: [
+                const HomeScreen(),
+                _buildProtectedTabSlot(
+                  tabIndex: _favoritesTabIndex,
+                  hasSession: hasSession,
+                  guestMessage: 'Sign in to view your favorites',
+                  child: const FavoritesScreen(),
+                ),
+                _buildProtectedTabSlot(
+                  tabIndex: _cartTabIndex,
+                  hasSession: hasSession,
+                  guestMessage: 'Sign in to view your cart',
+                  child: const CartScreen(),
+                ),
+                widget.accountChild ??
                     BlocProvider(
                       key: const ValueKey('account-tab'),
                       create: (context) => ArtistProfileCubit(
@@ -192,13 +200,30 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       ),
                       child: const AccountScreen(),
                     ),
-                  ],
-                );
-              },
+              ],
             );
           },
-        ),
-        bottomNavigationBar: const NavigationWidget(),
+        );
+      },
+    ),
+
+    Align(
+      alignment: Alignment.bottomCenter,
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final user = authStateSessionUser(authState);
+
+          final isArtist =
+              user?.systemRole.toLowerCase() == 'artist';
+
+          return NavigationWidget(
+            isArtist: isArtist,
+          );
+        },
+      ),
+    ),
+  ],
+),
       ),
     );
   }

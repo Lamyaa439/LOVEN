@@ -7,6 +7,7 @@ import 'package:loven/features/account/view/screens/account_screen.dart';
 import 'package:loven/features/account/view/screens/edit_account_screen.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/navigation/view/Screens/navigation_screen.dart';
 
 Widget _accountHubWithArtistCubit(
   BuildContext context,
@@ -39,8 +40,13 @@ List<RouteBase> buildAccountRoutesHub(AppRouterDeps deps) {
 List<RouteBase> buildAccountRoutesEdit(AppRouterDeps deps) {
   return [
     GoRoute(
-      path: AppRoutes.profileEdit,
-      builder: (context, state) => const EditAccountScreen(),
-    ),
+  path: AppRoutes.profileEdit,
+  builder: (context, state) {
+    return const NavigationScreen(
+      initialIndex: 3,
+      accountChild: EditAccountScreen(),
+    );
+  },
+),
   ];
 }
