@@ -189,16 +189,9 @@ class _SuccessContent extends StatelessWidget {
         slivers: [
           SliverToBoxAdapter(
             child: ArtistProfileHeroWidget(
-              artist: artist,
-              artworkCount: state.artworks.length,
-              isOwner: !isPublicView,
-              onUpload: () async {
-                final created = await context.push('/artworks/create');
-
-                if (created == true && context.mounted) {
-                  context.read<ArtistProfileCubit>().fetchMyProfileData();
-                }
-              },
+  artist: artist,
+  artworkCount: state.artworks.length,
+  isOwner: !isPublicView,
               onEdit: () async {
                 final updated = await context.push(
                   '/artist-profile/edit',

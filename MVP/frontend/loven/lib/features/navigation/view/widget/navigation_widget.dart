@@ -6,6 +6,7 @@ import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 
 class NavigationWidget extends StatelessWidget {
   const NavigationWidget({
@@ -75,9 +76,13 @@ class NavigationWidget extends StatelessWidget {
                   Positioned(
                     top: -2,
                     child: GestureDetector(
-                      onTap: () {
-                        context.go('/artist/upload');
-                      },
+                     onTap: () async {
+  final created = await context.push('/artworks/create');
+
+  if (created == true && context.mounted) {
+    context.read<ArtistProfileCubit>().fetchMyProfileData();
+  }
+},
                       child: Container(
                         width: 58,
                         height: 58,
