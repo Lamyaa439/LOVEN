@@ -20,7 +20,7 @@ class AppColors {
 
   // ── Canvas & surfaces (light) ──────────────────────────────────────────────
   /// Warm gallery canvas — aligns with native splash `#F9F6F0`.
-  static const Color canvas = Color(0xFFF9F6F0);
+  static const Color canvas = Color(0xFFF6F7F9);
 
   /// Primary elevated surface (cards on canvas).
   static const Color surface = Color(0xFFFFFFFF);
@@ -101,16 +101,6 @@ class AppColors {
       Color(0xB3000000),
       Color(0x4D000000),
       Colors.transparent,
-    ],
-  );
-
-  /// Subtle brand wash for empty-state icons (rare accent use).
-  static const LinearGradient brandWash = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [
-      Color(0x1AD0B1E6),
-      Color(0x1A293CAE),
     ],
   );
 }

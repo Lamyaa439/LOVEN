@@ -32,11 +32,11 @@ class NavigationWidget extends StatelessWidget {
                 Container(
                   height: 58,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
+                        color: AppColors.shadowTint,
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
@@ -82,23 +82,23 @@ class NavigationWidget extends StatelessWidget {
                         width: 58,
                         height: 58,
                         decoration: BoxDecoration(
-                          color: AppColors.deepPurple,
+                          color: AppColors.brandSecondary,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             width: 5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.deepPurple.withOpacity(0.35),
+                              color: AppColors.brandSecondary.withOpacity(0.35),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.add_rounded,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           size: 32,
                         ),
                       ),
@@ -138,7 +138,7 @@ class _NavItem extends StatelessWidget {
       icon: Icon(
         isActive ? activeIcon : icon,
         size: 25,
-        color: isActive ? AppColors.primaryBlue : Colors.grey.shade500,
+        color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade500,
       ),
     );
   }
@@ -180,7 +180,7 @@ class _CartNavItem extends StatelessWidget {
                     ? Icons.shopping_bag_rounded
                     : Icons.shopping_bag_outlined,
                 size: 25,
-                color: isActive ? AppColors.primaryBlue : Colors.grey.shade500,
+                color: isActive ? Theme.of(context).colorScheme.primary : Colors.grey.shade500,
               ),
               if (itemCount > 0)
                 Positioned(
@@ -192,7 +192,7 @@ class _CartNavItem extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.deepPurple,
+                      color: AppColors.badgeBackground,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     constraints: const BoxConstraints(
@@ -202,8 +202,8 @@ class _CartNavItem extends StatelessWidget {
                     child: Text(
                       itemCount > 9 ? '9+' : '$itemCount',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),

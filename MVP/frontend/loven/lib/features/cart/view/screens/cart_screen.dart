@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/features/cart/data/models/cart_item_model.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
@@ -35,6 +34,8 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) async {
         if (state is OrderLoaded) {
@@ -58,7 +59,7 @@ class _CartScreenState extends State<CartScreen> {
               content: Text('Order created successfully'),
             ),
           );
-          
+
           context.go(AppRoutes.home);
         }
 
@@ -77,9 +78,9 @@ class _CartScreenState extends State<CartScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           centerTitle: true,
           title: BlocBuilder<CartCubit, CartState>(
@@ -104,13 +105,16 @@ class _CartScreenState extends State<CartScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue,
+                        color: colorScheme.primary.withValues(alpha: 0.13),
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.18),
+                        ),
                       ),
                       child: Text(
                         '$itemCount',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.w900,
                           fontSize: 11,
                         ),
@@ -125,9 +129,9 @@ class _CartScreenState extends State<CartScreen> {
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, state) {
             if (state is CartLoading) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primaryBlue,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               );
             }
@@ -217,7 +221,7 @@ class _CartScreenState extends State<CartScreen> {
                     cart: cart,
                     onCheckout: () {
                       context.push(AppRoutes.checkout, extra: cart);
-                      },
+                    },
                   ),
                 ],
               );
@@ -253,14 +257,14 @@ class _CartItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.04),
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Theme.of(context).colorScheme.outlineVariant,
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -301,7 +305,10 @@ class _CartItemCard extends StatelessWidget {
                           child: Icon(
                             Icons.delete_outline,
                             size: 18,
-                            color: Colors.black.withValues(alpha: 0.28),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.28),
                           ),
                         ),
                       ),
@@ -313,7 +320,7 @@ class _CartItemCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.black45,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -330,7 +337,7 @@ class _CartItemCard extends StatelessWidget {
                         'SAR ${total.toStringAsFixed(2)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFF172033),
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                       ),
                     ],
@@ -358,14 +365,16 @@ class _QuantityControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.primaryPurple.withValues(alpha: 0.13),
+        color: colorScheme.primary.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: AppColors.primaryPurple.withValues(alpha: 0.18),
+          color: colorScheme.primary.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -373,12 +382,12 @@ class _QuantityControl extends StatelessWidget {
           InkWell(
             onTap: onDecrease,
             borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
               child: Icon(
                 Icons.remove,
                 size: 15,
-                color: AppColors.deepPurple,
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -393,12 +402,12 @@ class _QuantityControl extends StatelessWidget {
           InkWell(
             onTap: onIncrease,
             borderRadius: BorderRadius.circular(999),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
               child: Icon(
                 Icons.add,
                 size: 15,
-                color: AppColors.deepPurple,
+                color: colorScheme.primary,
               ),
             ),
           ),
@@ -419,6 +428,9 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BlocBuilder<OrderCubit, OrderState>(
       builder: (context, orderState) {
         final isLoading = orderState is OrderLoading;
@@ -426,15 +438,17 @@ class _CartSummary extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.colorScheme.surface,
             border: Border(
               top: BorderSide(
-                color: Colors.black.withValues(alpha: 0.06),
+                color: theme.colorScheme.outlineVariant,
               ),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.6)
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 18,
                 offset: const Offset(0, -8),
               ),
@@ -484,7 +498,7 @@ class _CartSummary extends StatelessWidget {
                           : 'Checkout — SAR ${cart.totalAmount.toStringAsFixed(2)}',
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
+                      backgroundColor: colorScheme.primary,
                       foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(52),
                       shape: RoundedRectangleBorder(
@@ -534,7 +548,7 @@ class _SummaryRow extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: large ? FontWeight.w900 : FontWeight.w600,
               ),
         ),
@@ -542,7 +556,7 @@ class _SummaryRow extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: valueColor ?? const Color(0xFF172033),
+                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w900,
                 fontSize: large ? 18 : 14,
               ),
@@ -563,20 +577,21 @@ class _ArtworkThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
 
     final gradients = [
       [
-        AppColors.primaryPurple,
-        AppColors.deepPurple,
+        colorScheme.primary,
+        colorScheme.secondary,
       ],
       [
         const Color(0xFFFFF4F7),
-        AppColors.primaryPurple,
+        colorScheme.primary,
       ],
       [
         const Color(0xFFEEF2FF),
-        AppColors.primaryBlue,
+        colorScheme.primary,
       ],
     ];
 
@@ -648,6 +663,8 @@ class _CartMessageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -656,10 +673,10 @@ class _CartMessageView extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 34,
-              backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.14),
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.14),
               child: Icon(
                 icon,
-                color: AppColors.primaryBlue,
+                color: colorScheme.primary,
                 size: 32,
               ),
             ),
@@ -684,7 +701,7 @@ class _CartMessageView extends StatelessWidget {
             FilledButton(
               onPressed: onAction,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),

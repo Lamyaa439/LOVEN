@@ -19,6 +19,7 @@ import 'package:loven/features/notifications/controller/cubit/notifications_cubi
 import 'package:loven/core/theme/theme_bloc.dart';
 import '../../controller/cubit/navigation_bar_cubit.dart';
 import 'package:loven/features/navigation/view/widget/navigation_widget.dart';
+import 'package:loven/core/res/theme/app_colors.dart';
 
 /// Bottom-nav tab indices aligned with [NavigationWidget].
 ///
@@ -165,7 +166,7 @@ _activateProtectedTabIfNeeded(startIndex);
             ),
           ],
         ),
-        backgroundColor: AppColors.backgroundGrey,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         extendBody: true,
         body: Stack(
   children: [
