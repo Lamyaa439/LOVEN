@@ -20,6 +20,8 @@ from app.api.v1.favorites import favorites_bp
 from app.api.v1.notifications import notifications_bp
 from app.api.v1.payments import payments_bp
 from app.api.v1.account import account_bp
+from app.api.v1.admin_dashboard import admin_dashboard_bp
+from app.api.v1.admin_users import admin_users_bp
 from flask_migrate import Migrate
 
 # Global JWT instance
@@ -186,6 +188,18 @@ def create_app():
 
     # Payment routes
     app.register_blueprint(payments_bp, url_prefix="/api/v1/payments")
+
+    # Admin dashboard routes
+    app.register_blueprint(
+        admin_dashboard_bp,
+        url_prefix="/api/v1/admin",
+    )
+
+    # Admin user management routes
+    app.register_blueprint(
+        admin_users_bp,
+        url_prefix="/api/v1/admin",
+    )
 
     # print(app.url_map)
 

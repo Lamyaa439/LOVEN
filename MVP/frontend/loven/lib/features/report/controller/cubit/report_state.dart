@@ -11,3 +11,9 @@ class ReportFailure extends ReportState {
 
   ReportFailure(this.message);
 }
+
+class ReportsLoaded extends ReportState {
+  final List<dynamic> reports;
+
+  ReportsLoaded(this.reports);
+}

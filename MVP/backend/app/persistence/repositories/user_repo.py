@@ -187,3 +187,39 @@ class UserRepository(SQLAlchemyRepository):
         db.session.commit()
         
         return user
+    
+    def count_active_users(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .count()
+        )
+    
+    def count_active_artists(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .filter(self.model.system_role == "artist")
+            .count()
+        )
+    
+    def list_active_records(self, limit=50, offset=0):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .order_by(self.model.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+    def update_active_status(self, user_id, is_active):
+        user = self.get_by_id(user_id)
+        
+        if not user:
+            return None
+        
+        user.is_active = is_active
+        db.session.commit()
+        
+        return user

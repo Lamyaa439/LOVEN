@@ -58,16 +58,6 @@ class ArtistAboutCard extends StatelessWidget {
                 fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
               ),
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const [
-                _ArtistTag(label: 'Digital Art'),
-                _ArtistTag(label: 'Original Artwork'),
-                _ArtistTag(label: 'Marketplace Seller'),
-              ],
-            ),
             if (hasShipping) ...[
               const SizedBox(height: 18),
               Divider(
@@ -97,28 +87,6 @@ class ArtistAboutCard extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ArtistTag extends StatelessWidget {
-  const _ArtistTag({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.16),
-      side: BorderSide.none,
-      labelStyle: const TextStyle(
-        color: AppColors.primaryBlue,
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
       ),
     );
   }

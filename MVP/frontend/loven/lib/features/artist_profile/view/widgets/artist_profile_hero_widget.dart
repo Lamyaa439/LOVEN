@@ -11,14 +11,12 @@ class ArtistProfileHeroWidget extends StatelessWidget {
     required this.artist,
     required this.artworkCount,
     required this.isOwner,
-    required this.onUpload,
     required this.onEdit,
   });
 
   final ArtistModel artist;
   final int artworkCount;
   final bool isOwner;
-  final VoidCallback onUpload;
   final VoidCallback onEdit;
 
   @override
@@ -176,62 +174,34 @@ Text(
         ],
         const SizedBox(height: AppSpacing.lg),
         if (isOwner)
-          Padding(
-            padding: EdgeInsets.symmetric(
-  horizontal: context.responsive(
-    mobile: 16,
-    tablet: 24,
-  ),
-),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-  onPressed: onUpload,
-  icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-  label: const Text('Upload'),
-  style: ElevatedButton.styleFrom(
-    backgroundColor: AppColors.primaryBlue,
-    foregroundColor: Colors.white,
-    elevation: 0,
-    minimumSize: Size.fromHeight(
-  context.responsive(
-    mobile: 42,
-    tablet: 44,
-  ),
-),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
+  Padding(
+    padding: EdgeInsets.symmetric(
+      horizontal: context.responsive(
+        mobile: 16,
+        tablet: 24,
+      ),
     ),
-  ),
-),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-  onPressed: onEdit,
-  icon: const Icon(Icons.edit_outlined, size: 18),
-  label: const Text('Edit'),
-  style: OutlinedButton.styleFrom(
-    foregroundColor: AppColors.primaryBlue,
-    minimumSize: Size.fromHeight(
-  context.responsive(
-    mobile: 42,
-    tablet: 44,
-  ),
-),
-    side: BorderSide(
-      color: AppColors.primaryBlue.withValues(alpha: 0.25),
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-  ),
-),
-                ),
-              ],
-            ),
+    child: OutlinedButton.icon(
+      onPressed: onEdit,
+      icon: const Icon(Icons.edit_outlined, size: 18),
+      label: const Text('Edit Profile'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primaryBlue,
+        minimumSize: Size.fromHeight(
+          context.responsive(
+            mobile: 42,
+            tablet: 44,
           ),
+        ),
+        side: BorderSide(
+          color: AppColors.primaryBlue.withValues(alpha: 0.25),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+    ),
+  ),
         const SizedBox(height: 20),
         Padding(
           padding: EdgeInsets.symmetric(

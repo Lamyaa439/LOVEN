@@ -24,7 +24,12 @@ List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
   return [
     GoRoute(
       path: AppRoutes.notifications,
-      builder: (context, state) => const NotificationsScreen(),
+      builder: (context, state) {
+  return const NavigationScreen(
+    initialIndex: 3,
+    accountChild: NotificationsScreen(),
+  );
+},
     ),
     GoRoute(
       path: AppRoutes.ordersDetails,
@@ -51,12 +56,22 @@ List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
           );
         }
         final artistProfileId = raw;
-        return IncomingOrdersScreen(artistProfileId: artistProfileId);
+        return NavigationScreen(
+  initialIndex: 3,
+  accountChild: IncomingOrdersScreen(
+    artistProfileId: artistProfileId,
+  ),
+);
       },
     ),
     GoRoute(
       path: AppRoutes.ordersHistory,
-      builder: (context, state) => const OrderHistoryScreen(),
+      builder: (context, state) {
+  return const NavigationScreen(
+    initialIndex: 3,
+    accountChild: OrderHistoryScreen(),
+  );
+},
     ),
   ];
 }
@@ -65,7 +80,12 @@ List<RouteBase> buildCommerceRoutesCheckout(AppRouterDeps deps) {
   return [
     GoRoute(
       path: AppRoutes.feedback,
-      builder: (context, state) => const FeedbackScreen(),
+      builder: (context, state) {
+  return const NavigationScreen(
+    initialIndex: 3,
+    accountChild: FeedbackScreen(),
+  );
+},
     ),
     GoRoute(
       path: AppRoutes.confirmOrder,
@@ -73,7 +93,12 @@ List<RouteBase> buildCommerceRoutesCheckout(AppRouterDeps deps) {
     ),
     GoRoute(
       path: AppRoutes.location,
-      builder: (context, state) => const LocationScreen(),
+      builder: (context, state) {
+  return const NavigationScreen(
+    initialIndex: 3,
+    accountChild: LocationScreen(),
+  );
+},
     ),
     GoRoute(
       path: AppRoutes.locationAddressForm,
@@ -123,12 +148,15 @@ List<RouteBase> buildCommerceRoutesVerification(AppRouterDeps deps) {
     GoRoute(
       path: AppRoutes.verificationRequest,
       builder: (context, state) {
-        return BlocProvider(
-          create: (_) => VerificationRequestCubit(
-            deps.verificationRequestRepository,
-          ),
-          child: const VerificationRequestScreen(),
-        );
+        return NavigationScreen(
+  initialIndex: 3,
+  accountChild: BlocProvider(
+    create: (_) => VerificationRequestCubit(
+      deps.verificationRequestRepository,
+    ),
+    child: const VerificationRequestScreen(),
+  ),
+);
       },
     ),
   ];

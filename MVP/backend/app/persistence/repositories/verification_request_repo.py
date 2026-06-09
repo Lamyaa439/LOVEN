@@ -72,6 +72,13 @@ class VerificationRequestRepository(SQLAlchemyRepository):
                 artist_profile.is_verified = True
 
         return self.save(verification_request)
-
+    
+    def count_pending_requests(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .filter(self.model.status == "pending")
+            .count()
+        )
 
 verification_request_repo = VerificationRequestRepository()

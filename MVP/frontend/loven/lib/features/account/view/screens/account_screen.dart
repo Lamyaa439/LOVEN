@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
@@ -115,8 +114,8 @@ class _SignedInAccountHub extends StatelessWidget {
     final nextRole = _isArtist ? 'customer' : 'artist';
 
     await context.read<AccountCubit>().updateRole(
-      systemRole: nextRole,
-    );
+          systemRole: nextRole,
+        );
 
     if (nextRole == 'artist') {
       context.read<ArtistProfileCubit>().fetchMyProfileData();
@@ -145,20 +144,18 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.person_outline,
               title: 'Edit Profile',
               subtitle: 'Update your personal information',
-              onTap: () => context.push(AppRoutes.profileEdit),
+              onTap: () {
+                context.push(AppRoutes.profileEdit);
+              }
             ),
             _AccountTile(
-  icon: _isArtist
-      ? Icons.person_outline
-      : Icons.brush_outlined,
-  title: _isArtist
-      ? 'Switch to Customer'
-      : 'Become an Artist',
-  subtitle: _isArtist
-      ? 'Use LOVEN as a customer account'
-      : 'Create and showcase your artwork',
-  onTap: () => _changeRole(context),
-),
+              icon: _isArtist ? Icons.person_outline : Icons.brush_outlined,
+              title: _isArtist ? 'Switch to Customer' : 'Become an Artist',
+              subtitle: _isArtist
+                  ? 'Use LOVEN as a customer account'
+                  : 'Create and showcase your artwork',
+              onTap: () => _changeRole(context),
+            ),
             _AccountTile(
               icon: Icons.location_on_outlined,
               title: 'Saved Addresses',
@@ -178,7 +175,9 @@ class _SignedInAccountHub extends StatelessWidget {
                 icon: Icons.storefront_outlined,
                 title: 'My Artist Profile',
                 subtitle: 'Manage your storefront and portfolio',
-                onTap: () => context.push(AppRoutes.myProfile),
+                onTap: () {
+                  context.go(AppRoutes.myProfile);
+                },
               ),
               BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
                 builder: (context, artistState) {
@@ -194,7 +193,7 @@ class _SignedInAccountHub extends StatelessWidget {
                         title: 'Incoming Orders',
                         subtitle: 'Review and fulfill buyer orders',
                         onTap: () {
-                          context.push(
+                          context.go(
                             AppRoutes.ordersIncoming,
                             extra: artist.id,
                           );
@@ -206,7 +205,7 @@ class _SignedInAccountHub extends StatelessWidget {
                           title: 'Request Verification',
                           subtitle: 'Apply for a verified artist badge',
                           onTap: () {
-                            context.push(AppRoutes.verificationRequest);
+                            context.go(AppRoutes.verificationRequest);
                           },
                         ),
                     ],
@@ -226,7 +225,9 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.shopping_bag_outlined,
               title: 'Order History',
               subtitle: 'View your previous orders',
-              onTap: () => context.push(AppRoutes.ordersHistory),
+              onTap: () {
+                context.go(AppRoutes.ordersHistory);
+              },
             ),
             const SizedBox(height: 20),
             _AccountSectionHeader(theme: theme, title: 'Support'),
@@ -234,7 +235,9 @@ class _SignedInAccountHub extends StatelessWidget {
               icon: Icons.feedback_outlined,
               title: 'Send Feedback',
               subtitle: 'Share your thoughts with us',
-              onTap: () => context.push(AppRoutes.feedback),
+              onTap: () {
+                context.go(AppRoutes.feedback);
+              },
             ),
             const SizedBox(height: 24),
             _AccountTile(
@@ -267,7 +270,7 @@ class _AccountSectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: theme.textTheme.titleSmall?.copyWith(
-          color: AppColors.primaryPurple,
+          color: theme.colorScheme.primary,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -446,6 +449,10 @@ class _GuestAccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final texTheme = theme.textTheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
@@ -454,8 +461,8 @@ class _GuestAccountView extends StatelessWidget {
           children: [
             Icon(
               Icons.person_outline,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary,
+              size: 64,
+              color: colorScheme.primary,
             ),
             const SizedBox(height: 20),
             const Text(
@@ -468,16 +475,20 @@ class _GuestAccountView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Create an account or log in to manage your orders, address, and profile.',
+              'Create an account or log in to manage your \n orders, address, and More.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 15,
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.push(AppRoutes.auth),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+              ),
               child: const Text('Sign Up / Login'),
             ),
           ],

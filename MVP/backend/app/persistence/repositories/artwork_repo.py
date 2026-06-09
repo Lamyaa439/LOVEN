@@ -147,3 +147,10 @@ class ArtworkRepository(SQLAlchemyRepository):
         so invalid values raise ValueError up to the service layer.
         """
         return self.update(artwork_id, {"status": new_status})
+    
+    def count_active_artworks(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .count()
+        )

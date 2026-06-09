@@ -60,9 +60,13 @@ abstract final class AppRoutes {
   // ---------------------------------------------------------------------------
 
   static const String admin = '/admin';
+
   static const String adminVerificationRequests =
       '/admin/verification-requests';
+
   static const String adminReports = '/admin/reports';
+  
+  static const String adminUsers = '/admin/users';
 
   // ---------------------------------------------------------------------------
   // Discovery — public browsing (guests allowed)
