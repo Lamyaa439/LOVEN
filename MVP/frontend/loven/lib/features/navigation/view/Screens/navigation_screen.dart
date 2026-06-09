@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/dimensions/app_spacing.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/account/controller/cubit/account_cubit.dart';
 import 'package:loven/features/account/view/screens/account_screen.dart';
@@ -213,7 +213,7 @@ class _GuestTabGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -225,28 +225,14 @@ class _GuestTabGate extends StatelessWidget {
                   .onSurface
                   .withValues(alpha: 0.45),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryPurple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
               onPressed: () => context.push(AppRoutes.auth),
               child: const Text('Sign Up / Login'),
             ),
