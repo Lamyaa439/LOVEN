@@ -96,7 +96,22 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  Text('Welcome back', style: theme.textTheme.displaySmall),
+                  Text.rich(
+                    TextSpan(
+                      style: theme.textTheme.displaySmall,
+                      children: [
+                        const TextSpan(text: 'Welcome back '),
+                        TextSpan(
+                          text: '👋',
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontSize:
+                                (theme.textTheme.displaySmall?.fontSize ?? 36) *
+                                    1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Sign in to your account',
