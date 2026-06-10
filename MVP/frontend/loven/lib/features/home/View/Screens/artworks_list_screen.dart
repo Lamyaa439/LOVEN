@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:loven/features/home/controller/bloc/home_bloc.dart';
-import 'package:loven/features/home/controller/bloc/home_state.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
+import 'package:loven/features/home/controller/bloc/home_state.dart';
 
 class ArtworksListScreen extends StatelessWidget {
-  final String type;
-
   const ArtworksListScreen({
     super.key,
     required this.type,
   });
+
+  final String type;
 
   String get title {
     if (type == 'new-arrivals') {
@@ -34,20 +36,28 @@ class ArtworksListScreen extends StatelessWidget {
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
           if (state is HomeLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return GalleryLoadingState(
+              message: 'Loading $title…',
             );
           }
 
           if (state is HomeError) {
-            return Center(
-              child: Text(state.message),
+            return GalleryEmptyState(
+              icon: Icons.error_outline,
+              title: 'Could not load artworks',
+              subtitle: state.message,
+              actionLabel: 'Try again',
+              onAction: () {
+                context.read<HomeBloc>().add(FetchHomeData());
+              },
             );
           }
 
           if (state is! HomeLoaded) {
-            return const Center(
-              child: Text('No artworks found.'),
+            return const GalleryEmptyState(
+              icon: Icons.palette_outlined,
+              title: 'No artworks found',
+              subtitle: 'Check back soon for new works.',
             );
           }
 
@@ -56,15 +66,19 @@ class ArtworksListScreen extends StatelessWidget {
               : state.allArtworks;
 
           if (artworks.isEmpty) {
-            return const Center(
-              child: Text('No artworks found.'),
+            return const GalleryEmptyState(
+              icon: Icons.palette_outlined,
+              title: 'No artworks found',
+              subtitle: 'New pieces will appear here as artists publish.',
             );
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              top: 16,
-              bottom: 32,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.lg,
+              AppSpacing.screenPadding,
+              AppSpacing.bottomNavClearance,
             ),
             child: ArtworkGridWidget(
               artworks: artworks,

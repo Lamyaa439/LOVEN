@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/features/artist_profile/model/artist_model.dart';
 
-import '../../../../core/res/theme/app_colors.dart';
-import '../../model/artist_model.dart';
-
+/// Readable about section — bio and shipping policy when available.
 class ArtistAboutCard extends StatelessWidget {
   const ArtistAboutCard({
     super.key,
@@ -14,82 +14,64 @@ class ArtistAboutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     final hasBio = artist.bio != null && artist.bio!.trim().isNotEmpty;
     final hasShipping = artist.shippingPolicy != null &&
         artist.shippingPolicy!.trim().isNotEmpty;
 
+    if (!hasBio && !hasShipping) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: colorScheme.outlineVariant,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowTint,
-              blurRadius: 22,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('About', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: AppSpacing.md),
+          if (hasBio)
             Text(
-              'About the Artist',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
+              artist.bio!,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                height: 1.6,
+                color: AppColors.textSecondary,
               ),
-            ),
-            const SizedBox(height: 12),
+            )
+          else if (!hasShipping)
             Text(
-              hasBio
-                  ? artist.bio!
-                  : 'This artist has not added a bio yet.',
+              'This artist has not added a bio yet.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.55,
-                color: hasBio
-    ? colorScheme.onSurfaceVariant
-    : colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
-                fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
+                color: AppColors.textMuted,
+                fontStyle: FontStyle.italic,
               ),
             ),
-            if (hasShipping) ...[
-              const SizedBox(height: 18),
-              Divider(
-                color: colorScheme.outlineVariant,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.local_shipping_outlined,
-                    size: 18,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      artist.shippingPolicy!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.4,
-                      ),
+          if (hasShipping) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Divider(color: theme.dividerColor, height: 1),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.local_shipping_outlined,
+                  size: AppSizes.iconSm,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    artist.shippingPolicy!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ],
-        ),
+          const SizedBox(height: AppSpacing.sectionGap),
+        ],
       ),
     );
   }

@@ -143,6 +143,14 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
     String? coverImageUrl,
   }) async {
     if (!_hasSession || isClosed) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            status: ArtistProfileStatus.error,
+            errorMessage: 'Session expired. Please sign in again.',
+          ),
+        );
+      }
       return;
     }
 

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 
 /// Post-verification confirmation before the user signs in for a LOVEN JWT.
-///
-/// Funnel: [SignupPage] → [SignupVerificationEmailPage] → here → [LoginPage].
 class SignupSuccessPage extends StatelessWidget {
   const SignupSuccessPage({super.key});
 
@@ -29,63 +27,45 @@ class SignupSuccessPage extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenPadding,
+            ),
             child: Column(
               children: [
                 const Spacer(),
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: AppSizes.avatarXl + AppSpacing.xxl,
+                  height: AppSizes.avatarXl + AppSpacing.xxl,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primaryPurple.withValues(alpha: 0.15),
-                        AppColors.primaryBlue.withValues(alpha: 0.2),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppColors.surfaceElevated,
+                    border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Icon(
                     Icons.verified_rounded,
-                    size: 64,
-                    color: AppColors.primaryBlue.withValues(alpha: 0.9),
+                    size: AppSizes.avatarLg,
+                    color: AppColors.brandPrimary,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: AppSpacing.xxl),
                 Text(
-                  'You\'re Verified!',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  'You\'re verified',
+                  style: theme.textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Your email is confirmed and your LOVEN account is ready. '
                   'Sign in to start exploring art from local creators.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                    height: 1.45,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 34),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () => _continueToLogin(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
-                      ),
-                    ),
-                    child: const Text('Continue to Login'),
-                  ),
+                const SizedBox(height: AppSpacing.sectionGap),
+                LovenPrimaryButton(
+                  label: 'Continue to login',
+                  onPressed: () => _continueToLogin(context),
                 ),
                 const Spacer(),
               ],

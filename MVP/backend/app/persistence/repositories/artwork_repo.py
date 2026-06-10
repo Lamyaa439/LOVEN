@@ -8,8 +8,11 @@ delete, soft_delete, get_by_attribute, get_all_by_attribute.
 Note: the Artwork model has no UNIQUE constraints (unlike ArtistProfile),
 so there is no need for "include-soft-deleted" variants here.
 """
+from sqlalchemy.orm import joinedload
+
 from app.persistence.repository import SQLAlchemyRepository
 from app.models.artwork import Artwork
+from app.models.artist_profile import ArtistProfile
 
 
 class ArtworkRepository(SQLAlchemyRepository):
@@ -71,6 +74,9 @@ class ArtworkRepository(SQLAlchemyRepository):
         """
         query = (
             self.model.query
+            .options(
+                joinedload(Artwork.artist).joinedload(ArtistProfile.user),
+            )
             .filter(self.model.deleted_at.is_(None))
         )
         if status is not None:
@@ -117,6 +123,9 @@ class ArtworkRepository(SQLAlchemyRepository):
         # used 'ilike' operator to ignores the difference between uppercase and lowercase letters.
         query = (
             self.model.query
+            .options(
+                joinedload(Artwork.artist).joinedload(ArtistProfile.user),
+            )
             .filter(self.model.deleted_at.is_(None))
             .filter(self.model.title.ilike(pattern))
         )

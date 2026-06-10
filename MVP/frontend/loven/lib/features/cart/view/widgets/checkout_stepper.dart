@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/features/cart/view/screens/checkout_screen.dart';
 
 class CheckoutStepper extends StatelessWidget {
@@ -16,22 +15,22 @@ class CheckoutStepper extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        StepItem(
-          icon: Icons.local_shipping_outlined,
-          label: 'Shipping',
+        _StepItem(
+          icon: Icons.person_outline,
+          label: 'Account',
           active: true,
-          completed: activeStep != CheckoutStep.shipping,
+          completed: activeStep != CheckoutStep.account,
         ),
-        const StepLine(),
-        StepItem(
-          icon: Icons.credit_card_outlined,
-          label: 'Payment',
+        const _StepLine(),
+        _StepItem(
+          icon: Icons.receipt_long_outlined,
+          label: 'Confirm',
           active: activeStep == CheckoutStep.payment ||
               activeStep == CheckoutStep.review,
           completed: activeStep == CheckoutStep.review,
         ),
-        const StepLine(),
-        StepItem(
+        const _StepLine(),
+        _StepItem(
           icon: Icons.check_rounded,
           label: 'Review',
           active: activeStep == CheckoutStep.review,
@@ -41,9 +40,8 @@ class CheckoutStepper extends StatelessWidget {
   }
 }
 
-class StepItem extends StatelessWidget {
-  const StepItem({
-    super.key,
+class _StepItem extends StatelessWidget {
+  const _StepItem({
     required this.icon,
     required this.label,
     required this.active,
@@ -57,49 +55,49 @@ class StepItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active
-        ? AppColors.primaryBlue
-        : AppColors.primaryPurple.withValues(alpha: 0.16);
+    final theme = Theme.of(context);
 
     return Column(
       children: [
         Container(
-          width: 42,
-          height: 42,
+          width: AppSizes.avatarMd,
+          height: AppSizes.avatarMd,
           decoration: BoxDecoration(
-            color: color,
+            color: active ? AppColors.brandPrimary : AppColors.surfaceElevated,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: active ? AppColors.brandPrimary : AppColors.borderLight,
+            ),
           ),
           child: Icon(
             completed ? Icons.check_rounded : icon,
-            color: active ? Colors.white : AppColors.deepPurple,
-            size: 18,
+            color: active ? AppColors.textOnBrand : AppColors.textMuted,
+            size: AppSizes.iconSm,
           ),
         ),
-        const SizedBox(height: 7),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: active ? Colors.black87 : Colors.black38,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-              ),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: active ? AppColors.textPrimary : AppColors.textMuted,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+          ),
         ),
       ],
     );
   }
 }
 
-class StepLine extends StatelessWidget {
-  const StepLine({super.key});
+class _StepLine extends StatelessWidget {
+  const _StepLine();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
+      width: AppSpacing.huge,
       height: 2,
-      margin: const EdgeInsets.only(bottom: 22),
-      color: AppColors.primaryBlue.withValues(alpha: 0.75),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xl),
+      color: AppColors.border,
     );
   }
 }

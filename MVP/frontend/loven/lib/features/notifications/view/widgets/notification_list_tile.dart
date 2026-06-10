@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/features/notifications/data/models/notification_model.dart';
 
 class NotificationListTile extends StatelessWidget {
@@ -17,29 +18,35 @@ class NotificationListTile extends StatelessWidget {
 
     return Material(
       color: notification.isUnread
-          ? theme.colorScheme.primary.withValues(alpha: 0.06)
+          ? AppColors.surfaceElevated
           : theme.colorScheme.surface,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+            vertical: AppSpacing.lg,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (notification.isUnread) ...[
+              if (notification.isUnread)
                 Padding(
-                  padding: const EdgeInsets.only(top: 6, right: 10),
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.xs,
+                    right: AppSpacing.sm,
+                  ),
                   child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
+                    width: AppSpacing.xs,
+                    height: AppSpacing.xs,
+                    decoration: const BoxDecoration(
+                      color: AppColors.brandPrimary,
                       shape: BoxShape.circle,
                     ),
                   ),
-                ),
-              ] else
-                const SizedBox(width: 18),
+                )
+              else
+                SizedBox(width: AppSpacing.xs + AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,27 +54,26 @@ class NotificationListTile extends StatelessWidget {
                     Text(
                       notification.title,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: notification.isUnread
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       notification.body,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.75,
-                        ),
+                        color: AppColors.textSecondary,
+                        height: 1.4,
                       ),
                     ),
                     if (notification.createdAt != null &&
                         notification.createdAt!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         _formatTimestamp(notification.createdAt!),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.5,
-                          ),
+                          color: AppColors.textMuted,
                         ),
                       ),
                     ],

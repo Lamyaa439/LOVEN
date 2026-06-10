@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/cart/data/models/cart_item_model.dart';
-import 'package:loven/features/order/controller/cubit/order_cubit.dart';
-import 'package:loven/features/order/controller/cubit/order_state.dart';
 
 import '../../controller/cubit/cart_cubit.dart';
 import '../../controller/cubit/cart_state.dart';
 import '../../data/models/cart_model.dart';
+<<<<<<< HEAD
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/theme/app_colors.dart';
+=======
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -25,62 +28,17 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       context.read<CartCubit>().getCart();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return BlocListener<OrderCubit, OrderState>(
-      listener: (context, state) async {
-        if (state is OrderLoaded) {
-          final hasError = state.order['error'] != null;
-
-          if (hasError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.order['error'].toString()),
-              ),
-            );
-            return;
-          }
-
-          await context.read<CartCubit>().clearCart();
-
-          if (!context.mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order created successfully'),
-            ),
-          );
-
-          context.go(AppRoutes.home);
-        }
-
-        if (state is OrderError) {
-          if (state.shouldRefreshCart) {
-            await context.read<CartCubit>().getCart();
-          }
-
-          if (!context.mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-            ),
-          );
-        }
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
+<<<<<<< HEAD
           actions: [
   BlocBuilder<CartCubit, CartState>(
     builder: (context, state) {
@@ -99,12 +57,15 @@ class _CartScreenState extends State<CartScreen> {
 ],
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
+=======
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
           centerTitle: true,
           title: BlocBuilder<CartCubit, CartState>(
             builder: (context, state) {
               final itemCount =
                   state is CartLoaded ? state.cart.items.length : 0;
 
+<<<<<<< HEAD
               return Column(
   mainAxisSize: MainAxisSize.min,
   children: [
@@ -152,28 +113,51 @@ class _CartScreenState extends State<CartScreen> {
     ),
   ],
 );
+=======
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Cart'),
+                  if (itemCount > 0) ...[
+                    const SizedBox(width: AppSpacing.sm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xxs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: Text(
+                        '$itemCount',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
             },
           ),
         ),
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, state) {
-            if (state is CartLoading) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              );
+            if (state is CartInitial || state is CartLoading) {
+              return const GalleryLoadingState(message: 'Loading cart…');
             }
 
             if (state is CartError) {
-              return _CartMessageView(
+              return GalleryEmptyState(
                 icon: Icons.error_outline,
                 title: 'Could not load cart',
-                message: state.message,
+                subtitle: state.message,
                 actionLabel: 'Retry',
-                onAction: () {
-                  context.read<CartCubit>().getCart();
-                },
+                onAction: () => context.read<CartCubit>().getCart(),
               );
             }
 
@@ -181,14 +165,12 @@ class _CartScreenState extends State<CartScreen> {
               final cart = state.cart;
 
               if (cart.items.isEmpty) {
-                return _CartMessageView(
+                return GalleryEmptyState(
                   icon: Icons.shopping_bag_outlined,
                   title: 'Your cart is empty',
-                  message: 'Add artworks you love and they will appear here.',
-                  actionLabel: 'Explore Artworks',
-                  onAction: () {
-                    context.go('/');
-                  },
+                  subtitle: 'Add artworks you love and they will appear here.',
+                  actionLabel: 'Explore artworks',
+                  onAction: () => context.go('/'),
                 );
               }
 
@@ -196,15 +178,24 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   Expanded(
                     child: ListView.separated(
+<<<<<<< HEAD
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 150),
+=======
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.screenPadding,
+                        AppSpacing.lg,
+                        AppSpacing.screenPadding,
+                        AppSpacing.xxl,
+                      ),
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
                       itemCount: cart.items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
                       itemBuilder: (context, index) {
                         final item = cart.items[index];
 
                         return _CartItemCard(
                           item: item,
-                          variant: index,
                           onIncrease: () {
                             if (item.quantity >= item.stockQuantity) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -259,7 +250,6 @@ class _CartScreenState extends State<CartScreen> {
             return const SizedBox.shrink();
           },
         ),
-      ),
     );
   }
 }
@@ -267,22 +257,22 @@ class _CartScreenState extends State<CartScreen> {
 class _CartItemCard extends StatelessWidget {
   const _CartItemCard({
     required this.item,
-    required this.variant,
     required this.onIncrease,
     required this.onDecrease,
     required this.onRemove,
   });
 
   final CartItemModel item;
-  final int variant;
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
   final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final total = item.price * item.quantity;
 
+<<<<<<< HEAD
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -299,16 +289,17 @@ class _CartItemCard extends StatelessWidget {
   ),
 ],
       ),
+=======
+    return LovenSurfaceCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ArtworkThumb(
-            imageUrl: item.imageUrl,
-            variant: variant,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: SizedBox(
+<<<<<<< HEAD
               height: 118,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,54 +316,65 @@ class _CartItemCard extends StatelessWidget {
                                     fontWeight: FontWeight.w900,
                                   ),
                         ),
+=======
+              width: AppSizes.listThumbSize + AppSpacing.sm,
+              height: AppSizes.listThumbSize + AppSpacing.lg,
+              child: LovenArtworkImage(imageUrl: item.imageUrl),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
                       ),
-                      InkWell(
-                        onTap: onRemove,
-                        borderRadius: BorderRadius.circular(999),
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.28),
-                          ),
-                        ),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: AppSizes.touchTargetMin,
+                        minHeight: AppSizes.touchTargetMin,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Artwork',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      _QuantityControl(
-                        quantity: item.quantity,
-                        onIncrease: onIncrease,
-                        onDecrease: onDecrease,
+                      onPressed: onRemove,
+                      icon: Icon(
+                        Icons.delete_outline,
+                        size: AppSizes.iconSm,
+                        color: AppColors.textMuted,
                       ),
-                      const Spacer(),
-                      Text(
-                        'SAR ${total.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'SAR ${item.price.toStringAsFixed(2)} each',
+                  style: AppTextStyles.priceMuted,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    _QuantityStepper(
+                      quantity: item.quantity,
+                      onDecrease: onDecrease,
+                      onIncrease: onIncrease,
+                    ),
+                    const Spacer(),
+                    Text(
+                      'SAR ${total.toStringAsFixed(2)}',
+                      style: theme.textTheme.titleSmall,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -381,63 +383,62 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-class _QuantityControl extends StatelessWidget {
-  const _QuantityControl({
+class _QuantityStepper extends StatelessWidget {
+  const _QuantityStepper({
     required this.quantity,
-    required this.onIncrease,
     required this.onDecrease,
+    required this.onIncrease,
   });
 
   final int quantity;
-  final VoidCallback onIncrease;
   final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Container(
+<<<<<<< HEAD
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 12),
+=======
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.18),
-        ),
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: onDecrease,
-            borderRadius: BorderRadius.circular(999),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Icon(
-                Icons.remove,
-                size: 15,
-                color: colorScheme.primary,
-              ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            constraints: const BoxConstraints(
+              minWidth: AppSizes.touchTargetMin,
+              minHeight: 32,
+            ),
+            onPressed: onDecrease,
+            icon: Icon(
+              Icons.remove,
+              size: AppSizes.iconSm,
+              color: AppColors.textMuted,
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            '$quantity',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-          const SizedBox(width: 16),
-          InkWell(
-            onTap: onIncrease,
-            borderRadius: BorderRadius.circular(999),
-            child: Padding(
-              padding: const EdgeInsets.all(2),
-              child: Icon(
-                Icons.add,
-                size: 15,
-                color: colorScheme.primary,
-              ),
+          Text('$quantity', style: theme.textTheme.titleSmall),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(AppSpacing.xs),
+            constraints: const BoxConstraints(
+              minWidth: AppSizes.touchTargetMin,
+              minHeight: 32,
+            ),
+            onPressed: onIncrease,
+            icon: Icon(
+              Icons.add,
+              size: AppSizes.iconSm,
+              color: AppColors.brandPrimary,
             ),
           ),
         ],
@@ -457,6 +458,7 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     final theme = Theme.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -542,10 +544,59 @@ class _CartSummary extends StatelessWidget {
                   ),
                 ),
               ],
+=======
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.lg,
+        AppSpacing.screenPadding,
+        AppSpacing.lg,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: AppColors.borderLight)),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(
+          bottom: AppSizes.shellFloatingNavClearance,
+        ),
+        child: Column(
+          children: [
+            _SummaryRow(
+              label: 'Subtotal',
+              value: 'SAR ${cart.subtotal.toStringAsFixed(2)}',
             ),
-          ),
-        );
-      },
+            const SizedBox(height: AppSpacing.sm),
+            _SummaryRow(
+              label: 'Shipping',
+              value: cart.shippingFee == 0
+                  ? 'Free'
+                  : 'SAR ${cart.shippingFee.toStringAsFixed(2)}',
+              valueColor: cart.shippingFee == 0 ? AppColors.success : null,
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _SummaryRow(
+              label: 'Total',
+              value: 'SAR ${cart.totalAmount.toStringAsFixed(2)}',
+              large: true,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            LovenPrimaryButton(
+              label: 'Checkout · SAR ${cart.totalAmount.toStringAsFixed(2)}',
+              icon: Icons.shopping_bag_outlined,
+              onPressed: onCheckout,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            LovenSecondaryButton(
+              label: 'Clear cart',
+              expand: true,
+              onPressed: () => context.read<CartCubit>().clearCart(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -565,28 +616,33 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontWeight: large ? FontWeight.w900 : FontWeight.w600,
-              ),
+          style: large
+              ? theme.textTheme.titleSmall
+              : theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                ),
         ),
         const Spacer(),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w900,
-                fontSize: large ? 18 : 14,
-              ),
+          style: large
+              ? theme.textTheme.titleLarge
+              : theme.textTheme.bodyMedium?.copyWith(
+                  color: valueColor ?? AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
         ),
       ],
     );
   }
 }
+<<<<<<< HEAD
 
 class _ArtworkThumb extends StatelessWidget {
   const _ArtworkThumb({
@@ -759,3 +815,5 @@ class _SoftCircle extends StatelessWidget {
     );
   }
 }
+=======
+>>>>>>> 9f02d84a284267ff8822af9136379e2bd9b99522

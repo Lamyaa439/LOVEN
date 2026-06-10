@@ -1,3 +1,5 @@
+from app.extensions import db
+from app.models.artwork import Artwork
 from app.models.order import Order
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 from app.persistence.repositories.order_repo import order_repo
@@ -8,6 +10,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 artist_profile_repo = ArtistProfileRepository()
+
+
+def _serialize_order_items(items):
+    """Return line items with artwork title and image for client display."""
+    serialized = []
+
+    for item in items:
+        payload = item.to_dict()
+        artwork = db.session.get(Artwork, item.artwork_id)
+
+        if artwork:
+            payload["artwork_title"] = artwork.title
+            payload["artwork_image_url"] = artwork.artwork_image_url
+
+        serialized.append(payload)
+
+    return serialized
 
 # =========================================================
 # Service: Order Service
@@ -82,9 +101,7 @@ def create_user_order(data):
         return {"error": str(exc)}, 400
 
     order_payload = order.to_dict()
-    order_payload["items"] = [
-        order_item.to_dict() for order_item in created_items
-    ]
+    order_payload["items"] = _serialize_order_items(created_items)
 
     return {
         "message": "Order created successfully",
@@ -98,9 +115,16 @@ def get_user_orders(buyer_id):
         return {"error": "buyer_id is required"}, 400
 
     orders = order_repo.get_orders_by_buyer(buyer_id)
+    order_payloads = []
+
+    for order in orders:
+        payload = order.to_dict()
+        _, items = order_repo.get_order_with_items(order.id)
+        payload["items"] = _serialize_order_items(items)
+        order_payloads.append(payload)
 
     return {
-        "orders": [order.to_dict() for order in orders],
+        "orders": order_payloads,
     }, 200
 
 
@@ -134,7 +158,7 @@ def get_order_by_id(order_id, user_id, role=None):
             return {"error": "Forbidden"}, 403
 
     order_payload = order.to_dict()
-    order_payload["items"] = [item.to_dict() for item in items]
+    order_payload["items"] = _serialize_order_items(items)
 
     return {"order": order_payload}, 200
 
@@ -147,9 +171,16 @@ def get_artist_orders(artist_profile_id):
     orders = order_repo.get_incoming_orders_by_artist(
         artist_profile_id
     )
+    order_payloads = []
+
+    for order in orders:
+        payload = order.to_dict()
+        _, items = order_repo.get_order_with_items(order.id)
+        payload["items"] = _serialize_order_items(items)
+        order_payloads.append(payload)
 
     return {
-        "orders": [order.to_dict() for order in orders],
+        "orders": order_payloads,
     }, 200
 
 

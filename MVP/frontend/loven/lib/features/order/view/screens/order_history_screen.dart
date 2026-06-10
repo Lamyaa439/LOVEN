@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:go_router/go_router.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
+import 'package:loven/features/order/view/widgets/order_item_display.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
 
   @override
-  State<OrderHistoryScreen> createState() =>
-      _OrderHistoryScreenState();
+  State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
 }
 
-class _OrderHistoryScreenState
-    extends State<OrderHistoryScreen> {
+class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
-
     context.read<OrderCubit>().getMyOrders();
+  }
+
+  Future<void> _refreshOrders() {
+    return context.read<OrderCubit>().getMyOrders();
   }
 
   @override
@@ -31,53 +34,53 @@ class _OrderHistoryScreenState
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: lovenPushedScreenBackLeading(context),
         centerTitle: true,
         title: const Text('Order History'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
       ),
       body: BlocBuilder<OrderCubit, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const GalleryLoadingState(message: 'Loading orders…');
           }
 
           if (state is OrderError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  state.message,
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return GalleryEmptyState(
+              icon: Icons.error_outline_rounded,
+              title: 'Could not load orders',
+              subtitle: state.message,
             );
           }
 
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return const _EmptyOrders();
+              return const GalleryEmptyState(
+                icon: Icons.receipt_long_outlined,
+                title: 'No orders yet',
+                subtitle:
+                    'Your order history will appear here once you place an order.',
+              );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(
-                20,
-                12,
-                20,
-                24,
+            return RefreshIndicator(
+              onRefresh: _refreshOrders,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  AppSpacing.md,
+                  AppSpacing.screenPadding,
+                  AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+                ),
+                itemCount: state.orders.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final order = Map<String, dynamic>.from(
+                    state.orders[index] as Map,
+                  );
+                  return _OrderCard(order: order);
+                },
               ),
-              itemCount: state.orders.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final order = Map<String, dynamic>.from(
-                  state.orders[index] as Map,
-                );
-
-                return _OrderCard(order: order);
-              },
             );
           }
 
@@ -89,133 +92,89 @@ class _OrderHistoryScreenState
 }
 
 class _OrderCard extends StatelessWidget {
-  final Map<String, dynamic> order;
+  const _OrderCard({required this.order});
 
-  const _OrderCard({
-    required this.order,
-  });
+  final Map<String, dynamic> order;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     final orderId =
-        order['id']?.toString() ??
-        order['order_id']?.toString() ??
-        'Unknown';
-
-    final status =
-        order['status']?.toString() ?? 'pending';
-
+        order['id']?.toString() ?? order['order_id']?.toString() ?? 'Unknown';
+    final status = order['status']?.toString() ?? 'pending';
     final total =
-        order['total_amount']?.toString() ??
-        order['total']?.toString() ??
-        '0';
-
+        order['total_amount']?.toString() ?? order['total']?.toString() ?? '0';
     final createdAt =
-        order['created_at']?.toString() ??
-        order['createdAt']?.toString() ??
-        '';
+        order['created_at']?.toString() ?? order['createdAt']?.toString() ?? '';
+    final items = OrderItemDisplay.listFromOrder(order);
+    final itemCount = items.isEmpty
+        ? 0
+        : items.fold<int>(0, (sum, item) => sum + item.quantity);
 
-    final items = order['items'];
-
-    final itemCount = items is List
-        ? items.length
-        : 0;
-
-    return InkWell(
-  borderRadius: BorderRadius.circular(18),
-  onTap: () {
-    context.push(
-      AppRoutes.ordersDetails,
-      extra: order,
-    );
-  },
-  child: Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: Colors.grey.shade200,
+    return LovenSurfaceCard(
+      onTap: () => context.push(
+        AppRoutes.ordersDetails,
+        extra: {'id': orderId},
       ),
-    ),
-    child: Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor:
-                  AppColors.primaryPurple.withValues(
-                alpha: 0.25,
-              ),
-              child: const Icon(
-                Icons.shopping_bag_outlined,
-                color: AppColors.primaryBlue,
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Order #${_shortId(orderId)}',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(
-                      fontWeight: FontWeight.w800,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Order #${_shortId(orderId)}',
+                      style: theme.textTheme.titleSmall,
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    createdAt.isEmpty
-                        ? '$itemCount item(s)'
-                        : createdAt,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(
-                      color: theme.colorScheme
-                          .onSurfaceVariant,
-                    ),
-                  ),
-                ],
+                    if (createdAt.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        createdAt,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-        
-            _StatusChip(status: status),
-          ],
-        ),
-
-        const SizedBox(height: 14),
-
-        Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '$itemCount item(s)',
-              style: theme.textTheme.bodySmall,
-            ),
-            Text(
-              '\$$total',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.primaryBlue,
-              ),
+              _StatusChip(status: status),
+            ],
+          ),
+          if (items.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.lg),
+            OrderItemPreviewStrip(
+              items: items,
+              thumbnailSize: AppSizes.listThumbSize + AppSpacing.sm,
             ),
           ],
-        ),
-      ],
-    ),
-  ),
-);
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                itemCount == 1 ? '1 item' : '$itemCount items',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+              ),
+              Text(
+                '$total SAR',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.brandPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
+
   String _shortId(String id) {
     if (id.length <= 8) return id;
     return id.substring(0, 8);
@@ -223,93 +182,38 @@ class _OrderCard extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  final String status;
+  const _StatusChip({required this.status});
 
-  const _StatusChip({
-    required this.status,
-  });
+  final String status;
 
   @override
   Widget build(BuildContext context) {
     final normalized = status.toLowerCase();
+    final Color color;
 
-    Color color;
-
-    if (normalized.contains('complete') ||
-        normalized.contains('delivered')) {
-      color = Colors.green;
+    if (normalized.contains('complete') || normalized.contains('delivered')) {
+      color = AppColors.success;
     } else if (normalized.contains('cancel')) {
-      color = Colors.red;
+      color = AppColors.error;
     } else {
-      color = AppColors.deepPurple;
+      color = AppColors.brandSecondary;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         status,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyOrders extends StatelessWidget {
-  const _EmptyOrders();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 42,
-              backgroundColor:
-                  AppColors.primaryPurple.withValues(
-                alpha: 0.22,
-              ),
-              child: const Icon(
-                Icons.receipt_long_outlined,
-                size: 40,
-                color: AppColors.primaryBlue,
-              ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 18),
-            Text(
-              'No orders yet',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Your order history will appear here once you place an order.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(
-                color: theme.colorScheme
-                    .onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 
-import 'package:loven/core/res/theme/app_colors.dart';
+/// Display name for checkout copy when available locally; otherwise email.
+String checkoutUserDisplayLabel(AuthState state) {
+  final user = authStateSessionUser(state);
+  if (user == null) {
+    return 'your account';
+  }
 
-class SectionTitle extends StatelessWidget {
-  const SectionTitle({
+  final name = user.name.trim();
+  if (name.isNotEmpty) {
+    return name;
+  }
+
+  return user.email;
+}
+
+/// Shared checkout presentation helpers — tokenized for LOVEN design system.
+class CheckoutSectionTitle extends StatelessWidget {
+  const CheckoutSectionTitle({
     super.key,
     required this.icon,
     required this.title,
@@ -14,23 +30,24 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
-        Icon(icon, color: AppColors.deepPurple, size: 20),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+        Icon(
+          icon,
+          color: AppColors.textMuted,
+          size: AppSizes.iconMd,
         ),
+        const SizedBox(width: AppSpacing.sm),
+        Text(title, style: theme.textTheme.headlineSmall),
       ],
     );
   }
 }
 
-class FieldSection extends StatelessWidget {
-  const FieldSection({
+class CheckoutFieldSection extends StatelessWidget {
+  const CheckoutFieldSection({
     super.key,
     required this.label,
     required this.child,
@@ -41,20 +58,20 @@ class FieldSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: AppColors.textMuted,
+            ),
           ),
-          const SizedBox(height: 7),
+          const SizedBox(height: AppSpacing.xs),
           child,
         ],
       ),
@@ -62,58 +79,49 @@ class FieldSection extends StatelessWidget {
   }
 }
 
-BoxDecoration checkoutCardDecoration() {
+BoxDecoration checkoutCardDecoration(BuildContext context) {
   return BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: Colors.black.withValues(alpha: 0.04),
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.025),
-        blurRadius: 14,
-        offset: const Offset(0, 6),
-      ),
-    ],
+    color: Theme.of(context).colorScheme.surface,
+    borderRadius: BorderRadius.circular(AppRadius.lg),
+    border: Border.all(color: AppColors.borderLight),
   );
 }
 
-InputDecoration checkoutDecoration({
+InputDecoration checkoutInputDecoration({
   required String hint,
   required IconData icon,
 }) {
   return InputDecoration(
     hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    prefixIcon: Icon(
-      icon,
-      size: 18,
-      color: AppColors.deepPurple,
-    ),
+    prefixIcon: Icon(icon, size: AppSizes.iconSm),
     contentPadding: const EdgeInsets.symmetric(
-      horizontal: 14,
-      vertical: 14,
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.md,
     ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.black.withValues(alpha: 0.08),
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: const BorderSide(color: AppColors.inputBorder),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.black.withValues(alpha: 0.08),
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: const BorderSide(color: AppColors.inputBorder),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: const BorderSide(
-        color: AppColors.primaryBlue,
-        width: 1.3,
+        color: AppColors.inputBorderFocused,
+        width: 1.2,
       ),
     ),
   );
 }
+
+/// Legacy aliases — keep imports stable across checkout steps.
+typedef SectionTitle = CheckoutSectionTitle;
+typedef FieldSection = CheckoutFieldSection;
+
+InputDecoration checkoutDecoration({
+  required String hint,
+  required IconData icon,
+}) =>
+    checkoutInputDecoration(hint: hint, icon: icon);

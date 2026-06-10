@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 
 /// Password-reset entry screen — Firebase link-based only.
-///
-/// **Architectural rule:** Firebase owns reset emails and the in-link password form.
-/// LOVEN backend is not called; no LOVEN JWT is issued after reset (user signs in via M3).
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -61,13 +58,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 4),
                 IconButton(
                   onPressed: _isSubmitting
                       ? null
@@ -80,57 +78,24 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         },
                   icon: const Icon(Icons.arrow_back),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Forgot Password',
-                  style: theme.textTheme.displayLarge?.copyWith(
-                    fontSize: 34,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Forgot password', style: theme.textTheme.displaySmall),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   _emailSent
                       ? 'If an account exists, a link was sent.'
                       : 'Enter your email to receive a password reset link.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
+                    color: AppColors.textMuted,
                   ),
                 ),
-                const SizedBox(height: 26),
-                Text(
-                  'Email',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
+                const SizedBox(height: AppSpacing.xxl),
+                LovenTextField(
                   controller: _emailController,
-                  enabled: !_emailSent && !_isSubmitting,
+                  labelText: 'Email',
+                  hintText: 'Your email',
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: 'Your email',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: AppColors.primaryBlue,
-                        width: 1.3,
-                      ),
-                    ),
-                  ),
+                  readOnly: _emailSent,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Email is required';
@@ -141,36 +106,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting
-                        ? null
-                        : (_emailSent
-                            ? () => context.go(AppRoutes.login)
-                            : _submit),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
-                      ),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(_emailSent ? 'Back to Login' : 'Send Reset Link'),
-                  ),
+                const SizedBox(height: AppSpacing.xxl),
+                LovenPrimaryButton(
+                  label: _emailSent ? 'Back to login' : 'Send reset link',
+                  isLoading: _isSubmitting,
+                  onPressed: _isSubmitting
+                      ? null
+                      : (_emailSent
+                          ? () => context.go(AppRoutes.login)
+                          : _submit),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),

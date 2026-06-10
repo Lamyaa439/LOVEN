@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 
 class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key});
@@ -27,9 +29,7 @@ class _LocationScreenState extends State<LocationScreen> {
 
   Future<void> _loadAddress() async {
     final raw = await _storage.read(key: _addressKey);
-
     if (!mounted) return;
-
     setState(() {
       _address = raw == null ? null : jsonDecode(raw);
     });
@@ -50,123 +50,88 @@ class _LocationScreenState extends State<LocationScreen> {
         : 'Add your delivery address';
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: lovenPushedScreenBackLeading(context),
         centerTitle: true,
         title: const Text('Saved Addresses'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenPadding,
+          AppSpacing.md,
+          AppSpacing.screenPadding,
+          AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 170,
+              height: 140,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.primaryPurple.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(18),
+                color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.borderLight),
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
-                  Icons.location_on,
-                  size: 48,
-                  color: AppColors.primaryBlue,
+                  Icons.location_on_outlined,
+                  size: AppSizes.iconLg,
+                  color: AppColors.brandPrimary.withValues(alpha: 0.7),
                 ),
               ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: AppSpacing.xl),
             Text(
-              'Delivery Address',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              'Delivery address',
+              style: theme.textTheme.titleSmall,
             ),
-
-            const SizedBox(height: 12),
-
-            InkWell(
+            const SizedBox(height: AppSpacing.md),
+            LovenSurfaceCard(
               onTap: _openAddressForm,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor:
-                          AppColors.primaryPurple.withValues(alpha: 0.25),
-                      child: const Icon(
-                        Icons.location_on,
-                        color: AppColors.primaryBlue,
-                      ),
+              child: Row(
+                children: [
+                  Container(
+                    width: AppSizes.avatarSm,
+                    height: AppSizes.avatarSm,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        addressText,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    child: Icon(
+                      Icons.location_on_outlined,
+                      size: AppSizes.iconMd,
+                      color: AppColors.brandPrimary,
                     ),
-                    const Icon(Icons.chevron_right),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      addressText,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                ],
               ),
             ),
-
             if (hasAddress) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _AddressDetail(label: 'Name', value: _address!['name']),
               _AddressDetail(label: 'Phone', value: _address!['phone']),
-              _AddressDetail(label: 'Governorate', value: _address!['governorate']),
+              _AddressDetail(
+                label: 'Governorate',
+                value: _address!['governorate'],
+              ),
               _AddressDetail(label: 'Building', value: _address!['building']),
             ],
-
-            const SizedBox(height: 24),
-
-            Text(
-              'Save Address As',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            const Row(
-              children: [
-                _AddressChip(label: 'Home', selected: true),
-                SizedBox(width: 10),
-                _AddressChip(label: 'Office', selected: false),
-              ],
-            ),
-
             const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _openAddressForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                ),
-                child: Text(hasAddress ? 'Edit Address' : 'Add Address'),
-              ),
+            LovenPrimaryButton(
+              label: hasAddress ? 'Edit address' : 'Add address',
+              onPressed: _openAddressForm,
             ),
           ],
         ),
@@ -176,13 +141,13 @@ class _LocationScreenState extends State<LocationScreen> {
 }
 
 class _AddressDetail extends StatelessWidget {
-  final String label;
-  final dynamic value;
-
   const _AddressDetail({
     required this.label,
     required this.value,
   });
+
+  final String label;
+  final dynamic value;
 
   @override
   Widget build(BuildContext context) {
@@ -191,37 +156,12 @@ class _AddressDetail extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Text(
         '$label: $value',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-    );
-  }
-}
-
-class _AddressChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-
-  const _AddressChip({
-    required this.label,
-    required this.selected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: selected
-          ? AppColors.primaryPurple.withValues(alpha: 0.25)
-          : Theme.of(context).colorScheme.surface,
-      labelStyle: TextStyle(
-        color: selected ? AppColors.primaryBlue : Colors.grey,
-        fontWeight: FontWeight.w700,
-      ),
-      side: BorderSide(
-        color: selected ? AppColors.primaryBlue : Colors.grey.shade300,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
       ),
     );
   }

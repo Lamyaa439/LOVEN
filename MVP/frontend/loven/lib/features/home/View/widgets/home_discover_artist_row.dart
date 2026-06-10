@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 
 /// Horizontal artist row — circular portrait + serif name + quiet meta.
@@ -43,19 +44,10 @@ class HomeDiscoverArtistRow extends StatelessWidget {
                 width: AppSizes.artistRowWidth,
                 child: Row(
                   children: [
-                    CircleAvatar(
+                    LovenCircleAvatar(
+                      imageUrl: art.artistProfileImageUrl,
                       radius: AppSizes.avatarLg / 2,
-                      backgroundImage: art.artistProfileImageUrl != null
-                          ? NetworkImage(art.artistProfileImageUrl!)
-                          : null,
-                      backgroundColor: AppColors.surfaceSoft,
-                      child: art.artistProfileImageUrl == null
-                          ? Icon(
-                              Icons.person_rounded,
-                              color: theme.colorScheme.primary,
-                              size: AppSizes.iconMd,
-                            )
-                          : null,
+                      fallbackLabel: art.artistDisplayName,
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
