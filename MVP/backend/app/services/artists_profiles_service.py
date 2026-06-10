@@ -66,13 +66,18 @@ def _profile_to_dict(profile):
     """
     if profile is None:
         return None
+
+    profile_image = profile.profile_image_url
+    if not profile_image and getattr(profile, "user", None):
+        profile_image = profile.user.profile_image_url
+
     return {
         "id": str(profile.id),
         "user_id": str(profile.user_id),
         "display_name": profile.display_name,
         "city": profile.city,
         "bio": profile.bio,
-        "profile_image_url": profile.profile_image_url,
+        "profile_image_url": profile_image,
         "cover_image_url": profile.cover_image_url,
         "is_verified": profile.is_verified,
         "shipping_policy": profile.shipping_policy,

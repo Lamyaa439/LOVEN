@@ -24,7 +24,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 
 import '../../controller/cubit/auth_cubit.dart';
 import '../../controller/cubit/auth_state.dart';
@@ -238,7 +239,7 @@ class _SignupPageState extends State<SignupPage> {
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.symmetric(
-              horizontal: 24,
+              horizontal: AppSpacing.screenPadding,
             ),
             child: Form(
               key: _formKey,
@@ -408,37 +409,13 @@ class _SignupPageState extends State<SignupPage> {
                       });
                     },
                   ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed:
-                          (_isFormValid && !_isSubmitting) ? _signup : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            26,
-                          ),
-                        ),
-                      ),
-                      child: _isSubmitting
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: colorScheme.onPrimary,
-                              ),
-                            )
-                          : const Text(
-                              'Register',
-                            ),
-                    ),
+                  const SizedBox(height: AppSpacing.xxl),
+                  LovenPrimaryButton(
+                    label: 'Register',
+                    isLoading: _isSubmitting,
+                    onPressed: (_isFormValid && !_isSubmitting) ? _signup : null,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -535,13 +512,13 @@ class _PasswordStrengthDot extends StatelessWidget {
     final bool isFilled;
 
     if (!hasInput) {
-      dotColor = Colors.grey.shade400;
+      dotColor = AppColors.textMuted;
       isFilled = false;
     } else if (isValid) {
-      dotColor = Colors.green;
+      dotColor = AppColors.success;
       isFilled = true;
     } else {
-      dotColor = AppColors.deepPurple;
+      dotColor = AppColors.brandSecondary;
       isFilled = false;
     }
 
@@ -579,8 +556,8 @@ class _PasswordRule extends StatelessWidget {
       children: [
         Icon(
           isMet ? Icons.check : Icons.close,
-          size: 14,
-          color: isMet ? Colors.green : Colors.red,
+          size: AppSizes.iconSm,
+          color: isMet ? AppColors.success : AppColors.error,
         ),
         const SizedBox(width: 6),
         Text(
@@ -664,21 +641,19 @@ class _RoleOption extends StatelessWidget {
 
     return InkWell(
       onTap: isDisabled ? null : () => onChanged(value),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 10,
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primary.withValues(alpha: 0.18)
-              : colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
+          color: isSelected ? AppColors.surfaceElevated : colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isSelected ? colorScheme.primary : Colors.grey.shade300,
-            width: isSelected ? 1.4 : 1,
+            color: isSelected ? AppColors.brandPrimary : AppColors.border,
+            width: isSelected ? 1.2 : 1,
           ),
         ),
         child: Row(

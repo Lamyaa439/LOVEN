@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/artwork/controller/cubit/artwork_state.dart';
 import 'package:loven/features/artwork/data/services/artwork_image_storage_service.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
@@ -56,9 +57,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
     if (pickedFile == null) return;
 
-    setState(() {
-      _selectedImage = pickedFile;
-    });
+    setState(() => _selectedImage = pickedFile);
   }
 
   Future<void> _submit() async {
@@ -66,9 +65,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an artwork image'),
-        ),
+        const SnackBar(content: Text('Please select an artwork image')),
       );
       return;
     }
@@ -84,9 +81,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
       return;
     }
 
-    setState(() {
-      _isUploadingImage = true;
-    });
+    setState(() => _isUploadingImage = true);
 
     try {
       final imageUrl = await _storageService.uploadArtworkImage(
@@ -98,31 +93,24 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
       final artist = context.read<ArtistProfileCubit>().state.artist;
       final isVerifiedArtist = artist?.isVerified ?? false;
-      
+
       context.read<ArtworkCubit>().createArtwork(
-        title: titleController.text.trim(),
-        description: descriptionController.text.trim(),
-        price: double.parse(priceController.text.trim()),
-        quantityAvailable: int.parse(quantityController.text.trim()),
-        shippingFee: double.parse(shippingFeeController.text.trim()),
-        artworkImageUrl: imageUrl,
-        status: isVerifiedArtist ? 'available' : 'hidden',
-      );
-      
-      } catch (e) {
-        if (!mounted) return;
+            title: titleController.text.trim(),
+            description: descriptionController.text.trim(),
+            price: double.parse(priceController.text.trim()),
+            quantityAvailable: int.parse(quantityController.text.trim()),
+            shippingFee: double.parse(shippingFeeController.text.trim()),
+            artworkImageUrl: imageUrl,
+            status: isVerifiedArtist ? 'available' : 'hidden',
+          );
+    } catch (e) {
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Image upload failed: $e'),
-        ),
+        SnackBar(content: Text('Image upload failed: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingImage = false;
-        });
-      }
+      if (mounted) setState(() => _isUploadingImage = false);
     }
   }
 
@@ -132,9 +120,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
       listener: (context, state) {
         if (state is ArtworkLoaded) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Artwork uploaded successfully'),
-            ),
+            const SnackBar(content: Text('Artwork uploaded successfully')),
           );
 
           context.read<HomeBloc>().add(FetchHomeData());
@@ -143,9 +129,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
         if (state is ArtworkError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-            ),
+            SnackBar(content: Text(state.message)),
           );
         }
       },
@@ -155,21 +139,18 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
         final isVerifiedArtist = artist?.isVerified ?? false;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F7F8),
           appBar: AppBar(
-            backgroundColor: const Color(0xFFF8F7F8),
-            elevation: 0,
             centerTitle: true,
-            title: Text(
-              'Upload Artwork',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
+            title: const Text('Upload artwork'),
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenPadding,
+                AppSpacing.md,
+                AppSpacing.screenPadding,
+                AppSpacing.xxxl,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -179,165 +160,173 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                       selectedImage: _selectedImage,
                       onTap: isLoading ? null : _pickArtworkImage,
                     ),
-                    const SizedBox(height: 26),
-
-                    _FieldSection(
-                      label: 'Artwork Title',
-                      child: _InputField(
+                    const SizedBox(height: AppSpacing.sectionGap),
+                    CheckoutFieldSection(
+                      label: 'Artwork title',
+                      child: LovenTextField(
                         controller: titleController,
-                        hint: 'Enter artwork title',
-                        icon: Icons.title,
-                        validatorMessage: 'Title is required',
+                        hintText: 'Enter artwork title',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Title is required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-
-                    _FieldSection(
+                    CheckoutFieldSection(
                       label: 'Description',
-                      child: _InputField(
+                      child: LovenTextField(
                         controller: descriptionController,
-                        hint: 'Describe your artwork',
-                        icon: Icons.notes_outlined,
-                        validatorMessage: 'Description is required',
+                        hintText: 'Describe your artwork',
                         maxLines: 5,
-                        alignLabelWithHint: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Description is required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-
                     Row(
                       children: [
                         Expanded(
-                          child: _FieldSection(
-                            label: 'Price',
-                            child: _InputField(
+                          child: CheckoutFieldSection(
+                            label: 'Price (SAR)',
+                            child: LovenTextField(
                               controller: priceController,
-                              hint: 'Price',
-                              icon: Icons.payments_outlined,
-                              validatorMessage: 'Price is required',
+                              hintText: '0.00',
                               keyboardType: TextInputType.number,
-                              suffixText: 'SAR',
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: _FieldSection(
-                            label: 'Shipping',
-                            child: _InputField(
+                          child: CheckoutFieldSection(
+                            label: 'Shipping (SAR)',
+                            child: LovenTextField(
                               controller: shippingFeeController,
-                              hint: 'Shipping',
-                              icon: Icons.local_shipping_outlined,
-                              validatorMessage: 'Shipping fee is required',
+                              hintText: '0.00',
                               keyboardType: TextInputType.number,
-                              suffixText: 'SAR',
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                         ),
                       ],
                     ),
-
-                    _FieldSection(
+                    CheckoutFieldSection(
                       label: 'Quantity',
-                      child: _InputField(
+                      child: LovenTextField(
                         controller: quantityController,
-                        hint: 'Quantity available',
-                        icon: Icons.inventory_2_outlined,
-                        validatorMessage: 'Quantity is required',
+                        hintText: 'Quantity available',
                         keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Quantity is required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-
-                    _FieldSection(
-  label: 'Artwork Status',
-  child: Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.black.withValues(alpha: 0.08),
-      ),
-    ),
-    child: Text(
-      isVerifiedArtist
-          ? 'Available for sale'
-          : 'Portfolio showcase only',
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: isVerifiedArtist
-                ? AppColors.primaryBlue
-                : Colors.black54,
-            fontWeight: FontWeight.w900,
-          ),
-    ),
-  ),
-),
-
-                    const SizedBox(height: 8),
-
-                    if (!isVerifiedArtist) ...[
-  Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.amber.shade50,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.amber.shade300,
-      ),
-    ),
-    child: const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Portfolio Mode',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 6),
-        Text(
-          'You are not verified yet. This artwork will appear in your portfolio but cannot be purchased until your verification request is approved.',
-        ),
-      ],
-    ),
-  ),
-  SizedBox(height: 20),
-],
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: isLoading ? null : _submit,
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 17,
-                                height: 17,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                    LovenSurfaceCard(
+                      child: Row(
+                        children: [
+                          Icon(
+                            isVerifiedArtist
+                                ? Icons.check_circle_outline
+                                : Icons.visibility_outlined,
+                            color: isVerifiedArtist
+                                ? AppColors.success
+                                : AppColors.textMuted,
+                            size: AppSizes.iconMd,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isVerifiedArtist
+                                      ? 'Available for sale'
+                                      : 'Portfolio showcase only',
+                                  style:
+                                      Theme.of(context).textTheme.titleSmall,
                                 ),
-                              )
-                            : const Icon(Icons.cloud_upload_outlined),
-                        label: Text(
-                          isLoading
-                              ? 'Uploading...' 
-                              : isVerifiedArtist
-                                  ? 'Publish Artwork'
-                                  : 'Save Portfolio Artwork',
+                                const SizedBox(height: AppSpacing.xxs),
+                                Text(
+                                  isVerifiedArtist
+                                      ? 'This artwork will be listed for purchase.'
+                                      : 'Visible in your portfolio until verification is approved.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(color: AppColors.textMuted),
+                                ),
+                              ],
+                            ),
                           ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
+                        ],
+                      ),
+                    ),
+                    if (!isVerifiedArtist) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      LovenSurfaceCard(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: AppColors.warning,
+                              size: AppSizes.iconMd,
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Portfolio mode',
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  const SizedBox(height: AppSpacing.xxs),
+                                  Text(
+                                    'Unverified artists can showcase work in their portfolio. Purchases unlock after verification.',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ],
+                    const SizedBox(height: AppSpacing.sectionGap),
+                    LovenPrimaryButton(
+                      label: isLoading
+                          ? 'Uploading…'
+                          : isVerifiedArtist
+                              ? 'Publish artwork'
+                              : 'Save to portfolio',
+                      icon: Icons.cloud_upload_outlined,
+                      onPressed: isLoading ? null : _submit,
+                      isLoading: isLoading,
                     ),
                   ],
                 ),
@@ -369,297 +358,76 @@ class _ArtworkImagePicker extends StatelessWidget {
           final hasImage = snapshot.hasData;
 
           return Container(
-            height: 240,
+            height: AppSizes.discoverFeaturedHeight + AppSpacing.xxl,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(26),
-              gradient: hasImage
-                  ? null
-                  : const LinearGradient(
-                      colors: [
-                        AppColors.primaryPurple,
-                        AppColors.deepPurple,
-                        AppColors.primaryBlue,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              color: AppColors.surfaceSoft,
+              border: Border.all(color: AppColors.borderLight),
               image: hasImage
                   ? DecorationImage(
                       image: MemoryImage(snapshot.data!),
                       fit: BoxFit.cover,
                     )
                   : null,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             clipBehavior: Clip.antiAlias,
-            child: hasImage ? const _SelectedImageOverlay() : const _EmptyImageState(),
+            child: hasImage
+                ? Stack(
+                    children: [
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.scrim.withValues(alpha: 0.12),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: AppSpacing.sm,
+                        bottom: AppSpacing.sm,
+                        child: LovenSecondaryButton(
+                          label: 'Change image',
+                          onPressed: onTap,
+                          expand: false,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: AppSizes.avatarLg,
+                        height: AppSizes.avatarLg,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.08),
+                        ),
+                        child: Icon(
+                          Icons.add_photo_alternate_outlined,
+                          color: AppColors.brandPrimary,
+                          size: AppSizes.iconLg,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'Add artwork image',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        'PNG or JPG from your gallery',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textMuted,
+                            ),
+                      ),
+                    ],
+                  ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _EmptyImageState extends StatelessWidget {
-  const _EmptyImageState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned(
-          top: -30,
-          right: -30,
-          child: _SoftCircle(size: 150, opacity: 0.12),
-        ),
-        Positioned(
-          bottom: -42,
-          left: -38,
-          child: _SoftCircle(size: 190, opacity: 0.08),
-        ),
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add_photo_alternate_outlined,
-                  color: Colors.white,
-                  size: 34,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Add Artwork Image',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'PNG, JPG up to 10MB',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.78),
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SelectedImageOverlay extends StatelessWidget {
-  const _SelectedImageOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withValues(alpha: 0.05),
-                  Colors.black.withValues(alpha: 0.32),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 14,
-          bottom: 14,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.image_outlined,
-                  size: 15,
-                  color: Colors.black87,
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Change Image',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FieldSection extends StatelessWidget {
-  const _FieldSection({
-    required this.label,
-    required this.child,
-  });
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 11,
-                  letterSpacing: 0.45,
-                ),
-          ),
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _InputField extends StatelessWidget {
-  const _InputField({
-    required this.controller,
-    required this.hint,
-    required this.icon,
-    required this.validatorMessage,
-    this.keyboardType = TextInputType.text,
-    this.maxLines = 1,
-    this.suffixText,
-    this.alignLabelWithHint = false,
-  });
-
-  final TextEditingController controller;
-  final String hint;
-  final IconData icon;
-  final String validatorMessage;
-  final TextInputType keyboardType;
-  final int maxLines;
-  final String? suffixText;
-  final bool alignLabelWithHint;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return validatorMessage;
-        }
-
-        return null;
-      },
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.white,
-        prefixIcon: Icon(
-          icon,
-          size: 18,
-          color: AppColors.deepPurple,
-        ),
-        suffixText: suffixText,
-        alignLabelWithHint: alignLabelWithHint,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: AppColors.primaryBlue,
-            width: 1.3,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.red.shade400,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.red.shade400,
-            width: 1.3,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SoftCircle extends StatelessWidget {
-  const _SoftCircle({
-    required this.size,
-    required this.opacity,
-  });
-
-  final double size;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: opacity),
-        shape: BoxShape.circle,
       ),
     );
   }

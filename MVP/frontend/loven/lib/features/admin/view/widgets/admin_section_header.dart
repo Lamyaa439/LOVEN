@@ -32,7 +32,7 @@ class AdminSectionHeader extends StatelessWidget {
           subtitle,
           style: theme.textTheme.bodyMedium
               ?.copyWith(
-            color: Colors.grey.shade600,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

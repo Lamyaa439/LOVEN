@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/features/artist_profile/model/artist_model.dart';
 
-import '../../../../core/res/theme/app_colors.dart';
-import '../../model/artist_model.dart';
-
+/// Readable about section — bio and shipping policy when available.
 class ArtistAboutCard extends StatelessWidget {
   const ArtistAboutCard({
     super.key,
@@ -14,111 +14,64 @@ class ArtistAboutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final hasBio = artist.bio != null && artist.bio!.trim().isNotEmpty;
     final hasShipping = artist.shippingPolicy != null &&
         artist.shippingPolicy!.trim().isNotEmpty;
 
+    if (!hasBio && !hasShipping) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Colors.black.withValues(alpha: 0.04),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.035),
-              blurRadius: 22,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('About', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: AppSpacing.md),
+          if (hasBio)
             Text(
-              'About the Artist',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
+              artist.bio!,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                height: 1.6,
+                color: AppColors.textSecondary,
               ),
-            ),
-            const SizedBox(height: 12),
+            )
+          else if (!hasShipping)
             Text(
-              hasBio
-                  ? artist.bio!
-                  : 'This artist has not added a bio yet.',
+              'This artist has not added a bio yet.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.55,
-                color: Colors.black.withValues(alpha: hasBio ? 0.68 : 0.42),
-                fontStyle: hasBio ? FontStyle.normal : FontStyle.italic,
+                color: AppColors.textMuted,
+                fontStyle: FontStyle.italic,
               ),
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const [
-                _ArtistTag(label: 'Digital Art'),
-                _ArtistTag(label: 'Original Artwork'),
-                _ArtistTag(label: 'Marketplace Seller'),
-              ],
-            ),
-            if (hasShipping) ...[
-              const SizedBox(height: 18),
-              Divider(
-                color: Colors.black.withValues(alpha: 0.06),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.local_shipping_outlined,
-                    size: 18,
-                    color: AppColors.primaryBlue,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      artist.shippingPolicy!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black.withValues(alpha: 0.58),
-                        height: 1.4,
-                      ),
+          if (hasShipping) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Divider(color: theme.dividerColor, height: 1),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.local_shipping_outlined,
+                  size: AppSizes.iconSm,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    artist.shippingPolicy!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ArtistTag extends StatelessWidget {
-  const _ArtistTag({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: AppColors.primaryPurple.withValues(alpha: 0.16),
-      side: BorderSide.none,
-      labelStyle: const TextStyle(
-        color: AppColors.primaryBlue,
-        fontWeight: FontWeight.w700,
-        fontSize: 12,
+          const SizedBox(height: AppSpacing.sectionGap),
+        ],
       ),
     );
   }

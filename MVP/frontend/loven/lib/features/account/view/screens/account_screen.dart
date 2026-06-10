@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
@@ -11,9 +13,6 @@ import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.
 import 'package:loven/features/account/controller/cubit/account_cubit.dart';
 
 /// Single account hub for guests and signed-in users (`/profile`).
-///
-/// Consolidates account, settings, and role-gated artist tools in one surface.
-/// Session identity from [AuthCubit]; profile edits via [AccountCubit] on the edit route.
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
@@ -27,9 +26,7 @@ class _AccountScreenState extends State<AccountScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       final user = authStateSessionUser(context.read<AuthCubit>().state);
       if (user?.systemRole == 'artist') {
@@ -67,9 +64,7 @@ class _AccountScreenState extends State<AccountScreen> {
   void _openFavoritesTab() {
     context.go(AppRoutes.home);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       context.read<NavigationBarCubit>().navigateTo(1);
     });
   }
@@ -91,7 +86,7 @@ class _AccountScreenState extends State<AccountScreen> {
           );
         }
 
-        return const Center(child: CircularProgressIndicator());
+        return const GalleryLoadingState();
       },
     );
   }
@@ -113,9 +108,7 @@ class _SignedInAccountHub extends StatelessWidget {
   Future<void> _changeRole(BuildContext context) async {
     final nextRole = _isArtist ? 'customer' : 'artist';
 
-    await context.read<AccountCubit>().updateRole(
-          systemRole: nextRole,
-        );
+    await context.read<AccountCubit>().updateRole(systemRole: nextRole);
 
     if (nextRole == 'artist') {
       context.read<ArtistProfileCubit>().fetchMyProfileData();
@@ -124,11 +117,14 @@ class _SignedInAccountHub extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenPadding,
+          AppSpacing.lg,
+          AppSpacing.screenPadding,
+          AppSpacing.bottomNavClearance,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -138,17 +134,18 @@ class _SignedInAccountHub extends StatelessWidget {
               imageUrl: user.profileImageUrl,
               role: user.systemRole,
             ),
-            const SizedBox(height: 28),
-            _AccountSectionHeader(theme: theme, title: 'Account'),
-            _AccountTile(
-              icon: Icons.person_outline,
-              title: 'Edit Profile',
-              subtitle: 'Update your personal information',
-              onTap: () => context.push(AppRoutes.profileEdit),
-            ),
+            const SizedBox(height: AppSpacing.sectionGap),
+            const _AccountSectionHeader(title: 'Account'),
+            if (!_isArtist)
+  _AccountTile(
+    icon: Icons.person_outline,
+    title: 'Account details',
+    subtitle: 'Name, email, and account photo',
+    onTap: () => context.push(AppRoutes.profileEdit),
+  ),
             _AccountTile(
               icon: _isArtist ? Icons.person_outline : Icons.brush_outlined,
-              title: _isArtist ? 'Switch to Customer' : 'Become an Artist',
+              title: _isArtist ? 'Switch to customer' : 'Become an artist',
               subtitle: _isArtist
                   ? 'Use LOVEN as a customer account'
                   : 'Create and showcase your artwork',
@@ -156,24 +153,24 @@ class _SignedInAccountHub extends StatelessWidget {
             ),
             _AccountTile(
               icon: Icons.location_on_outlined,
-              title: 'Saved Addresses',
+              title: 'Saved addresses',
               subtitle: 'Manage your delivery locations',
               onTap: () => context.push(AppRoutes.location),
             ),
             _AccountTile(
               icon: Icons.lock_outline,
-              title: 'Change Password',
+              title: 'Change password',
               subtitle: 'Update your account password',
               onTap: () => context.push(AppRoutes.changePassword),
             ),
             if (_isArtist) ...[
-              const SizedBox(height: 20),
-              _AccountSectionHeader(theme: theme, title: 'Artist'),
+              const SizedBox(height: AppSpacing.xl),
+              const _AccountSectionHeader(title: 'Artist'),
               _AccountTile(
                 icon: Icons.storefront_outlined,
-                title: 'My Artist Profile',
+                title: 'My artist profile',
                 subtitle: 'Manage your storefront and portfolio',
-                onTap: () => context.push(AppRoutes.myProfile),
+                onTap: () => context.go(AppRoutes.myProfile),
               ),
               BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
                 builder: (context, artistState) {
@@ -186,7 +183,7 @@ class _SignedInAccountHub extends StatelessWidget {
                     children: [
                       _AccountTile(
                         icon: Icons.inventory_2_outlined,
-                        title: 'Incoming Orders',
+                        title: 'Incoming orders',
                         subtitle: 'Review and fulfill buyer orders',
                         onTap: () {
                           context.push(
@@ -198,10 +195,10 @@ class _SignedInAccountHub extends StatelessWidget {
                       if (!artist.isVerified)
                         _AccountTile(
                           icon: Icons.verified_outlined,
-                          title: 'Request Verification',
+                          title: 'Request verification',
                           subtitle: 'Apply for a verified artist badge',
                           onTap: () {
-                            context.push(AppRoutes.verificationRequest);
+                            context.go(AppRoutes.verificationRequest);
                           },
                         ),
                     ],
@@ -209,29 +206,29 @@ class _SignedInAccountHub extends StatelessWidget {
                 },
               ),
             ],
-            const SizedBox(height: 20),
-            _AccountSectionHeader(theme: theme, title: 'Activity'),
+            const SizedBox(height: AppSpacing.xl),
+            const _AccountSectionHeader(title: 'Activity'),
             _AccountTile(
               icon: Icons.favorite_border,
-              title: 'Your Favorites',
+              title: 'Your favorites',
               subtitle: 'Artworks you have saved',
               onTap: onOpenFavorites,
             ),
             _AccountTile(
               icon: Icons.shopping_bag_outlined,
-              title: 'Order History',
+              title: 'Order history',
               subtitle: 'View your previous orders',
-              onTap: () => context.push(AppRoutes.ordersHistory),
+              onTap: () => context.go(AppRoutes.ordersHistory),
             ),
-            const SizedBox(height: 20),
-            _AccountSectionHeader(theme: theme, title: 'Support'),
+            const SizedBox(height: AppSpacing.xl),
+            const _AccountSectionHeader(title: 'Support'),
             _AccountTile(
               icon: Icons.feedback_outlined,
-              title: 'Send Feedback',
+              title: 'Send feedback',
               subtitle: 'Share your thoughts with us',
-              onTap: () => context.push(AppRoutes.feedback),
+              onTap: () => context.go(AppRoutes.feedback),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             _AccountTile(
               icon: Icons.logout,
               title: 'Logout',
@@ -247,24 +244,21 @@ class _SignedInAccountHub extends StatelessWidget {
 }
 
 class _AccountSectionHeader extends StatelessWidget {
-  const _AccountSectionHeader({
-    required this.theme,
-    required this.title,
-  });
+  const _AccountSectionHeader({required this.title});
 
-  final ThemeData theme;
   final String title;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Text(
-        title,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
-        ),
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: AppColors.textMuted,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }
@@ -285,39 +279,18 @@ class _AccountHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colorScheme.primary.withValues(alpha: 0.95),
-            colorScheme.primary.withValues(alpha: 0.65),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return LovenSurfaceCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 36,
-            backgroundColor: Colors.white.withValues(alpha: 0.25),
-            backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-                ? NetworkImage(imageUrl!)
-                : null,
-            child: imageUrl == null || imageUrl!.isEmpty
-                ? const Icon(
-                    Icons.person,
-                    size: 38,
-                    color: Colors.white,
-                  )
-                : null,
+          LovenCircleAvatar(
+            imageUrl: imageUrl,
+            radius: AppSizes.avatarLg / 2,
+            fallbackLabel: name,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,39 +299,33 @@ class _AccountHeader extends StatelessWidget {
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: theme.textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   email,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xxs,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                    border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Text(
                     role.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -388,49 +355,56 @@ class _AccountTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDanger ? Colors.red : Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final iconColor = isDanger ? AppColors.error : AppColors.textSecondary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: isDanger ? Colors.red : null,
-          ),
-        ),
-        subtitle: Text(subtitle),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Theme.of(context).hintColor,
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: LovenSurfaceCard(
         onTap: onTap,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: AppSizes.avatarMd,
+              height: AppSizes.avatarMd,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(icon, color: iconColor, size: AppSizes.iconMd),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: isDanger ? AppColors.error : null,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: AppSizes.iconMd,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -441,51 +415,14 @@ class _GuestAccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final texTheme = theme.textTheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person_outline,
-              size: 64,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Sign in to view your profile',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create an account or log in to manage your \n orders, address, and More.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => context.push(AppRoutes.auth),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-              ),
-              child: const Text('Sign Up / Login'),
-            ),
-          ],
-        ),
-      ),
+    return GalleryEmptyState(
+      icon: Icons.person_outline,
+      title: 'Sign in to view your profile',
+      subtitle:
+          'Create an account or log in to manage your orders, addresses, and more.',
+      actionLabel: 'Sign up / Log in',
+      onAction: () => context.push(AppRoutes.auth),
+      usePrimaryAction: true,
     );
   }
 }

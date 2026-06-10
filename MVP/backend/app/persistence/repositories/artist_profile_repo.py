@@ -101,3 +101,11 @@ class ArtistProfileRepository(SQLAlchemyRepository):
         Persists the Firebase Storage URL after a successful image upload.
         """
         return self.update(profile_id, {"profile_image_url": new_url})
+    
+    def count_verified_artists(self):
+        return (
+            self.model.query
+            .filter(self.model.deleted_at.is_(None))
+            .filter(self.model.is_verified.is_(True))
+            .count()
+        )

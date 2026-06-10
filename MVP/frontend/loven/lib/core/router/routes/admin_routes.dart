@@ -6,14 +6,25 @@ import 'package:loven/features/admin/view/screens/admin_dashboard_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_reports_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_verification_requests_screen.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
+import 'package:loven/features/report/controller/cubit/report_cubit.dart';
+import 'package:loven/features/admin/controller/cubit/admin_dashboard_cubit.dart';
+import 'package:loven/features/admin/controller/cubit/admin_users_cubit.dart';
+import 'package:loven/features/admin/view/screens/admin_users_screen.dart';
 
 /// System administrator dashboards.
 List<RouteBase> buildAdminRoutes(AppRouterDeps deps) {
   return [
     GoRoute(
-      path: AppRoutes.admin,
-      builder: (context, state) => const AdminDashboardScreen(),
-    ),
+  path: AppRoutes.admin,
+  builder: (context, state) {
+    return BlocProvider(
+      create: (_) => AdminDashboardCubit(
+        deps.adminDashboardRepository,
+      )..loadStats(),
+      child: const AdminDashboardScreen(),
+    );
+  },
+),
     GoRoute(
       path: AppRoutes.adminVerificationRequests,
       builder: (context, state) {
@@ -26,8 +37,26 @@ List<RouteBase> buildAdminRoutes(AppRouterDeps deps) {
       },
     ),
     GoRoute(
-      path: AppRoutes.adminReports,
-      builder: (context, state) => const AdminReportsScreen(),
-    ),
+  path: AppRoutes.adminReports,
+  builder: (context, state) {
+    return BlocProvider(
+      create: (_) => ReportCubit(
+        deps.reportRepository,
+      )..loadReports(),
+      child: const AdminReportsScreen(),
+    );
+  },
+),
+GoRoute(
+  path: AppRoutes.adminUsers,
+  builder: (context, state) {
+    return BlocProvider(
+      create: (_) => AdminUsersCubit(
+        deps.adminUsersRepository,
+      )..loadUsers(),
+      child: const AdminUsersScreen(),
+    );
+  },
+),
   ];
 }

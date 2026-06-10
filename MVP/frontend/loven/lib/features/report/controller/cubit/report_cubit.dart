@@ -31,4 +31,52 @@ class ReportCubit extends Cubit<ReportState> {
       return false;
     }
   }
+
+  Future<void> loadReports() async {
+  emit(ReportLoading());
+
+  try {
+    final reports = await _reportRepository.getReports();
+
+    emit(ReportsLoaded(reports));
+  } catch (e) {
+    emit(ReportFailure(e.toString()));
+  }
+}
+
+Future<void> updateReportStatus({
+  required String reportId,
+  required String status,
+}) async {
+  emit(ReportLoading());
+
+  try {
+    await _reportRepository.updateReportStatus(
+      reportId: reportId,
+      status: status,
+    );
+
+    await loadReports();
+  } catch (e) {
+    emit(ReportFailure(e.toString()));
+  }
+}
+
+Future<void> updateArtworkStatus({
+  required String artworkId,
+  required String status,
+}) async {
+  emit(ReportLoading());
+
+  try {
+    await _reportRepository.updateArtworkStatus(
+      artworkId: artworkId,
+      status: status,
+    );
+
+    await loadReports();
+  } catch (e) {
+    emit(ReportFailure(e.toString()));
+  }
+}
 }

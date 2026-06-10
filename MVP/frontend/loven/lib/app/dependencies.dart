@@ -20,6 +20,9 @@ import 'package:loven/features/notifications/data/services/push_notification_ser
 import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/data/repositories/report_repository.dart';
 import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
+import 'package:loven/features/admin/data/repositories/admin_dashboard_repository.dart';
+import 'package:loven/features/admin/data/repositories/admin_users_repository.dart';
+import 'package:loven/features/payment/data/repositories/payment_repository.dart';
 
 /// App-wide singletons constructed once at startup.
 ///
@@ -39,6 +42,7 @@ class AppDependencies {
     required this.accountCubit,
     required this.artworkRepository,
     required this.orderRepository,
+    required this.paymentRepository,
     required this.artistRepository,
     required this.favoritesRepository,
     required this.verificationRequestRepository,
@@ -48,6 +52,8 @@ class AppDependencies {
     required this.notificationsRepository,
     required this.notificationsCubit,
     required this.pushNotificationService,
+    required this.adminDashboardRepository,
+    required this.adminUsersRepository,
     required this.splashMinDurationNotifier,
     required this.appRouter,
   });
@@ -63,6 +69,7 @@ class AppDependencies {
   final AccountCubit accountCubit;
   final ArtworkRepository artworkRepository;
   final OrderRepository orderRepository;
+  final PaymentRepository paymentRepository;
   final ArtistRepository artistRepository;
   final FavoritesRepository favoritesRepository;
   final VerificationRequestRepository verificationRequestRepository;
@@ -72,6 +79,8 @@ class AppDependencies {
   final NotificationsRepository notificationsRepository;
   final NotificationsCubit notificationsCubit;
   final PushNotificationService pushNotificationService;
+  final AdminDashboardRepository adminDashboardRepository;
+  final AdminUsersRepository adminUsersRepository;
   final SplashMinDurationNotifier splashMinDurationNotifier;
   final AppRouter appRouter;
 
@@ -119,6 +128,16 @@ class AppDependencies {
       authCubit: authCubit,
     );
 
+    final adminDashboardRepository = AdminDashboardRepository(
+      apiClient: apiClient,
+    );
+
+    final adminUsersRepository = AdminUsersRepository(
+      apiClient: apiClient,
+    );
+
+    final paymentRepository = PaymentRepository(apiClient: apiClient);
+
     final splashMinDurationNotifier = SplashMinDurationNotifier();
 
     apiClient.attachSessionExpiredHandler(() {
@@ -136,6 +155,9 @@ class AppDependencies {
       splashMinDurationNotifier: splashMinDurationNotifier,
       artistRepository: artistRepository,
       verificationRequestRepository: verificationRequestRepository,
+      reportRepository: reportRepository,
+      adminDashboardRepository: adminDashboardRepository,
+      adminUsersRepository: adminUsersRepository,
     );
 
     final pushNotificationService = PushNotificationService();
@@ -152,6 +174,7 @@ class AppDependencies {
       accountCubit: accountCubit,
       artworkRepository: artworkRepository,
       orderRepository: orderRepository,
+      paymentRepository: paymentRepository,
       artistRepository: artistRepository,
       favoritesRepository: favoritesRepository,
       verificationRequestRepository: verificationRequestRepository,
@@ -161,6 +184,8 @@ class AppDependencies {
       notificationsRepository: notificationsRepository,
       notificationsCubit: notificationsCubit,
       pushNotificationService: pushNotificationService,
+      adminDashboardRepository: adminDashboardRepository,
+      adminUsersRepository: adminUsersRepository,
       splashMinDurationNotifier: splashMinDurationNotifier,
       appRouter: appRouter,
     );

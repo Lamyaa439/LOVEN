@@ -17,96 +17,100 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     'Digital Art',
   ];
 
-  /// [artworkRepository] is injected from app startup ([LovenApp]) so the
-  /// bloc shares the same [ApiClient]-backed instance as [ArtworkCubit],
-  /// rather than constructing its own repository internally.
   HomeBloc({
     required ArtworkRepository artworkRepository,
   })  : _artworkRepository = artworkRepository,
         super(HomeLoading()) {
-    on<FetchHomeData>((
-      event,
-      emit,
-    ) async {
-      emit(HomeLoading());
+    on<FetchHomeData>(_onFetchHomeData);
+    on<FilterArtworks>(_onFilterArtworks);
+  }
 
-      try {
-        final rawArtworks =
-            await _artworkRepository
-                .getArtworks();
+  Future<void> _onFetchHomeData(
+    FetchHomeData event,
+    Emitter<HomeState> emit,
+  ) async {
+    emit(HomeLoading());
 
-        final artworks = rawArtworks
-            .whereType<Map>()
-            .map(
-              (json) => ArtworkModel.fromJson(
-                Map<String, dynamic>.from(json),
-              ),
-            )
-            .toList();
+    try {
+      final rawArtworks = await _artworkRepository.getArtworks();
 
-        emit(
-          HomeLoaded(
-            allArtworks: artworks,
-            categories: _categoryTags,
-            artPieces: artworks,
-          ),
-        );
-      } catch (e) {
-        emit(
-          HomeError(
-            'Failed to fetch artworks: $e',
-          ),
-        );
-      }
-    });
-
-    on<FilterArtworks>((
-      event,
-      emit,
-    ) {
-      if (state is! HomeLoaded) {
-        return;
-      }
-
-      final currentState =
-          state as HomeLoaded;
-
-      final search =
-          event.searchText ??
-              currentState.searchQuery;
-
-      final category =
-          event.category ??
-              currentState
-                  .selectedCategory;
-
-      final filteredList =
-          currentState.allArtworks.where((
-        art,
-      ) {
-        final title =
-            art.title.toLowerCase();
-
-        final matchesSearch =
-            search.isEmpty ||
-                title.contains(
-                  search.toLowerCase(),
-                );
-
-        final matchesCategory =
-            category == 'All';
-
-        return matchesSearch &&
-            matchesCategory;
-      }).toList();
+      final artworks = rawArtworks
+          .whereType<Map>()
+          .map(
+            (json) => ArtworkModel.fromJson(
+              Map<String, dynamic>.from(json),
+            ),
+          )
+          .toList();
 
       emit(
-        currentState.copyWith(
-          artPieces: filteredList,
-          searchQuery: search,
-          selectedCategory: category,
+        HomeLoaded(
+          allArtworks: artworks,
+          categories: _categoryTags,
+          artPieces: artworks,
         ),
       );
-    });
+    } catch (e) {
+      emit(HomeError('Failed to fetch artworks: $e'));
+    }
+  }
+
+  void _onFilterArtworks(
+    FilterArtworks event,
+    Emitter<HomeState> emit,
+  ) {
+    if (state is! HomeLoaded) {
+      return;
+    }
+
+    final currentState = state as HomeLoaded;
+
+    final search = event.searchText ?? currentState.searchQuery;
+    final category = event.category ?? currentState.selectedCategory;
+    final query = search.trim().toLowerCase();
+
+    final filteredList = currentState.allArtworks.where((art) {
+      final matchesSearch = query.isEmpty || _matchesSearch(art, query);
+      final matchesCategory = _matchesCategory(art, category);
+      return matchesSearch && matchesCategory;
+    }).toList();
+
+    emit(
+      currentState.copyWith(
+        artPieces: filteredList,
+        searchQuery: search,
+        selectedCategory: category,
+      ),
+    );
+  }
+
+  bool _matchesSearch(ArtworkModel art, String query) {
+    final haystack =
+        '${art.title} ${art.description ?? ''} ${art.artistDisplayName ?? ''}'
+            .toLowerCase();
+    return haystack.contains(query);
+  }
+
+  bool _matchesCategory(ArtworkModel art, String category) {
+    if (category == 'All') {
+      return true;
+    }
+
+    final haystack =
+        '${art.title} ${art.description ?? ''}'.toLowerCase();
+    final normalized = category.toLowerCase();
+
+    if (haystack.contains(normalized)) {
+      return true;
+    }
+
+    // Match significant words from multi-word categories (e.g. "Oil" in "Oil Painting").
+    for (final word in normalized.split(RegExp(r'\s+'))) {
+      if (word.length >= 4 && haystack.contains(word)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

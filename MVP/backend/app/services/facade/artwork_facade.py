@@ -146,6 +146,17 @@ class ArtworkFacade:
             200 with updated artwork; 400/403/404/500 on failure.
         """
         return artwork_service.update_artwork(user_id, artwork_id, data)
+    
+    @staticmethod
+    def admin_update_status(user_id, artwork_id, status):
+        """
+        Admin-only artwork moderation status update.
+        """
+        return artwork_service.admin_update_artwork_status(
+            user_id=user_id,
+            artwork_id=artwork_id,
+            status=status,
+        )
 
     @staticmethod
     def delete(user_id, artwork_id):

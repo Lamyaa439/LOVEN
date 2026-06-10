@@ -20,6 +20,8 @@ dependencies:
   # -- Networking & Backend connection ---
   http: ^1.2.0
 
+# -- Moyasar Payment --
+  moyasar: ^3.0.3
 
   # --- Localization & Bilingual support ---
   flutter_localizations:

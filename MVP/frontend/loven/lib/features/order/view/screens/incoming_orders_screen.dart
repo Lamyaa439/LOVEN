@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
+import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
 
@@ -14,8 +16,7 @@ class IncomingOrdersScreen extends StatefulWidget {
   final String artistProfileId;
 
   @override
-  State<IncomingOrdersScreen> createState() =>
-      _IncomingOrdersScreenState();
+  State<IncomingOrdersScreen> createState() => _IncomingOrdersScreenState();
 }
 
 class _IncomingOrdersScreenState extends State<IncomingOrdersScreen> {
@@ -47,61 +48,56 @@ class _IncomingOrdersScreenState extends State<IncomingOrdersScreen> {
         );
 
     if (!mounted) return;
-
     await _refreshOrders();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: lovenPushedScreenBackLeading(context),
         title: const Text('Incoming Orders'),
         centerTitle: true,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
       ),
       body: BlocBuilder<OrderCubit, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const GalleryLoadingState(message: 'Loading orders…');
           }
 
           if (state is OrderError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  state.message,
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return GalleryEmptyState(
+              icon: Icons.error_outline_rounded,
+              title: 'Could not load orders',
+              subtitle: state.message,
             );
           }
 
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return const Center(
-                child: Text('No incoming orders yet.'),
+              return const GalleryEmptyState(
+                icon: Icons.inventory_2_outlined,
+                title: 'No incoming orders yet',
+                subtitle: 'Orders for your artworks will appear here.',
               );
             }
 
             return RefreshIndicator(
               onRefresh: _refreshOrders,
               child: ListView.separated(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  AppSpacing.screenPadding,
+                  AppSpacing.screenPadding,
+                  AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+                ),
                 itemCount: state.orders.length,
                 separatorBuilder: (_, __) =>
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                 itemBuilder: (context, index) {
                   final order = Map<String, dynamic>.from(
                     state.orders[index] as Map,
                   );
-
                   return _IncomingOrderCard(
                     order: order,
                     onSave: _updateOrder,
@@ -125,7 +121,6 @@ class _IncomingOrderCard extends StatefulWidget {
   });
 
   final Map<String, dynamic> order;
-
   final Future<void> Function({
     required String orderId,
     required String status,
@@ -134,28 +129,22 @@ class _IncomingOrderCard extends StatefulWidget {
   }) onSave;
 
   @override
-  State<_IncomingOrderCard> createState() =>
-      _IncomingOrderCardState();
+  State<_IncomingOrderCard> createState() => _IncomingOrderCardState();
 }
 
 class _IncomingOrderCardState extends State<_IncomingOrderCard> {
   late String _selectedStatus;
   late final TextEditingController _shippingCompanyController;
   late final TextEditingController _trackingNumberController;
-
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-
-    _selectedStatus =
-        widget.order['status']?.toString() ?? 'pending';
-
+    _selectedStatus = widget.order['status']?.toString() ?? 'pending';
     _shippingCompanyController = TextEditingController(
       text: widget.order['shipping_company']?.toString() ?? '',
     );
-
     _trackingNumberController = TextEditingController(
       text: widget.order['tracking_number']?.toString() ?? '',
     );
@@ -170,10 +159,7 @@ class _IncomingOrderCardState extends State<_IncomingOrderCard> {
 
   Future<void> _save() async {
     final orderId = widget.order['id']?.toString();
-
-    if (orderId == null || orderId.isEmpty) {
-      return;
-    }
+    if (orderId == null || orderId.isEmpty) return;
 
     if (_selectedStatus == 'shipped') {
       if (_shippingCompanyController.text.trim().isEmpty ||
@@ -189,238 +175,141 @@ class _IncomingOrderCardState extends State<_IncomingOrderCard> {
       }
     }
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
       await widget.onSave(
         orderId: orderId,
         status: _selectedStatus,
-        shippingCompany:
-            _shippingCompanyController.text.trim().isEmpty
-                ? null
-                : _shippingCompanyController.text.trim(),
-        trackingNumber:
-            _trackingNumberController.text.trim().isEmpty
-                ? null
-                : _trackingNumberController.text.trim(),
+        shippingCompany: _shippingCompanyController.text.trim().isEmpty
+            ? null
+            : _shippingCompanyController.text.trim(),
+        trackingNumber: _trackingNumberController.text.trim().isEmpty
+            ? null
+            : _trackingNumberController.text.trim(),
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order updated'),
-        ),
+        const SnackBar(content: Text('Order updated')),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final id = widget.order['id']?.toString() ?? '';
     final total = widget.order['total_amount']?.toString() ?? '0';
     final createdAt = widget.order['created_at']?.toString() ?? '';
     final items = widget.order['items'];
-
     final itemCount = items is List ? items.length : 0;
     final showShippingFields = _selectedStatus == 'shipped';
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-        ),
-      ),
+    return LovenSurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 21,
-                backgroundColor:
-                    AppColors.primaryPurple.withValues(alpha: 0.18),
-                child: const Icon(
+              Container(
+                width: AppSizes.avatarMd,
+                height: AppSizes.avatarMd,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                ),
+                child: Icon(
                   Icons.inventory_2_outlined,
-                  color: AppColors.primaryBlue,
+                  size: AppSizes.iconMd,
+                  color: AppColors.brandPrimary,
                 ),
               ),
-
-              const SizedBox(width: 12),
-
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Order #${id.length > 8 ? id.substring(0, 8) : id}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: theme.textTheme.titleSmall,
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      createdAt,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.55),
+                    if (createdAt.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xxs),
+                      Text(
+                        createdAt,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-
               Text(
                 '$total SAR',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.primaryBlue,
-                  fontWeight: FontWeight.w900,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.brandPrimary,
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '$itemCount item(s)',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+              color: AppColors.textMuted,
             ),
           ),
-
-          const SizedBox(height: 14),
-
-          DropdownButtonFormField<String>(
-            value: _selectedStatus,
-            decoration: InputDecoration(
-              labelText: 'Order Status',
-              filled: true,
-              fillColor: theme.scaffoldBackgroundColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+          const SizedBox(height: AppSpacing.lg),
+          CheckoutFieldSection(
+            label: 'Order status',
+            child: DropdownButtonFormField<String>(
+              value: _selectedStatus,
+              decoration: checkoutInputDecoration(
+                hint: 'Select status',
+                icon: Icons.local_shipping_outlined,
               ),
+              items: const [
+                DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                DropdownMenuItem(value: 'paid', child: Text('Paid')),
+                DropdownMenuItem(value: 'shipped', child: Text('Shipped')),
+                DropdownMenuItem(value: 'delivered', child: Text('Delivered')),
+                DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _selectedStatus = value);
+              },
             ),
-            items: const [
-              DropdownMenuItem(
-                value: 'pending',
-                child: Text('Pending'),
-              ),
-              DropdownMenuItem(
-                value: 'paid',
-                child: Text('Paid'),
-              ),
-              DropdownMenuItem(
-                value: 'shipped',
-                child: Text('Shipped'),
-              ),
-              DropdownMenuItem(
-                value: 'delivered',
-                child: Text('Delivered'),
-              ),
-              DropdownMenuItem(
-                value: 'cancelled',
-                child: Text('Cancelled'),
-              ),
-            ],
-            onChanged: (value) {
-              if (value == null) return;
-
-              setState(() {
-                _selectedStatus = value;
-              });
-            },
           ),
-
           if (showShippingFields) ...[
-            const SizedBox(height: 12),
-
-            _ShippingField(
-              controller: _shippingCompanyController,
-              label: 'Shipping Company',
-              hint: 'Example: Aramex, DHL, FedEx',
+            CheckoutFieldSection(
+              label: 'Shipping company',
+              child: LovenTextField(
+                controller: _shippingCompanyController,
+                hintText: 'Example: Aramex, DHL, FedEx',
+                prefixIcon: const Icon(Icons.business_outlined, size: 20),
+              ),
             ),
-
-            const SizedBox(height: 12),
-
-            _ShippingField(
-              controller: _trackingNumberController,
-              label: 'Tracking Number',
-              hint: 'Enter tracking number',
+            CheckoutFieldSection(
+              label: 'Tracking number',
+              child: LovenTextField(
+                controller: _trackingNumberController,
+                hintText: 'Enter tracking number',
+                prefixIcon: const Icon(Icons.numbers_outlined, size: 20),
+              ),
             ),
           ],
-
-          const SizedBox(height: 14),
-
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Text(
-                _isSaving ? 'Saving...' : 'Save Order Update',
-              ),
-            ),
+          LovenPrimaryButton(
+            label: _isSaving ? 'Saving…' : 'Save order update',
+            onPressed: _isSaving ? null : _save,
+            isLoading: _isSaving,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ShippingField extends StatelessWidget {
-  const _ShippingField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String hint;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        filled: true,
-        fillColor: theme.scaffoldBackgroundColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.primaryBlue,
-            width: 1.3,
-          ),
-        ),
       ),
     );
   }

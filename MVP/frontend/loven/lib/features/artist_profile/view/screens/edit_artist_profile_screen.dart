@@ -2,13 +2,20 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../../../../core/res/theme/app_colors.dart';
-import '../../controller/artist_profile_cubit.dart';
-import '../../controller/artist_profile_state.dart';
-import '../../data/services/artist_profile_image_storage_service.dart';
-import '../../model/artist_model.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
+import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
+import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
+import 'package:loven/features/artist_profile/data/services/artist_profile_image_storage_service.dart';
+import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
 
 class EditArtistProfileScreen extends StatefulWidget {
   const EditArtistProfileScreen({
@@ -27,9 +34,14 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _displayNameController;
-  late final TextEditingController _cityController;
   late final TextEditingController _bioController;
   late final TextEditingController _shippingPolicyController;
+  late final String _initialDisplayName;
+  late final String _initialCity;
+  late final String _initialBio;
+  late final String _initialShippingPolicy;
+
+  String? _selectedCity;
 
   final _picker = ImagePicker();
   final _imageStorageService = ArtistProfileImageStorageService();
@@ -60,23 +72,39 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   @override
   void initState() {
     super.initState();
-
     _displayNameController =
         TextEditingController(text: widget.artist.displayName);
-    _cityController = TextEditingController(text: widget.artist.city ?? '');
+    final initialCity = widget.artist.city?.trim();
+    _selectedCity =
+        initialCity == null || initialCity.isEmpty ? null : initialCity;
     _bioController = TextEditingController(text: widget.artist.bio ?? '');
     _shippingPolicyController =
         TextEditingController(text: widget.artist.shippingPolicy ?? '');
+    _initialDisplayName = widget.artist.displayName;
+    _initialCity = widget.artist.city ?? '';
+    _initialBio = widget.artist.bio ?? '';
+    _initialShippingPolicy = widget.artist.shippingPolicy ?? '';
+    _displayNameController.addListener(() => setState(() {}));
+_bioController.addListener(() => setState(() {}));
+_shippingPolicyController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _displayNameController.dispose();
-    _cityController.dispose();
     _bioController.dispose();
     _shippingPolicyController.dispose();
     super.dispose();
   }
+
+bool get _hasChanges {
+  return _displayNameController.text.trim() != _initialDisplayName ||
+      (_selectedCity ?? '') != _initialCity ||
+      _bioController.text.trim() != _initialBio ||
+      _shippingPolicyController.text.trim() != _initialShippingPolicy ||
+      _selectedProfileImage != null ||
+      _selectedCoverImage != null;
+}
 
   Future<void> _pickProfileImage() async {
     final image = await _picker.pickImage(
@@ -84,12 +112,8 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
       imageQuality: 80,
       maxWidth: 900,
     );
-
     if (image == null) return;
-
-    setState(() {
-      _selectedProfileImage = image;
-    });
+    setState(() => _selectedProfileImage = image);
   }
 
   Future<void> _pickCoverImage() async {
@@ -98,20 +122,28 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
       imageQuality: 82,
       maxWidth: 1400,
     );
-
     if (image == null) return;
-
-    setState(() {
-      _selectedCoverImage = image;
-    });
+    setState(() => _selectedCoverImage = image);
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_hasChanges) return;
 
-    setState(() {
-      _isUploadingImages = true;
-    });
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix the highlighted fields')),
+      );
+      return;
+    }
+
+    if (!authStateHasSession(context.read<AuthCubit>().state)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Session expired. Please sign in again.')),
+      );
+      return;
+    }
+
+    setState(() => _isUploadingImages = true);
 
     try {
       String? profileImageUrl = widget.artist.profileImageUrl;
@@ -122,7 +154,6 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
           imageFile: _selectedProfileImage!,
           artistId: widget.artist.id,
         );
-        print('UPLOADED PROFILE URL: $profileImageUrl');
       }
 
       if (_selectedCoverImage != null) {
@@ -130,14 +161,13 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
           imageFile: _selectedCoverImage!,
           artistId: widget.artist.id,
         );
-        print('UPLOADED COVER URL: $coverImageUrl');
       }
 
       if (!mounted) return;
 
       await context.read<ArtistProfileCubit>().updateProfileInfo(
             displayName: _displayNameController.text.trim(),
-            city: _cityController.text.trim(),
+            city: _selectedCity?.trim(),
             bio: _bioController.text.trim(),
             shippingPolicy: _shippingPolicyController.text.trim(),
             profileImageUrl: profileImageUrl,
@@ -147,75 +177,32 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
       if (!mounted) return;
 
       final state = context.read<ArtistProfileCubit>().state;
+      if (state.status == ArtistProfileStatus.error) {
+        return;
+      }
 
       if (state.status == ArtistProfileStatus.success) {
-        Navigator.of(context).pop(true);
+        context.read<HomeBloc>().add(FetchHomeData());
+        context.pop(true);
       }
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not update profile: $e'),
-        ),
+        SnackBar(content: Text('Could not update profile: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingImages = false;
-        });
-      }
+      if (mounted) setState(() => _isUploadingImages = false);
     }
   }
 
-  InputDecoration _inputDecoration({
-    required String hint,
-    required IconData icon,
-    bool alignLabelWithHint = false,
-  }) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white,
-      prefixIcon: Icon(icon, size: 18),
-      alignLabelWithHint: alignLabelWithHint,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 14,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Colors.black.withValues(alpha: 0.08),
-        ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Colors.black.withValues(alpha: 0.08),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppColors.primaryBlue,
-          width: 1.3,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Colors.red.shade400,
-        ),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: Colors.red.shade400,
-          width: 1.3,
-        ),
-      ),
-    );
+  List<String> get _cityOptions {
+    final selected = _selectedCity;
+    if (selected != null &&
+        selected.isNotEmpty &&
+        !_cities.contains(selected)) {
+      return [selected, ..._cities];
+    }
+    return _cities;
   }
 
   @override
@@ -235,64 +222,50 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
             state.status == ArtistProfileStatus.loading || _isUploadingImages;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F7F8),
           appBar: AppBar(
-            backgroundColor: const Color(0xFFF8F7F8),
-            elevation: 0,
             centerTitle: true,
-            title: Text(
-              'Edit Profile',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: FilledButton(
-                  onPressed: isLoading ? null : _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    minimumSize: const Size(0, 36),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Text(isLoading ? 'Saving...' : 'Save'),
-                ),
-              ),
-            ],
+            title: const Text('Artist profile'),
+            leading: lovenPushedScreenBackLeading(context),
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenPadding,
+                AppSpacing.md,
+                AppSpacing.screenPadding,
+                AppSpacing.xxxl,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Text(
+                      'Update how collectors see your storefront.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
                     _CoverSection(
                       artist: widget.artist,
                       selectedCoverImage: _selectedCoverImage,
                       onPickCover: isLoading ? null : _pickCoverImage,
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: AppSpacing.xl),
                     _AvatarSection(
                       artist: widget.artist,
                       selectedProfileImage: _selectedProfileImage,
                       onPickProfileImage:
                           isLoading ? null : _pickProfileImage,
                     ),
-                    const SizedBox(height: 30),
-                    EditProfileField(
-                      label: 'Display Name',
-                      child: TextFormField(
+                    const SizedBox(height: AppSpacing.sectionGap),
+                    CheckoutFieldSection(
+                      label: 'Display name',
+                      child: LovenTextField(
                         controller: _displayNameController,
-                        decoration: _inputDecoration(
-                          hint: 'Display name',
-                          icon: Icons.person_outline,
-                        ),
+                        hintText: 'Display name',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Display name is required';
@@ -301,65 +274,47 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                         },
                       ),
                     ),
-                    EditProfileField(
+                    CheckoutFieldSection(
                       label: 'Location',
                       child: DropdownButtonFormField<String>(
-                        value: _cityController.text.isEmpty
-                            ? null
-                            : _cityController.text,
-                        decoration: _inputDecoration(
+                        value: _selectedCity,
+                        decoration: checkoutInputDecoration(
                           hint: 'Select city',
                           icon: Icons.location_on_outlined,
                         ),
-                        items: _cities.map((city) {
-                          return DropdownMenuItem(
-                            value: city,
-                            child: Text(city),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          _cityController.text = value ?? '';
-                        },
+                        items: _cityOptions
+                            .map(
+                              (city) => DropdownMenuItem(
+                                value: city,
+                                child: Text(city),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: isLoading
+                            ? null
+                            : (value) => setState(() => _selectedCity = value),
                       ),
                     ),
-                    EditProfileField(
-                      label: 'Artist Category',
-                      child: TextFormField(
-                        initialValue: 'Digital Artist / Illustrator',
-                        decoration: _inputDecoration(
-                          hint: 'Artist category',
-                          icon: Icons.palette_outlined,
-                        ),
-                      ),
-                    ),
-                    EditProfileField(
+                    CheckoutFieldSection(
                       label: 'Bio',
-                      child: TextFormField(
+                      child: LovenTextField(
                         controller: _bioController,
+                        hintText: 'Write a short artist bio',
                         maxLines: 7,
-                        maxLength: 500,
-                        decoration: _inputDecoration(
-                          hint: 'Write a short artist bio',
-                          icon: Icons.notes_outlined,
-                          alignLabelWithHint: true,
-                        ),
                       ),
                     ),
-                    EditProfileField(
-                      label: 'Shipping Policy',
-                      child: TextFormField(
+                    CheckoutFieldSection(
+                      label: 'Shipping policy',
+                      child: LovenTextField(
                         controller: _shippingPolicyController,
+                        hintText: 'Describe shipping availability and timing',
                         maxLines: 3,
-                        decoration: _inputDecoration(
-                          hint: 'Describe shipping availability and timing',
-                          icon: Icons.local_shipping_outlined,
-                          alignLabelWithHint: true,
-                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _AccountSection(
-                      onSignOut: () {},
+                    LovenPrimaryButton(
+                      label: isLoading ? 'Saving…' : 'Save changes',
+                      onPressed: (isLoading || !_hasChanges) ? null : _save,
+                      isLoading: isLoading,
                     ),
                   ],
                 ),
@@ -394,7 +349,6 @@ class _CoverSection extends StatelessWidget {
         future: selectedCoverImage?.readAsBytes(),
         builder: (context, snapshot) {
           final hasSelectedImage = snapshot.hasData;
-
           DecorationImage? coverImage;
 
           if (hasSelectedImage) {
@@ -410,81 +364,31 @@ class _CoverSection extends StatelessWidget {
           }
 
           return Container(
-            height: 132,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: coverImage == null
-                  ? const LinearGradient(
-                      colors: [
-                        AppColors.primaryPurple,
-                        AppColors.deepPurple,
-                        AppColors.primaryBlue,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              color: AppColors.surfaceSoft,
               image: coverImage,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             clipBehavior: Clip.antiAlias,
             child: Stack(
               children: [
-                if (coverImage == null) ...[
-                  Positioned(
-                    right: -18,
-                    top: -12,
-                    child: Icon(
-                      Icons.auto_awesome,
-                      size: 118,
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
-                  ),
-                  Positioned(
-                    left: -16,
-                    bottom: -20,
-                    child: Icon(
-                      Icons.brush_outlined,
-                      size: 112,
-                      color: Colors.white.withValues(alpha: 0.10),
-                    ),
-                  ),
-                ],
                 if (coverImage != null)
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.12),
+                        color: AppColors.scrim.withValues(alpha: 0.15),
                       ),
                     ),
                   ),
                 Positioned(
-                  right: 10,
-                  bottom: 10,
-                  child: FilledButton.icon(
+                  right: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                  child: LovenSecondaryButton(
+                    label: 'Change cover',
                     onPressed: onPickCover,
-                    icon: const Icon(Icons.image_outlined, size: 15),
-                    label: const Text('Change Cover'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.88),
-                      foregroundColor: Colors.black87,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
+                    expand: false,
                   ),
                 ),
               ],
@@ -510,153 +414,59 @@ class _AvatarSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasNetworkImage =
-        artist.profileImageUrl != null &&
-        artist.profileImageUrl!.isNotEmpty;
+        artist.profileImageUrl != null && artist.profileImageUrl!.isNotEmpty;
 
     return Center(
       child: GestureDetector(
         onTap: onPickProfileImage,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            FutureBuilder<Uint8List?>(
-              future: selectedProfileImage?.readAsBytes(),
-              builder: (context, snapshot) {
-                final hasSelectedImage = snapshot.hasData;
+        child: FutureBuilder<Uint8List?>(
+          future: selectedProfileImage?.readAsBytes(),
+          builder: (context, snapshot) {
+            final hasSelectedImage = snapshot.hasData;
+            ImageProvider? imageProvider;
 
-                ImageProvider? imageProvider;
+            if (hasSelectedImage) {
+              imageProvider = MemoryImage(snapshot.data!);
+            } else if (hasNetworkImage) {
+              imageProvider = NetworkImage(artist.profileImageUrl!);
+            }
 
-                if (hasSelectedImage) {
-                  imageProvider = MemoryImage(snapshot.data!);
-                } else if (hasNetworkImage) {
-                  imageProvider =
-                      NetworkImage(artist.profileImageUrl!);
-                }
-
-                return CircleAvatar(
-                  radius: 42,
-                  backgroundColor: AppColors.primaryPurple,
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: AppSizes.avatarLg / 2,
+                  backgroundColor: AppColors.surfaceSoft,
                   backgroundImage: imageProvider,
                   child: imageProvider == null
                       ? Text(
                           artist.displayName.isNotEmpty
-                              ? artist.displayName[0]
-                                  .toUpperCase()
+                              ? artist.displayName[0].toUpperCase()
                               : '?',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                color:
-                                    AppColors.primaryBlue,
-                                fontWeight:
-                                    FontWeight.w900,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: AppColors.brandPrimary,
                               ),
                         )
                       : null,
-                );
-              },
-            ),
-            Positioned(
-              right: -2,
-              bottom: -2,
-              child: CircleAvatar(
-                radius: 15,
-                backgroundColor:
-                    AppColors.primaryBlue,
-                child: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 14,
                 ),
-              ),
-            ),
-          ],
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: CircleAvatar(
+                    radius: AppSizes.iconMd,
+                    backgroundColor: AppColors.brandPrimary,
+                    child: Icon(
+                      Icons.camera_alt_outlined,
+                      size: AppSizes.iconSm,
+                      color: AppColors.textOnBrand,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
-    );
-  }
-}
-
-class EditProfileField extends StatelessWidget {
-  const EditProfileField({
-    super.key,
-    required this.label,
-    required this.child,
-  });
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 11,
-                  letterSpacing: 0.45,
-                ),
-          ),
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountSection extends StatelessWidget {
-  const _AccountSection({
-    required this.onSignOut,
-  });
-
-  final VoidCallback onSignOut;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'ACCOUNT',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.black54,
-                fontWeight: FontWeight.w800,
-                fontSize: 11,
-                letterSpacing: 0.45,
-              ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            onPressed: onSignOut,
-            icon: const Icon(Icons.logout, size: 17),
-            label: const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Sign Out'),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red.shade700,
-              backgroundColor: Colors.red.withValues(alpha: 0.055),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

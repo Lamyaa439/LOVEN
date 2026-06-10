@@ -74,14 +74,14 @@ class OrderCubit extends Cubit<OrderState> {
   /// [subtotal], [shippingFee], and [totalAmount] are validated server-side
   /// against artwork prices; line items need only `artwork_id` and `quantity`
   /// (see [OrderRepository.createOrder]).
-  Future<void> createOrder({
+  Future<Map<String, dynamic>?> createOrder({
     required double subtotal,
     required double shippingFee,
     required double totalAmount,
     required List<Map<String, dynamic>> items,
   }) async {
     if (!_guardSession()) {
-      return;
+      return null;
     }
 
     _emit(OrderLoading());
@@ -95,6 +95,7 @@ class OrderCubit extends Cubit<OrderState> {
       );
 
       _emit(OrderLoaded(order));
+return order;
     } catch (e) {
       final message = _mapCreateOrderError(e);
 
@@ -104,6 +105,7 @@ class OrderCubit extends Cubit<OrderState> {
           shouldRefreshCart: _isPricingMismatchError(e.toString()),
         ),
       );
+      return null;
     }
   }
 

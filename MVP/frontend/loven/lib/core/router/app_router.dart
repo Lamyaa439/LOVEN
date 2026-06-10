@@ -10,6 +10,9 @@ import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/features/artist_profile/data/artist_repository.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/verification_request/data/repositories/verification_request_repository.dart';
+import 'package:loven/features/report/data/repositories/report_repository.dart';
+import 'package:loven/features/admin/data/repositories/admin_dashboard_repository.dart';
+import 'package:loven/features/admin/data/repositories/admin_users_repository.dart';
 
 /// Application router — [GoRouter] assembly only.
 ///
@@ -25,10 +28,16 @@ class AppRouter {
     required this.splashMinDurationNotifier,
     required this.artistRepository,
     required this.verificationRequestRepository,
+    required this.reportRepository,
+    required this.adminDashboardRepository,
+    required this.adminUsersRepository,
   }) : _deps = AppRouterDeps(
           authCubit: authCubit,
           artistRepository: artistRepository,
           verificationRequestRepository: verificationRequestRepository,
+          reportRepository: reportRepository,
+          adminDashboardRepository: adminDashboardRepository,
+          adminUsersRepository: adminUsersRepository,
         );
 
   final AuthCubit authCubit;
@@ -36,6 +45,9 @@ class AppRouter {
   final SplashMinDurationNotifier splashMinDurationNotifier;
   final ArtistRepository artistRepository;
   final VerificationRequestRepository verificationRequestRepository;
+  final ReportRepository reportRepository;
+  final AdminDashboardRepository adminDashboardRepository;
+  final AdminUsersRepository adminUsersRepository;
 
   final AppRouterDeps _deps;
 

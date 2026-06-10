@@ -61,6 +61,43 @@ from app.services.facade.artwork_facade import ArtworkFacade
 
 artwork_bp = Blueprint("artworks", __name__)
 
+# =========================================================
+# Route: Admin Update Artwork Status
+# Method: PATCH
+# Endpoint: /api/v1/artworks/admin/<artwork_id>/status
+#
+# Description:
+# Allows admins to moderate artwork status.
+#
+# Expected JSON:
+# {
+#     "status": "hidden"
+# }
+#
+# Allowed statuses:
+# - available
+# - sold_out
+# - hidden
+#
+# Authentication:
+# Protected route, admin only
+# =========================================================
+@artwork_bp.patch("/admin/<artwork_id>/status")
+@jwt_required()
+def admin_update_artwork_status(artwork_id):
+
+    user_id = get_authenticated_user_id()
+    data = request.get_json() or {}
+
+    status = data.get("status")
+
+    result, status_code = ArtworkFacade.admin_update_status(
+        user_id=user_id,
+        artwork_id=artwork_id,
+        status=status,
+    )
+
+    return jsonify(result), status_code
 
 # =========================================================
 # Route: List Public Artworks

@@ -11,7 +11,8 @@
 /// - Endpoint paths come from [ApiConstants] relative to [ApiClient]'s base.
 /// ========================================================================
 
-import 'package:loven/core/network/api_constants.dart';
+import 'package:loven/core/network/api_endpoints.dart';
+import 'package:loven/core/network/api_client.dart';
 
 class ReportRepository {
   final ApiClient _apiClient;
@@ -34,10 +35,9 @@ class ReportRepository {
     String? details,
   }) async {
     final response = await _apiClient.post(
-      ApiConstants.reports,
+      ApiEndpoints.reports,
       data: {
-        'target_type': targetType,
-        'target_id': targetId,
+        'target_artwork_id': targetId,
         'reason': reason,
         if (details != null) 'details': details,
       },
@@ -45,4 +45,46 @@ class ReportRepository {
 
     return _asMap(response.data);
   }
+
+  Future<List<dynamic>> getReports() async {
+  final response = await _apiClient.get(
+    ApiEndpoints.reports,
+  );
+
+  final data = response.data;
+
+  if (data is Map<String, dynamic>) {
+    return data['reports'] ?? [];
+  }
+
+  return [];
+}
+
+Future<Map<String, dynamic>> updateReportStatus({
+  required String reportId,
+  required String status,
+}) async {
+  final response = await _apiClient.patch(
+    ApiEndpoints.reportStatus(reportId),
+    data: {
+      'status': status,
+    },
+  );
+
+  return _asMap(response.data);
+}
+
+Future<Map<String, dynamic>> updateArtworkStatus({
+  required String artworkId,
+  required String status,
+}) async {
+  final response = await _apiClient.patch(
+    ApiEndpoints.adminArtworkStatus(artworkId),
+    data: {
+      'status': status,
+    },
+  );
+
+  return _asMap(response.data);
+}
 }

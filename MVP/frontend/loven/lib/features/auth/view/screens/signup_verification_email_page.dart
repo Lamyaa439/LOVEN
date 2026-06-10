@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
-import 'package:loven/core/res/theme/app_colors.dart';
-
+import 'package:loven/core/widgets/loven_widgets.dart';
 import '../../controller/cubit/auth_cubit.dart';
 
 /// Link-based email verification after Firebase signup.
-///
-/// **Architectural rule:** Firebase owns verification; LOVEN JWT is not issued
-/// here. On success the user is sent to [SignupSuccessPage], then login (M3).
 class SignupVerificationEmailPage extends StatefulWidget {
-  final String email;
-
   const SignupVerificationEmailPage({
     super.key,
     required this.email,
   });
+
+  final String email;
 
   @override
   State<SignupVerificationEmailPage> createState() =>
@@ -60,7 +56,6 @@ class _SignupVerificationEmailPageState
     }
   }
 
-  /// Reloads Firebase user after the user taps the email link, then routes to success.
   Future<void> _checkVerification() async {
     if (_isChecking) return;
 
@@ -73,7 +68,6 @@ class _SignupVerificationEmailPageState
       if (!mounted) return;
 
       if (isVerified) {
-        // Clear Firebase session so login performs a fresh token exchange.
         await context.read<AuthCubit>().signOutFirebaseOnly();
 
         if (!mounted) return;
@@ -119,11 +113,12 @@ class _SignupVerificationEmailPageState
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 4),
               IconButton(
                 onPressed: isBusy
                     ? null
@@ -136,78 +131,71 @@ class _SignupVerificationEmailPageState
                       },
                 icon: const Icon(Icons.arrow_back),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: AppSpacing.sectionGap),
               Center(
                 child: Text(
-                  'Verify Your Email',
-                  style: theme.textTheme.displayLarge?.copyWith(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  'Verify your email',
+                  style: theme.textTheme.displaySmall,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.sm),
               Center(
                 child: Text(
                   'We sent a verification link to',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
+                    color: AppColors.textMuted,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xxs),
               Center(
                 child: Text(
                   widget.email,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                  style: theme.textTheme.titleSmall,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
               Center(
                 child: Icon(
                   Icons.mark_email_unread_outlined,
-                  size: 72,
-                  color: AppColors.primaryBlue.withValues(alpha: 0.85),
+                  size: AppSizes.avatarXl,
+                  color: AppColors.textMuted,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xxl),
               Center(
                 child: Text(
                   'Open the link in your email, then return here and tap Continue.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.lg),
               Center(
                 child: TextButton(
                   onPressed: isBusy ? null : _resendVerificationEmail,
                   child: _isResending
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: AppSizes.iconMd,
+                          height: AppSizes.iconMd,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : Text.rich(
                           TextSpan(
                             text: "Didn't receive the email? ",
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: AppColors.textMuted,
                             ),
                             children: const [
                               TextSpan(
                                 text: 'Resend',
                                 style: TextStyle(
-                                  color: AppColors.primaryBlue,
-                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.brandPrimary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -215,30 +203,11 @@ class _SignupVerificationEmailPageState
                         ),
                 ),
               ),
-              const SizedBox(height: 34),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: isBusy ? null : _checkVerification,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                  ),
-                  child: _isChecking
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Continue'),
-                ),
+              const SizedBox(height: AppSpacing.sectionGap),
+              LovenPrimaryButton(
+                label: 'Continue',
+                isLoading: _isChecking,
+                onPressed: isBusy ? null : _checkVerification,
               ),
             ],
           ),

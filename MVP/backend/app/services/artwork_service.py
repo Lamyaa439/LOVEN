@@ -64,16 +64,18 @@ def _artwork_to_dict(artwork):
 
     artist = artwork.artist
 
+    profile_image = None
+    if artist:
+        profile_image = artist.profile_image_url
+        if not profile_image and artist.user:
+            profile_image = artist.user.profile_image_url
+
     return {
         "id": str(artwork.id),
         "artist_profile_id": str(artwork.artist_profile_id),
 
         "artist_display_name": artist.display_name if artist else None,
-        "artist_profile_image_url": (
-            artist.user.profile_image_url
-            if artist and artist.user
-            else None
-        ),
+        "artist_profile_image_url": profile_image,
         "artist_is_verified": artist.is_verified if artist else False,
 
         "title": artwork.title,
@@ -158,6 +160,10 @@ def _artwork_owned_by_user(artwork, user_id):
     if not profile or not artwork:
         return False
     return artwork.artist_profile_id == profile.id
+
+def _is_admin(user_id):
+    user = user_repo.get_user_by_id(as_uuid(user_id))
+    return user is not None and user.system_role == "admin"
 
 
 # ----------------------------- Public Functions ---------------------------------
@@ -405,6 +411,42 @@ def update_artwork(user_id, artwork_id, data):
         return {"error": str(e)}, 400
     except IntegrityError:
         return {"error": "Could not update artwork"}, 400
+    except Exception:
+        return {"error": "An internal error occurred"}, 500
+
+
+def admin_update_artwork_status(user_id, artwork_id, status):
+    """
+    Allows admins to moderate artwork visibility/status.
+
+    Supported statuses:
+    - available
+    - sold_out
+    - hidden
+    """
+    if not _is_admin(user_id):
+        return {"error": "Admin access required"}, 403
+
+    if not status:
+        return {"error": "status is required"}, 400
+
+    artwork = artwork_repo.get(as_uuid(artwork_id))
+    if not artwork:
+        return {"error": "Artwork not found"}, 404
+
+    try:
+        updated = artwork_repo.update_status(artwork.id, status)
+
+        if not updated:
+            return {"error": "Artwork not found"}, 404
+
+        return {
+            "message": "Artwork status updated",
+            "artwork": _artwork_to_dict(updated),
+        }, 200
+
+    except ValueError as e:
+        return {"error": str(e)}, 400
     except Exception:
         return {"error": "An internal error occurred"}, 500
 
