@@ -155,9 +155,9 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
         final isVerifiedArtist = artist?.isVerified ?? false;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F7F8),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: const Color(0xFFF8F7F8),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             centerTitle: true,
             title: Text(
@@ -252,10 +252,10 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
     width: double.infinity,
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: Colors.black.withValues(alpha: 0.08),
+        color: Theme.of(context).colorScheme.outlineVariant,
       ),
     ),
     child: Text(
@@ -265,7 +265,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: isVerifiedArtist
                 ? AppColors.primaryBlue
-                : Colors.black54,
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w900,
           ),
     ),
@@ -274,34 +274,58 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
                     const SizedBox(height: 8),
 
-                    if (!isVerifiedArtist) ...[
-  Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.amber.shade50,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.amber.shade300,
-      ),
-    ),
-    child: const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Portfolio Mode',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+if (!isVerifiedArtist) ...[
+  Builder(
+    builder: (context) {
+      final colorScheme = Theme.of(context).colorScheme;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colorScheme.outlineVariant,
           ),
         ),
-        SizedBox(height: 6),
-        Text(
-          'You are not verified yet. This artwork will appear in your portfolio but cannot be purchased until your verification request is approved.',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              color: colorScheme.secondary,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Portfolio Mode',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'You are not verified yet. This artwork will appear in your portfolio but cannot be purchased until your verification request is approved.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.45,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
+      );
+    },
   ),
-  SizedBox(height: 20),
+  const SizedBox(height: 20),
 ],
 
                     SizedBox(
@@ -392,7 +416,7 @@ class _ArtworkImagePicker extends StatelessWidget {
                   : null,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: AppColors.shadowTint,
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -543,7 +567,7 @@ class _FieldSection extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
+                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
                   letterSpacing: 0.45,
@@ -580,6 +604,7 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -594,11 +619,11 @@ class _InputField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: colorScheme.surface,
         prefixIcon: Icon(
           icon,
           size: 18,
-          color: AppColors.deepPurple,
+          color: colorScheme.secondary,
         ),
         suffixText: suffixText,
         alignLabelWithHint: alignLabelWithHint,
@@ -609,21 +634,21 @@ class _InputField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: colorScheme.outlineVariant,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: colorScheme.outlineVariant,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
-            color: AppColors.primaryBlue,
-            width: 1.3,
-          ),
+          borderSide: BorderSide(
+  color: colorScheme.primary,
+  width: 1.3,
+),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

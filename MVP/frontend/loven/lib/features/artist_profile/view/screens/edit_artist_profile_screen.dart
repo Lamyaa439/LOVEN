@@ -30,6 +30,10 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   late final TextEditingController _cityController;
   late final TextEditingController _bioController;
   late final TextEditingController _shippingPolicyController;
+  late final String _initialDisplayName;
+  late final String _initialCity;
+  late final String _initialBio;
+  late final String _initialShippingPolicy;
 
   final _picker = ImagePicker();
   final _imageStorageService = ArtistProfileImageStorageService();
@@ -67,6 +71,14 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     _bioController = TextEditingController(text: widget.artist.bio ?? '');
     _shippingPolicyController =
         TextEditingController(text: widget.artist.shippingPolicy ?? '');
+    _initialDisplayName = widget.artist.displayName;
+    _initialCity = widget.artist.city ?? '';
+    _initialBio = widget.artist.bio ?? '';
+    _initialShippingPolicy = widget.artist.shippingPolicy ?? '';
+    _displayNameController.addListener(() => setState(() {}));
+_cityController.addListener(() => setState(() {}));
+_bioController.addListener(() => setState(() {}));
+_shippingPolicyController.addListener(() => setState(() {}));
   }
 
   @override
@@ -77,6 +89,16 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     _shippingPolicyController.dispose();
     super.dispose();
   }
+
+  bool get _hasChanges {
+  return
+      _displayNameController.text.trim() != _initialDisplayName ||
+      _cityController.text.trim() != _initialCity ||
+      _bioController.text.trim() != _initialBio ||
+      _shippingPolicyController.text.trim() != _initialShippingPolicy ||
+      _selectedProfileImage != null ||
+      _selectedCoverImage != null;
+}
 
   Future<void> _pickProfileImage() async {
     final image = await _picker.pickImage(
@@ -107,6 +129,8 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (!_hasChanges) return;
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -173,10 +197,11 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     required IconData icon,
     bool alignLabelWithHint = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Theme.of(context).colorScheme.surface,
       prefixIcon: Icon(icon, size: 18),
       alignLabelWithHint: alignLabelWithHint,
       contentPadding: const EdgeInsets.symmetric(
@@ -186,19 +211,19 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: Colors.black.withValues(alpha: 0.08),
+          color: colorScheme.outlineVariant,
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: Colors.black.withValues(alpha: 0.08),
+          color: colorScheme.outlineVariant,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppColors.primaryBlue,
+        borderSide: BorderSide(
+          color: colorScheme.primary,
           width: 1.3,
         ),
       ),
@@ -235,9 +260,9 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
             state.status == ArtistProfileStatus.loading || _isUploadingImages;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8F7F8),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: const Color(0xFFF8F7F8),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             centerTitle: true,
             title: Text(
@@ -250,7 +275,9 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
               Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: FilledButton(
-                  onPressed: isLoading ? null : _save,
+                  onPressed: (isLoading || !_hasChanges)
+    ? null
+    : _save,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primaryBlue,
                     foregroundColor: Colors.white,
@@ -260,7 +287,13 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: Text(isLoading ? 'Saving...' : 'Save'),
+                  child: Text(
+  isLoading
+      ? 'Saving...'
+      : _hasChanges
+          ? 'Save Changes'
+          : 'No Changes',
+),
                 ),
               ),
             ],
@@ -410,7 +443,7 @@ class _CoverSection extends StatelessWidget {
           }
 
           return Container(
-            height: 132,
+            height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
@@ -428,7 +461,7 @@ class _CoverSection extends StatelessWidget {
               image: coverImage,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: AppColors.shadowTint,
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -473,8 +506,11 @@ class _CoverSection extends StatelessWidget {
                     icon: const Icon(Icons.image_outlined, size: 15),
                     label: const Text('Change Cover'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.88),
-                      foregroundColor: Colors.black87,
+                      backgroundColor:
+    Theme.of(context).colorScheme.surface.withValues(alpha: 0.92),
+
+foregroundColor:
+    Theme.of(context).colorScheme.onSurface,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -534,7 +570,7 @@ class _AvatarSection extends StatelessWidget {
                 }
 
                 return CircleAvatar(
-                  radius: 42,
+                  radius: 52,
                   backgroundColor: AppColors.primaryPurple,
                   backgroundImage: imageProvider,
                   child: imageProvider == null
@@ -598,7 +634,7 @@ class EditProfileField extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
                   letterSpacing: 0.45,
@@ -627,7 +663,7 @@ class _AccountSection extends StatelessWidget {
         Text(
           'ACCOUNT',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.black54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 letterSpacing: 0.45,

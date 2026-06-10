@@ -11,6 +11,7 @@ import 'package:loven/features/cart/view/widgets/review_step.dart';
 import 'package:loven/features/cart/view/widgets/shipping_step.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
+import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
 
 enum CheckoutStep {
   shipping,
@@ -83,21 +84,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     context.pop();
   }
 
-  Future<void> _placeOrder() async {
-    final items = widget.cart.items.map((item) {
-      return {
-        'artwork_id': item.artworkId,
-        'quantity': item.quantity,
-      };
-    }).toList();
+Future<void> _placeOrder() async {
+  final items = widget.cart.items.map((item) {
+    return {
+      'artwork_id': item.artworkId,
+      'quantity': item.quantity,
+    };
+  }).toList();
 
-    await context.read<OrderCubit>().createOrder(
-          subtotal: widget.cart.subtotal,
-          shippingFee: widget.cart.shippingFee,
-          totalAmount: widget.cart.totalAmount,
-          items: items,
-        );
+  final orderResponse =
+      await context.read<OrderCubit>().createOrder(
+            subtotal: widget.cart.subtotal,
+            shippingFee: widget.cart.shippingFee,
+            totalAmount: widget.cart.totalAmount,
+            items: items,
+          );
+
+  if (!mounted || orderResponse == null) {
+    return;
   }
+
+  final orderId =
+      orderResponse['order']?['id']?.toString();
+
+  if (orderId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to create order'),
+      ),
+    );
+    return;
+  }
+
+  final paymentResponse =
+      await context.read<PaymentCubit>().initiatePayment(
+            orderId: orderId,
+          );
+
+  if (!mounted || paymentResponse == null) {
+    return;
+  }
+
+  debugPrint('Payment initiated: $paymentResponse');
+
+  // NEXT STEP:
+  // Open Moyasar payment sheet here
+}
 
   @override
   Widget build(BuildContext context) {
@@ -112,16 +144,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
             return;
           }
-
-          await context.read<CartCubit>().clearCart();
-
-          if (!context.mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Order created successfully')),
-          );
-
-          context.go(AppRoutes.home);
         }
 
         if (state is OrderError) {
@@ -137,9 +159,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F7F8),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFF8F7F8),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           centerTitle: true,
           title: Text(

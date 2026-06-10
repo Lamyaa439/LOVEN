@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/res/theme/app_colors.dart';
-
 class ArtistPortfolioFilter extends StatelessWidget {
   const ArtistPortfolioFilter({
     super.key,
@@ -11,6 +9,7 @@ class ArtistPortfolioFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
       child: Row(
@@ -23,15 +22,17 @@ class ArtistPortfolioFilter extends StatelessWidget {
               label: Text(filter),
               selected: isSelected,
               onSelected: (_) {},
-              selectedColor: Colors.white,
-              backgroundColor: AppColors.backgroundGrey,
+              selectedColor: colorScheme.surface,
+              backgroundColor: colorScheme.surfaceContainerHighest,
               side: BorderSide(
-                color: isSelected
-                    ? AppColors.primaryBlue
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
+  color: isSelected
+      ? colorScheme.primary
+      : colorScheme.outlineVariant,
+),
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.primaryBlue : Colors.black45,
+                color: isSelected
+    ? colorScheme.primary
+    : colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w800,
               ),
             ),

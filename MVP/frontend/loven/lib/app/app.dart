@@ -22,6 +22,8 @@ import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
+import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
+import 'package:loven/features/payment/data/repositories/payment_repository.dart';
 
 /// Root widget: global providers and [MaterialApp.router].
 class LovenApp extends StatefulWidget {
@@ -82,6 +84,9 @@ class _LovenAppState extends State<LovenApp> {
         RepositoryProvider<OrderRepository>.value(
           value: _deps.orderRepository,
         ),
+        RepositoryProvider<PaymentRepository>.value(
+  value: _deps.paymentRepository,
+),
       ],
       child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
         value: _deps.splashMinDurationNotifier,
@@ -129,6 +134,12 @@ class _LovenAppState extends State<LovenApp> {
               _deps.verificationRequestRepository,
             ),
           ),
+          BlocProvider(
+  create: (_) => PaymentCubit(
+    _deps.paymentRepository,
+    authCubit: _deps.authCubit,
+  ),
+),
           ],
           child: BlocBuilder<ThemeBloc, ThemeMode>(
             builder: (context, themeMode) {

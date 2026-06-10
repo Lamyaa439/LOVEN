@@ -73,9 +73,9 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7F8),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F7F8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+appBar: AppBar(
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(
@@ -268,7 +268,7 @@ class _SuccessContent extends StatelessWidget {
             ),
 
           const SliverToBoxAdapter(
-            child: SizedBox(height: 30),
+            child: SizedBox(height: 120),
           ),
         ],
       ),

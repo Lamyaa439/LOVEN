@@ -10,6 +10,7 @@ import '../../controller/cubit/cart_cubit.dart';
 import '../../controller/cubit/cart_state.dart';
 import '../../data/models/cart_model.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/res/theme/app_colors.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -80,6 +81,22 @@ class _CartScreenState extends State<CartScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
+          actions: [
+  BlocBuilder<CartCubit, CartState>(
+    builder: (context, state) {
+      if (state is! CartLoaded || state.cart.items.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return TextButton(
+        onPressed: () {
+          context.read<CartCubit>().clearCart();
+        },
+        child: const Text('Clear'),
+      );
+    },
+  ),
+],
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           centerTitle: true,
@@ -88,41 +105,53 @@ class _CartScreenState extends State<CartScreen> {
               final itemCount =
                   state is CartLoaded ? state.cart.items.length : 0;
 
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Cart',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                  if (itemCount > 0) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.13),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: colorScheme.primary.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        '$itemCount',
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              );
+              return Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Cart',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+        ),
+        if (itemCount > 0) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 7,
+              vertical: 3,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Text(
+              '$itemCount',
+              style: TextStyle(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+    const SizedBox(height: 2),
+    Text(
+      'Review your selected artworks',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+    ),
+  ],
+);
             },
           ),
         ),
@@ -167,7 +196,7 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   Expanded(
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 150),
                       itemCount: cart.items.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, index) {
@@ -261,14 +290,14 @@ class _CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Theme.of(context).colorScheme.outlineVariant,
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
+  BoxShadow(
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.35)
+        : AppColors.shadowTint,
+    blurRadius: 22,
+    offset: const Offset(0, 10),
+  ),
+],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +309,7 @@ class _CartItemCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: SizedBox(
-              height: 92,
+              height: 118,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -368,8 +397,8 @@ class _QuantityControl extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: colorScheme.primary.withValues(alpha: 0.13),
         borderRadius: BorderRadius.circular(999),
@@ -436,24 +465,26 @@ class _CartSummary extends StatelessWidget {
         final isLoading = orderState is OrderLoading;
 
         return Container(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: theme.colorScheme.outlineVariant,
-              ),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.black.withValues(alpha: 0.6)
-                    : Colors.black.withValues(alpha: 0.04),
-                blurRadius: 18,
-                offset: const Offset(0, -8),
-              ),
-            ],
-          ),
+  margin: const EdgeInsets.fromLTRB(16, 0, 16, 110),
+  padding: const EdgeInsets.all(18),
+  decoration: BoxDecoration(
+  color: colorScheme.surface,
+  borderRadius: BorderRadius.circular(24),
+  border: Border(
+    top: BorderSide(
+      color: colorScheme.outlineVariant,
+    ),
+  ),
+  boxShadow: [
+    BoxShadow(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.black.withValues(alpha: 0.55)
+          : AppColors.shadowTint,
+      blurRadius: 28,
+      offset: const Offset(0, 8),
+    ),
+  ],
+),
           child: SafeArea(
             top: false,
             child: Column(
@@ -468,8 +499,7 @@ class _CartSummary extends StatelessWidget {
                   value: cart.shippingFee == 0
                       ? 'Free'
                       : 'SAR ${cart.shippingFee.toStringAsFixed(2)}',
-                  valueColor:
-                      cart.shippingFee == 0 ? Colors.green.shade600 : null,
+                  valueColor: cart.shippingFee == 0 ? AppColors.success : null,
                 ),
                 const SizedBox(height: 12),
                 _SummaryRow(
@@ -498,9 +528,9 @@ class _CartSummary extends StatelessWidget {
                           : 'Checkout — SAR ${cart.totalAmount.toStringAsFixed(2)}',
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
+                      backgroundColor: AppColors.buttonPrimaryBackground,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(52),
+                      minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -510,14 +540,6 @@ class _CartSummary extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-                TextButton(
-                  onPressed: isLoading
-                      ? null
-                      : () {
-                          context.read<CartCubit>().clearCart();
-                        },
-                  child: const Text('Clear Cart'),
                 ),
               ],
             ),
@@ -586,18 +608,18 @@ class _ArtworkThumb extends StatelessWidget {
         colorScheme.secondary,
       ],
       [
-        const Color(0xFFFFF4F7),
+        colorScheme.tertiary.withValues(alpha: 0.35),
         colorScheme.primary,
       ],
       [
-        const Color(0xFFEEF2FF),
+        colorScheme.secondary.withValues(alpha: 0.35),
         colorScheme.primary,
       ],
     ];
 
     return Container(
-      width: 82,
-      height: 92,
+      width: 96,
+      height: 118,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: hasImage
@@ -692,7 +714,7 @@ class _CartMessageView extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.4,
                   ),
               textAlign: TextAlign.center,

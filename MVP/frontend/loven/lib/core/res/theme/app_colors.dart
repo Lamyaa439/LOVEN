@@ -106,4 +106,13 @@ class AppColors {
       Colors.transparent,
     ],
   );
+
+  static const LinearGradient brandWash = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color(0x1AD0B1E6),
+    Color(0x1A293CAE),
+  ],
+);
 }
