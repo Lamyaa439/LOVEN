@@ -136,12 +136,13 @@ class _SignedInAccountHub extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sectionGap),
             const _AccountSectionHeader(title: 'Account'),
-            _AccountTile(
-              icon: Icons.person_outline,
-              title: 'Account details',
-              subtitle: 'Name, email, and account photo',
-              onTap: () => context.push(AppRoutes.profileEdit),
-            ),
+            if (!_isArtist)
+  _AccountTile(
+    icon: Icons.person_outline,
+    title: 'Account details',
+    subtitle: 'Name, email, and account photo',
+    onTap: () => context.push(AppRoutes.profileEdit),
+  ),
             _AccountTile(
               icon: _isArtist ? Icons.person_outline : Icons.brush_outlined,
               title: _isArtist ? 'Switch to customer' : 'Become an artist',

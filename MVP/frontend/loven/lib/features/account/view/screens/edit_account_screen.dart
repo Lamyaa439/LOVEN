@@ -171,6 +171,28 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = authStateSessionUser(context.watch<AuthCubit>().state);
+final isCustomer = user?.systemRole.toLowerCase() == 'customer';
+
+if (!isCustomer) {
+  return Scaffold(
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    appBar: AppBar(
+      centerTitle: true,
+      title: const Text('Account details'),
+      leading: lovenPushedScreenBackLeading(context),
+    ),
+    body: const Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        child: Text(
+          'Artists can edit their account from the artist profile page.',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ),
+  );
+}
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
