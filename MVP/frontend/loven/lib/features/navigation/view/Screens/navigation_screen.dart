@@ -30,7 +30,8 @@ const _accountTabIndex = 3;
 
 /// Shell top-chrome contract (Phase 0):
 /// - Home tab: no shell [AppBar] — [HomeScreen] owns editorial header + actions.
-/// - Cart tab: no shell [AppBar] — [CartScreen] owns its own [AppBar].
+/// - Cart tab (signed-in): no shell [AppBar] — [CartScreen] owns its own [AppBar].
+/// - Cart tab (guest): shell logo [AppBar] — matches Favorites guest gate.
 /// - Account tab with [accountChild]: no shell [AppBar] — pushed child owns chrome.
 /// - Favorites + default Account: shell logo [AppBar] + theme toggle only.
 
@@ -82,12 +83,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 
   /// Whether the shell renders the shared logo [AppBar] for [tabIndex].
-  bool _shouldShowShellAppBar(int tabIndex) {
+  bool _shouldShowShellAppBar(int tabIndex, {required bool hasSession}) {
     if (tabIndex == _homeTabIndex) {
       return false;
     }
     if (tabIndex == _cartTabIndex) {
-      return false;
+      return !hasSession;
     }
     if (tabIndex == _accountTabIndex && widget.accountChild != null) {
       return false;
@@ -141,19 +142,21 @@ class _NavigationScreenState extends State<NavigationScreen> {
       ],
       child: BlocBuilder<NavigationBarCubit, NavigationBarState>(
         builder: (context, navState) {
-          final showShellAppBar = _shouldShowShellAppBar(navState.currentIndex);
+          return BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, authState) {
+              final hasSession = authStateHasSession(authState);
+              final showShellAppBar = _shouldShowShellAppBar(
+                navState.currentIndex,
+                hasSession: hasSession,
+              );
 
-          return Scaffold(
+              return Scaffold(
             appBar: showShellAppBar ? _buildShellAppBar(context) : null,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             extendBody: true,
             body: Stack(
               children: [
-                BlocBuilder<AuthCubit, AuthState>(
-                  builder: (context, authState) {
-                    final hasSession = authStateHasSession(authState);
-
-                    return IndexedStack(
+                IndexedStack(
                       index: navState.currentIndex,
                       children: [
                         const HomeScreen(),
@@ -177,23 +180,20 @@ class _NavigationScreenState extends State<NavigationScreen> {
                               child: const AccountScreen(),
                             ),
                       ],
-                    );
-                  },
-                ),
+                    ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, authState) {
-                      final user = authStateSessionUser(authState);
-                      final isArtist =
-                          user?.systemRole.toLowerCase() == 'artist';
-
-                      return NavigationWidget(isArtist: isArtist);
-                    },
+                  child: NavigationWidget(
+                    isArtist: authStateSessionUser(authState)
+                            ?.systemRole
+                            .toLowerCase() ==
+                        'artist',
                   ),
                 ),
               ],
             ),
+          );
+            },
           );
         },
       ),

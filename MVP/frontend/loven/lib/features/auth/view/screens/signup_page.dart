@@ -255,10 +255,20 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Sign Up',
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      fontSize: 34,
+                  Text.rich(
+                    TextSpan(
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontSize: 34,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Sign Up '),
+                        TextSpan(
+                          text: '🎨',
+                          style: theme.textTheme.displayLarge?.copyWith(
+                            fontSize: 34 * 1.12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 6),
