@@ -29,7 +29,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     FetchHomeData event,
     Emitter<HomeState> emit,
   ) async {
-    emit(HomeLoading());
+    if (!event.silent || state is! HomeLoaded) {
+      emit(HomeLoading());
+    }
 
     try {
       final rawArtworks = await _artworkRepository.getArtworks();
@@ -51,6 +53,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         ),
       );
     } catch (e) {
+      if (event.silent && state is HomeLoaded) {
+        return;
+      }
+
       emit(HomeError('Failed to fetch artworks: $e'));
     }
   }

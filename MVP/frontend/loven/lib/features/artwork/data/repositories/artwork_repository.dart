@@ -48,9 +48,21 @@ class ArtworkRepository {
 
   /// Fetches the public marketplace feed and returns raw artwork JSON maps.
   ///
-  /// Errors propagate from [ApiClient].
-  Future<List<dynamic>> getArtworks() async {
-    final response = await _apiClient.get(ApiConstants.artworks);
+  /// Only listings with `status=available` are returned by the backend.
+  /// Results are sorted newest-first.
+  Future<List<dynamic>> getArtworks({
+    int limit = 50,
+    int offset = 0,
+    String status = 'available',
+  }) async {
+    final response = await _apiClient.get(
+      ApiConstants.artworks,
+      queryParameters: {
+        'limit': limit,
+        'offset': offset,
+        'status': status,
+      },
+    );
 
     return _parseArtworksList(response.data);
   }

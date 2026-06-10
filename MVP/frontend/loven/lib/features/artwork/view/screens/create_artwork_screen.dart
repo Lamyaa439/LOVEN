@@ -39,6 +39,20 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
   bool _isUploadingImage = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final profileCubit = context.read<ArtistProfileCubit>();
+      if (profileCubit.state.artist == null) {
+        profileCubit.fetchMyProfileData();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     titleController.dispose();
     descriptionController.dispose();
@@ -84,6 +98,11 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
     setState(() => _isUploadingImage = true);
 
     try {
+      final profileCubit = context.read<ArtistProfileCubit>();
+      await profileCubit.fetchMyProfileData();
+
+      if (!mounted) return;
+
       final imageUrl = await _storageService.uploadArtworkImage(
         imageFile: _selectedImage!,
         artistId: authStateSessionUser(authState)!.id,
@@ -91,7 +110,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
       if (!mounted) return;
 
-      final artist = context.read<ArtistProfileCubit>().state.artist;
+      final artist = profileCubit.state.artist;
       final isVerifiedArtist = artist?.isVerified ?? false;
 
       context.read<ArtworkCubit>().createArtwork(

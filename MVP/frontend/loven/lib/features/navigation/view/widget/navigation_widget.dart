@@ -8,6 +8,8 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/controller/cubit/cart_state.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 
 class NavigationWidget extends StatelessWidget {
@@ -20,6 +22,10 @@ class NavigationWidget extends StatelessWidget {
 
   void _navigateToTab(BuildContext context, int index) {
     context.read<NavigationBarCubit>().navigateTo(index);
+
+    if (index == 0) {
+      context.read<HomeBloc>().add(FetchHomeData(silent: true));
+    }
   }
 
   @override
@@ -60,6 +66,9 @@ class NavigationWidget extends StatelessWidget {
                             context
                                 .read<ArtistProfileCubit>()
                                 .fetchMyProfileData();
+                            context
+                                .read<HomeBloc>()
+                                .add(FetchHomeData(silent: true));
                           }
                         },
                       ),

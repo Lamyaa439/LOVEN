@@ -59,7 +59,12 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
       }
 
       final artist = results[0] as ArtistModel;
-      final artworks = results[1] as List<ArtworkModel>;
+      var artworks = results[1] as List<ArtworkModel>;
+
+      artworks = await _publishHiddenPortfolioArtworksIfVerified(
+        artist: artist,
+        artworks: artworks,
+      );
 
       emit(
         state.copyWith(
@@ -221,6 +226,37 @@ class ArtistProfileCubit extends Cubit<ArtistProfileState> {
         ),
       );
     }
+  }
+
+  /// Verified artists may still have portfolio uploads saved as `hidden`
+  /// before approval. Publish them so they appear on the public home feed.
+  Future<List<ArtworkModel>> _publishHiddenPortfolioArtworksIfVerified({
+    required ArtistModel artist,
+    required List<ArtworkModel> artworks,
+  }) async {
+    if (!artist.isVerified) {
+      return artworks;
+    }
+
+    final hiddenArtworks =
+        artworks.where((artwork) => artwork.status == 'hidden').toList();
+
+    if (hiddenArtworks.isEmpty) {
+      return artworks;
+    }
+
+    for (final artwork in hiddenArtworks) {
+      try {
+        await _repository.updateArtwork(
+          artwork.id,
+          status: 'available',
+        );
+      } catch (_) {
+        // Keep other listings publishable even if one update fails.
+      }
+    }
+
+    return _repository.listMyArtworks();
   }
 
   /// Normalizes thrown objects to a user-visible string (Exception, HTTP errors, etc.).

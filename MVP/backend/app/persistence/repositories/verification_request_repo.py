@@ -5,6 +5,7 @@ Handles ORM persistence for artist verification submissions.
 """
 
 from app.extensions import db
+from app.models.artwork import Artwork
 from app.models.artist_profile import ArtistProfile
 from app.models.verification_requests import VerificationRequest
 from app.persistence.repository import SQLAlchemyRepository
@@ -70,6 +71,18 @@ class VerificationRequestRepository(SQLAlchemyRepository):
             )
             if artist_profile:
                 artist_profile.is_verified = True
+                # Portfolio uploads saved as hidden while pending verification
+                # should become publicly discoverable once the artist is approved.
+                (
+                    Artwork.query.filter(
+                        Artwork.artist_profile_id == artist_profile.id,
+                        Artwork.deleted_at.is_(None),
+                        Artwork.status == "hidden",
+                    ).update(
+                        {"status": "available"},
+                        synchronize_session=False,
+                    )
+                )
 
         return self.save(verification_request)
     
