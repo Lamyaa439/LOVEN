@@ -1,16 +1,4 @@
-from app.services.report_service import report_service
-
-# =========================================================
-# Report Facade
-# =========================================================
-# The facade keeps API routes lightweight while preparing
-# the reporting flow for future moderation integrations.
-#
-# Examples:
-# - admin moderation queues
-# - automated flagging systems
-# - notification workflows
-# =========================================================
+from app.services import report_service
 
 
 class ReportFacade:
