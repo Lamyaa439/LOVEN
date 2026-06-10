@@ -149,6 +149,8 @@ abstract final class AppRoutes {
     artistProfileEdit,
     artworksCreate,
     // Commerce & fulfillment
+    cart,
+    checkout,
     confirmOrder,
     location,
     locationAddressForm,
@@ -161,10 +163,14 @@ abstract final class AppRoutes {
 
   /// Path prefixes that require [authStateHasSession].
   static const List<String> sessionRequiredPrefixes = [
-    cart,
     admin,
     ordersPrefix,
   ];
+
+  /// True when [path] matches [prefix] exactly or as a path segment root.
+  static bool _matchesPathPrefix(String path, String prefix) {
+    return path == prefix || path.startsWith('$prefix/');
+  }
 
   /// True when [path] is login/sign-up entry (including [signupRoutePrefix]).
   static bool isUnauthenticatedAuthEntryPath(String path) {
@@ -200,7 +206,7 @@ abstract final class AppRoutes {
       return true;
     }
     for (final prefix in sessionRequiredPrefixes) {
-      if (path.startsWith(prefix)) {
+      if (_matchesPathPrefix(path, prefix)) {
         return true;
       }
     }

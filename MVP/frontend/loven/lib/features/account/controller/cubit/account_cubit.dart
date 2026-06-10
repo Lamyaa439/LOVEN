@@ -87,7 +87,9 @@ class AccountCubit extends Cubit<AccountState> {
     String? profileImageUrl,
   }) async {
     if (!_hasSession) {
-      resetForSignedOut();
+      _emit(const AccountFailure(
+        message: 'Session expired. Please sign in again.',
+      ));
       return;
     }
 

@@ -80,6 +80,25 @@ class AppColors {
   static const Color scrim = Color(0x80000000);
   static const Color heroOverlay = Color(0x99000000);
 
+  // ── Floating navigation shell ──────────────────────────────────────────────
+  /// Translucent glass fill for the floating bottom bar (light).
+  static const Color navGlassFillLight = Color(0xBFFFFFFF);
+
+  /// Hairline border on glass nav (light).
+  static const Color navGlassBorderLight = Color(0x66E4E0DC);
+
+  /// Soft inner halo around the artist FAB (light).
+  static const Color navFabHaloInner = Color(0x40BB84D4);
+
+  /// Diffuse outer glow around the artist FAB (light).
+  static const Color navFabHaloOuter = Color(0x1AD0B1E6);
+
+  /// Translucent glass fill for the floating bottom bar (dark).
+  static const Color navGlassFillDark = Color(0xBF1E1E22);
+
+  /// Hairline border on glass nav (dark).
+  static const Color navGlassBorderDark = Color(0x663A3A42);
+
   // ── Dark mode ──────────────────────────────────────────────────────────────
   static const Color darkCanvas = Color(0xFF141416);
   static const Color darkSurface = Color(0xFF1E1E22);

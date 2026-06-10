@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/feedback/controller/cubit/feedback_cubit.dart';
 import 'package:loven/features/feedback/controller/cubit/feedback_state.dart';
 
@@ -10,13 +11,11 @@ class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
 
   @override
-  State<FeedbackScreen> createState() =>
-      _FeedbackScreenState();
+  State<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final subjectController = TextEditingController();
   final messageController = TextEditingController();
 
@@ -28,9 +27,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     context.read<FeedbackCubit>().submitFeedback(
           subject: subjectController.text.trim().isEmpty
@@ -50,7 +47,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
-
           context.pop();
         }
 
@@ -64,15 +60,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         final isLoading = state is FeedbackLoading;
 
         return Scaffold(
-          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
+            leading: lovenPushedScreenBackLeading(context),
             centerTitle: true,
             title: const Text('Feedback'),
-            backgroundColor: theme.scaffoldBackgroundColor,
-            elevation: 0,
           ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.md,
+              AppSpacing.screenPadding,
+              AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -80,79 +79,56 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 children: [
                   Text(
                     'Help us improve LOVEN',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: theme.textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Share your thoughts, suggestions, or issues with us.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 13,
+                      color: AppColors.textMuted,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  _FieldLabel('Subject'),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.xl),
+                  Text(
+                    'Subject',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  LovenTextField(
                     controller: subjectController,
-                    enabled: !isLoading,
-                    decoration: _inputDecoration(
-                      context,
-                      hint: 'Optional subject',
+                    hintText: 'Optional subject',
+                    readOnly: isLoading,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Message',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: AppColors.textMuted,
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  _FieldLabel('Message'),
-                  TextFormField(
+                  const SizedBox(height: AppSpacing.xs),
+                  LovenTextField(
                     controller: messageController,
-                    enabled: !isLoading,
+                    hintText: 'Write your feedback here',
                     maxLines: 6,
-                    decoration: _inputDecoration(
-                      context,
-                      hint: 'Write your feedback here',
-                    ),
+                    readOnly: isLoading,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Feedback message is required';
                       }
-
                       if (value.trim().length < 5) {
                         return 'Please write a little more detail';
                       }
-
                       return null;
                     },
                   ),
-
-                  const SizedBox(height: 28),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Submit Feedback'),
-                    ),
+                  const SizedBox(height: AppSpacing.sectionGap),
+                  LovenPrimaryButton(
+                    label: 'Submit feedback',
+                    onPressed: isLoading ? null : _submit,
+                    isLoading: isLoading,
                   ),
                 ],
               ),
@@ -160,56 +136,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
         );
       },
-    );
-  }
-
-  InputDecoration _inputDecoration(
-    BuildContext context, {
-    required String hint,
-  }) {
-    final theme = Theme.of(context);
-
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: theme.colorScheme.surface,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 14,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: AppColors.primaryBlue,
-          width: 1.3,
-        ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 13,
-        ),
-      ),
     );
   }
 }

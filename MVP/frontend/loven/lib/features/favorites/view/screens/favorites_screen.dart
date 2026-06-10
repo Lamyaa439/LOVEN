@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:loven/features/artist_profile/data/artist_repository.dart';
-import 'package:loven/features/home/View/widgets/art_details_screen.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
 
+/// Saved gallery — personal collection of favorited artworks.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -19,12 +20,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       context.read<FavoritesCubit>().loadFavorites();
     });
+  }
+
+  ArtworkModel _artworkFromFavorite(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return ArtworkModel.fromJson(raw);
+    }
+    return ArtworkModel.fromJson(Map<String, dynamic>.from(raw as Map));
   }
 
   @override
@@ -37,14 +42,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         child: BlocBuilder<FavoritesCubit, FavoritesState>(
           builder: (context, state) {
             if (state is FavoritesLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
+              return const GalleryLoadingState(
+                message: 'Loading your collection…',
               );
             }
 
             if (state is FavoritesError) {
-              return Center(
-                child: Text(state.message),
+              return GalleryEmptyState(
+                icon: Icons.error_outline,
+                title: 'Could not load favorites',
+                subtitle: state.message,
+                actionLabel: 'Retry',
+                onAction: () {
+                  context.read<FavoritesCubit>().loadFavorites();
+                },
               );
             }
 
@@ -52,20 +63,38 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               final favorites = state.favorites;
 
               if (favorites.isEmpty) {
-                return _buildEmptyState(context);
+                return const GalleryEmptyState(
+                  icon: Icons.favorite_border_rounded,
+                  title: 'No favorites yet',
+                  subtitle:
+                      'Save artworks you love to easily find them later.',
+                );
               }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-                    child: Row(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenPadding,
+                      AppSpacing.lg,
+                      AppSpacing.screenPadding,
+                      AppSpacing.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Your Favorites',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
+                          'Your collection',
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppSpacing.xxs),
+                        Text(
+                          favorites.length == 1
+                              ? '1 saved work'
+                              : '${favorites.length} saved works',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ],
@@ -73,19 +102,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   ),
                   Expanded(
                     child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.screenPadding,
+                        AppSpacing.none,
+                        AppSpacing.screenPadding,
+                        AppSpacing.bottomNavClearance,
                       ),
                       itemCount: favorites.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 28,
-                        color: theme.dividerColor.withOpacity(0.4),
-                      ),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
                       itemBuilder: (context, index) {
-                        final artwork = favorites[index];
+                        final artwork = _artworkFromFavorite(favorites[index]);
 
-                        return _FavoriteTile(
+                        return LovenArtworkCard(
                           artwork: artwork,
+                          variant: LovenArtworkCardVariant.compact,
+                          showFavorite: true,
                         );
                       },
                     ),
@@ -97,132 +129,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             return const SizedBox.shrink();
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.favorite_border_rounded,
-              size: 80,
-              color: theme.colorScheme.primary.withOpacity(0.6),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'No favorites yet',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Save artworks you love to easily find them later.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FavoriteTile extends StatelessWidget {
-  final Map<String, dynamic> artwork;
-
-  const _FavoriteTile({
-    required this.artwork,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final artworkId = artwork['id']?.toString() ?? '';
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () {
-        final artworkModel = ArtworkModel.fromJson(artwork);
-
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) {
-            return FractionallySizedBox(
-              heightFactor: 0.92,
-              child: ArtDetailsScreen(
-                artItem: artworkModel,
-                artistRepository: context.read<ArtistRepository>(),
-              ),
-            );
-          },
-        );
-      },
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              artwork['artwork_image_url'] ?? '',
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return Container(
-                  width: 72,
-                  height: 72,
-                  color: Colors.grey.shade300,
-                  child: const Icon(Icons.image_not_supported),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  artwork['title'] ?? 'Artwork',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${artwork['price'] ?? 0} SAR',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              context.read<FavoritesCubit>().toggleFavorite(artworkId);
-            },
-            icon: Icon(
-              Icons.favorite,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ],
       ),
     );
   }

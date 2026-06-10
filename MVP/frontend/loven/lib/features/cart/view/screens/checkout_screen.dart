@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/cart/controller/cubit/cart_cubit.dart';
 import 'package:loven/features/cart/data/models/cart_model.dart';
+import 'package:loven/features/cart/view/widgets/checkout_account_step.dart';
 import 'package:loven/features/cart/view/widgets/checkout_footer.dart';
+import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/cart/view/widgets/payment_step.dart';
 import 'package:loven/features/cart/view/widgets/review_step.dart';
-import 'package:loven/features/cart/view/widgets/shipping_step.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
+import 'package:loven/features/order/view/models/order_success_extra.dart';
 
 enum CheckoutStep {
-  shipping,
+  account,
   payment,
   review,
 }
@@ -31,32 +37,10 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  CheckoutStep step = CheckoutStep.shipping;
-
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final phoneController = TextEditingController();
-  final addressController = TextEditingController();
-  final cityController = TextEditingController();
-  final regionController = TextEditingController();
-  final zipController = TextEditingController();
-
-  String? selectedCountry;
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
-    addressController.dispose();
-    cityController.dispose();
-    regionController.dispose();
-    zipController.dispose();
-    super.dispose();
-  }
+  CheckoutStep step = CheckoutStep.account;
 
   void _nextStep() {
-    if (step == CheckoutStep.shipping) {
+    if (step == CheckoutStep.account) {
       setState(() => step = CheckoutStep.payment);
       return;
     }
@@ -76,11 +60,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
     if (step == CheckoutStep.payment) {
-      setState(() => step = CheckoutStep.shipping);
+      setState(() => step = CheckoutStep.account);
       return;
     }
 
-    context.pop();
+    _leaveCheckout();
+  }
+
+  void _leaveCheckout() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go(AppRoutes.cart);
+  }
+
+  void _handleAppBarBack() {
+    if (step != CheckoutStep.account) {
+      _previousStep();
+      return;
+    }
+
+    _leaveCheckout();
   }
 
   Future<void> _placeOrder() async {
@@ -97,6 +99,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           totalAmount: widget.cart.totalAmount,
           items: items,
         );
+  }
+
+  String? _orderIdFromResponse(Map<String, dynamic> orderResponse) {
+    final orderPayload = orderResponse['order'];
+    if (orderPayload is! Map) {
+      return null;
+    }
+
+    final id = Map<String, dynamic>.from(orderPayload)['id'];
+    if (id == null) {
+      return null;
+    }
+
+    return id.toString();
   }
 
   @override
@@ -117,11 +133,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           if (!context.mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Order created successfully')),
-          );
+          context.read<HomeBloc>().add(FetchHomeData());
 
-          context.go(AppRoutes.home);
+          final authState = context.read<AuthCubit>().state;
+          final userLabel = checkoutUserDisplayLabel(authState);
+
+          context.go(
+            AppRoutes.confirmOrder,
+            extra: OrderSuccessExtra(
+              userLabel: userLabel,
+              totalAmount: widget.cart.totalAmount,
+              itemCount: widget.cart.items.length,
+              orderId: _orderIdFromResponse(state.order),
+            ),
+          );
         }
 
         if (state is OrderError) {
@@ -136,68 +161,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F7F8),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF8F7F8),
-          elevation: 0,
-          centerTitle: true,
-          title: Text(
-            'Checkout',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final userLabel = checkoutUserDisplayLabel(authState);
+
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              centerTitle: true,
+              title: const Text('Checkout'),
+              leading: BackButton(onPressed: _handleAppBarBack),
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenPadding,
+                      AppSpacing.md,
+                      AppSpacing.screenPadding,
+                      AppSpacing.xxl,
+                    ),
+                    child: switch (step) {
+                      CheckoutStep.account => const CheckoutAccountStep(),
+                      CheckoutStep.payment => const PaymentStep(),
+                      CheckoutStep.review => ReviewStep(
+                          cart: widget.cart,
+                          userLabel: userLabel,
+                        ),
+                    },
+                  ),
                 ),
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
-                child: switch (step) {
-                  CheckoutStep.shipping => ShippingStep(
-                      nameController: nameController,
-                      emailController: emailController,
-                      phoneController: phoneController,
-                      addressController: addressController,
-                      cityController: cityController,
-                      regionController: regionController,
-                      zipController: zipController,
-                      selectedCountry: selectedCountry,
-                      onCountryChanged: (value) {
-                        setState(() {
-                          selectedCountry = value;
-                        });
-                      },
-                    ),
-                  CheckoutStep.payment => const PaymentStep(),
-                  CheckoutStep.review => ReviewStep(
+                BlocBuilder<OrderCubit, OrderState>(
+                  builder: (context, orderState) {
+                    return CheckoutFooter(
+                      step: step,
                       cart: widget.cart,
-                      name: nameController.text,
-                      email: emailController.text,
-                      phone: phoneController.text,
-                      address: addressController.text,
-                      city: cityController.text,
-                      region: regionController.text,
-                      zipCode: zipController.text,
-                      country: selectedCountry ?? '',
-                    ),
-                },
-              ),
+                      isLoading: orderState is OrderLoading,
+                      onNext: _nextStep,
+                      onBack: _previousStep,
+                    );
+                  },
+                ),
+              ],
             ),
-            BlocBuilder<OrderCubit, OrderState>(
-              builder: (context, orderState) {
-                return CheckoutFooter(
-                  step: step,
-                  cart: widget.cart,
-                  isLoading: orderState is OrderLoading,
-                  onNext: _nextStep,
-                  onBack: _previousStep,
-                );
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

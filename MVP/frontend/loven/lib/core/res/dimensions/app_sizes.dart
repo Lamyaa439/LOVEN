@@ -79,6 +79,26 @@ class AppSizes {
   static const double bottomNavHeight = 64;
   static const double appBarHeight = 56;
 
+  /// Logo height in shell [AppBar] (non-Home tabs).
+  static const double shellLogoHeight = 40;
+
+  /// Floating [NavigationWidget] dimensions.
+  static const double floatingNavStackHeight = 82;
+  static const double floatingNavBarHeight = 58;
+  static const double floatingNavFabSize = 58;
+  static const double floatingNavFabBorderWidth = 5;
+  static const double floatingNavHorizontalGutter = 20;
+  static const double floatingNavBottomInset = 24;
+
+  /// Bottom padding for tab bodies so content clears [NavigationWidget].
+  static const double shellFloatingNavClearance =
+      floatingNavStackHeight + floatingNavBottomInset;
+  static const double floatingNavArtistSlotWidth = 64;
+  static const double floatingNavIconSize = 25;
+  static const double floatingNavFabIconSize = 32;
+  static const double cartBadgeMinSize = 18;
+  static const double cartBadgeFontSize = 10;
+
   static const double mobileMaxContentWidth = 480;
   static const double tabletMaxContentWidth = 720;
   static const double desktopMaxContentWidth = 1000;

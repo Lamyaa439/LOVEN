@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:loven/core/res/design_system.dart';
 
 /// Discover-style section header — rule, caps label, bold "See all".
+///
+/// Kept separate from [GallerySectionHeader] intentionally: Discover reference
+/// uses ALL-CAPS sans labels, top divider rule, and "SEE ALL" in brand accent —
+/// not the serif title + "View all" arrow pattern used elsewhere in LOVEN.
 class HomeDiscoverSectionHeader extends StatelessWidget {
   const HomeDiscoverSectionHeader({
     super.key,

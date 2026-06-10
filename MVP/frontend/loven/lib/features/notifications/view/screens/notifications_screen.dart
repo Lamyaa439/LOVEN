@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/router/router_helpers.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 import 'package:loven/features/notifications/navigation/notification_route_resolver.dart';
@@ -18,9 +21,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       context.read<NotificationsCubit>().refreshNotifications();
     });
   }
@@ -36,9 +37,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await cubit.markAsRead(notification.id);
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     await NotificationRouteResolver.open(
       context,
@@ -49,10 +48,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
+        leading: lovenPushedScreenBackLeading(context),
         title: const Text('Notifications'),
         centerTitle: true,
         actions: [
@@ -75,32 +73,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
           if (state is NotificationsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const GalleryLoadingState(
+              message: 'Loading notifications…',
+            );
           }
 
           if (state is NotificationsError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      state.message,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<NotificationsCubit>()
-                            .refreshNotifications();
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
+            return GalleryEmptyState(
+              icon: Icons.error_outline,
+              title: 'Could not load notifications',
+              subtitle: state.message,
+              actionLabel: 'Retry',
+              onAction: () {
+                context.read<NotificationsCubit>().refreshNotifications();
+              },
             );
           }
 
@@ -111,18 +97,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     context.read<NotificationsCubit>().refreshNotifications(),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
+                  children: const [
                     SizedBox(
-                      height: MediaQuery.sizeOf(context).height * 0.5,
-                      child: Center(
-                        child: Text(
-                          'No notifications yet.',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                        ),
+                      height: 320,
+                      child: GalleryEmptyState(
+                        icon: Icons.notifications_none_outlined,
+                        title: 'No notifications yet',
+                        subtitle:
+                            'Updates about orders and activity will appear here.',
                       ),
                     ),
                   ],
@@ -145,20 +127,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 },
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: state.notifications.length +
-                      (state.isLoadingMore ? 1 : 0),
+                  padding: const EdgeInsets.only(
+                    bottom: AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+                  ),
+                  itemCount:
+                      state.notifications.length + (state.isLoadingMore ? 1 : 0),
                   separatorBuilder: (_, __) => Divider(
                     height: 1,
-                    color: theme.dividerColor.withValues(alpha: 0.3),
+                    color: AppColors.borderLight,
                   ),
                   itemBuilder: (context, index) {
                     if (index >= state.notifications.length) {
                       return const Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppSpacing.lg),
                         child: Center(
                           child: SizedBox(
-                            width: 24,
-                            height: 24,
+                            width: AppSizes.iconMd,
+                            height: AppSizes.iconMd,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:loven/core/router/app_routes.dart';
 
 /// Fallback screen when a route is opened without required [GoRouterState.extra].
 Widget invalidRouteExtraFallback({
@@ -27,4 +28,20 @@ Widget routeWithRequiredStringExtra({
     );
   }
   return builder(raw.trim());
+}
+
+/// Leaves a pushed screen via [context.pop] when possible; otherwise returns to
+/// the account hub (used by routes opened with [context.go]).
+void lovenLeavePushedScreen(BuildContext context) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+
+  context.go(AppRoutes.profile);
+}
+
+/// Standard back affordance for non-tab satellite screens.
+Widget lovenPushedScreenBackLeading(BuildContext context) {
+  return BackButton(onPressed: () => lovenLeavePushedScreen(context));
 }

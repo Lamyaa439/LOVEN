@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-
-import 'package:loven/core/res/theme/app_colors.dart';
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 
 class AddressFormScreen extends StatefulWidget {
   const AddressFormScreen({super.key});
@@ -89,9 +89,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Address saved'),
-      ),
+      const SnackBar(content: Text('Address saved')),
     );
 
     context.pop(true);
@@ -99,33 +97,29 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Address'),
         centerTitle: true,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back),
-        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenPadding,
+          AppSpacing.sm,
+          AppSpacing.screenPadding,
+          AppSpacing.xxl,
+        ),
         child: Column(
           children: [
             _AddressField(
               label: 'Phone',
-              hint: 'Phone',
+              hint: 'Phone number',
               controller: phoneController,
               keyboardType: TextInputType.phone,
             ),
             _AddressField(
               label: 'Name',
-              hint: 'Name',
+              hint: 'Full name',
               controller: nameController,
             ),
             _AddressField(
@@ -155,36 +149,23 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
             ),
             _AddressField(
               label: 'Floor (optional)',
-              hint: 'Floor (optional)',
+              hint: 'Floor',
               controller: floorController,
             ),
             _AddressField(
               label: 'Flat (optional)',
-              hint: 'Flat (optional)',
+              hint: 'Flat',
               controller: flatController,
             ),
             _AddressField(
               label: 'Avenue (optional)',
-              hint: 'Avenue (optional)',
+              hint: 'Avenue',
               controller: avenueController,
             ),
-
-            const SizedBox(height: 18),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _confirm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                ),
-                child: const Text('Save Address'),
-              ),
+            const SizedBox(height: AppSpacing.lg),
+            LovenPrimaryButton(
+              label: 'Save address',
+              onPressed: _confirm,
             ),
           ],
         ),
@@ -194,11 +175,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 }
 
 class _AddressField extends StatelessWidget {
-  final String label;
-  final String hint;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-
   const _AddressField({
     required this.label,
     required this.hint,
@@ -206,45 +182,29 @@ class _AddressField extends StatelessWidget {
     this.keyboardType,
   });
 
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 5),
-          TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: theme.colorScheme.surface,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 13,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryBlue,
-                  width: 1.3,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: AppColors.textMuted,
                 ),
-              ),
-            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          LovenTextField(
+            controller: controller,
+            hintText: hint,
+            keyboardType: keyboardType,
           ),
         ],
       ),

@@ -11,7 +11,6 @@ import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/home/View/widgets/home_discover_artist_row.dart';
 import 'package:loven/features/home/View/widgets/home_discover_hero.dart';
 import 'package:loven/features/home/View/widgets/home_discover_masterpieces_mosaic.dart';
-import 'package:loven/features/home/View/widgets/home_discover_overlay_card.dart';
 import 'package:loven/features/home/View/widgets/home_discover_section_header.dart';
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
@@ -185,13 +184,11 @@ class _HomeDiscoverBody extends StatelessWidget {
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final art = artworks[index];
-              return HomeDiscoverOverlayCard(
-                title: art.title,
-                imageUrl: art.artworkImageUrl,
+              return LovenArtworkCard(
                 artwork: art,
+                variant: LovenArtworkCardVariant.overlay,
                 width: double.infinity,
                 height: AppSizes.discoverRailCardHeight,
-                onTap: () {},
               );
             },
             childCount: artworks.length.clamp(0, 12),
@@ -500,12 +497,10 @@ class _DiscoverHorizontalRail extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
           final art = artworks[index];
-          return HomeDiscoverOverlayCard(
-            title: art.title,
-            imageUrl: art.artworkImageUrl,
-            badge: badge,
+          return LovenArtworkCard(
             artwork: art,
-            onTap: () {},
+            variant: LovenArtworkCardVariant.overlay,
+            badge: badge,
           );
         },
       ),
@@ -556,9 +551,10 @@ class _GenreRail extends StatelessWidget {
           final genre = genres[index];
           final sample = _sampleForGenre(genre);
 
-          return HomeDiscoverOverlayCard(
+          return LovenArtworkCard(
             title: genre,
             imageUrl: sample?.artworkImageUrl,
+            variant: LovenArtworkCardVariant.overlay,
             badge: 'Genre',
             onTap: () => onGenreTap(genre),
           );

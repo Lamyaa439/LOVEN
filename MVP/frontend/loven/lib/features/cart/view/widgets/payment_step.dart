@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:loven/core/res/design_system.dart';
+import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/cart/view/screens/checkout_screen.dart';
 import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/cart/view/widgets/checkout_stepper.dart';
@@ -9,43 +10,55 @@ class PaymentStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CheckoutStepper(
-          activeStep: CheckoutStep.payment,
+        const CheckoutStepper(activeStep: CheckoutStep.payment),
+        const SizedBox(height: AppSpacing.sectionGap),
+        const CheckoutSectionTitle(
+          icon: Icons.receipt_long_outlined,
+          title: 'Checkout confirmation',
         ),
-        const SizedBox(height: 24),
-        const SectionTitle(
-          icon: Icons.lock_outline,
-          title: 'Payment',
-        ),
-        const SizedBox(height: 18),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: checkoutCardDecoration(),
-          child: const Column(
+        const SizedBox(height: AppSpacing.xl),
+        LovenSurfaceCard(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.lock_outline),
-                  SizedBox(width: 8),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: AppSizes.iconMd,
+                    color: AppColors.brandPrimary,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
-                    'Secure Payment',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    'How checkout works today',
+                    style: theme.textTheme.titleSmall,
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Text(
-                'LOVEN uses Moyasar for secure payment processing.',
+                'Online payment is not connected yet. When you place your order, '
+                'LOVEN creates an order record under your account with the items '
+                'and totals from your cart.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
-                'You will be redirected to complete payment after reviewing your order.',
+                'Payment and delivery will be arranged separately when those '
+                'features are available. No card or billing details are collected '
+                'at this step.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                  height: 1.5,
+                ),
               ),
             ],
           ),

@@ -4,7 +4,6 @@ import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/features/artwork/view/screens/create_artwork_screen.dart';
-import 'package:loven/features/cart/view/screens/confirm_order_screen.dart';
 import 'package:loven/features/feedback/view/screens/feedback_screen.dart';
 import 'package:loven/features/location/view/screens/address_form_screen.dart';
 import 'package:loven/features/location/view/screens/location_screen.dart';
@@ -12,7 +11,9 @@ import 'package:loven/features/navigation/view/Screens/navigation_screen.dart';
 import 'package:loven/features/notifications/view/screens/notifications_screen.dart';
 import 'package:loven/features/order/view/screens/incoming_orders_screen.dart';
 import 'package:loven/features/order/view/screens/order_details_screen.dart';
+import 'package:loven/features/order/view/models/order_success_extra.dart';
 import 'package:loven/features/order/view/screens/order_history_screen.dart';
+import 'package:loven/features/order/view/screens/order_success_screen.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'package:loven/features/verification_request/view/screens/verification_request_screen.dart';
 import 'package:loven/features/cart/data/models/cart_model.dart';
@@ -41,8 +42,28 @@ List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
             message: 'Unable to open order details.',
           );
         }
-        final order = Map<String, dynamic>.from(raw);
-        return OrderDetailsScreen(order: order);
+
+        final extra = Map<String, dynamic>.from(raw);
+        final orderId = extra['id']?.toString() ??
+            extra['order_id']?.toString() ??
+            extra['orderId']?.toString();
+
+        if (orderId == null || orderId.isEmpty) {
+          return invalidRouteExtraFallback(
+            title: 'Order Details',
+            message: 'Order ID is missing.',
+          );
+        }
+
+        Map<String, dynamic>? initialOrder;
+        if (extra.containsKey('status') || extra.containsKey('items')) {
+          initialOrder = extra;
+        }
+
+        return OrderDetailsScreen(
+          orderId: orderId,
+          initialOrder: initialOrder,
+        );
       },
     ),
     GoRoute(
@@ -89,7 +110,18 @@ List<RouteBase> buildCommerceRoutesCheckout(AppRouterDeps deps) {
     ),
     GoRoute(
       path: AppRoutes.confirmOrder,
-      builder: (context, state) => const ConfirmOrderScreen(),
+      builder: (context, state) {
+        final raw = state.extra;
+
+        if (raw is! OrderSuccessExtra) {
+          return invalidRouteExtraFallback(
+            title: 'Order confirmation',
+            message: 'Unable to open order confirmation.',
+          );
+        }
+
+        return OrderSuccessScreen(extra: raw);
+      },
     ),
     GoRoute(
       path: AppRoutes.location,
