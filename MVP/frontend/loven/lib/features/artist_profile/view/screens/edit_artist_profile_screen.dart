@@ -85,8 +85,8 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     _initialBio = widget.artist.bio ?? '';
     _initialShippingPolicy = widget.artist.shippingPolicy ?? '';
     _displayNameController.addListener(() => setState(() {}));
-_bioController.addListener(() => setState(() {}));
-_shippingPolicyController.addListener(() => setState(() {}));
+    _bioController.addListener(() => setState(() {}));
+    _shippingPolicyController.addListener(() => setState(() {}));
   }
 
   @override
@@ -98,10 +98,10 @@ _shippingPolicyController.addListener(() => setState(() {}));
   }
 
 bool get _hasChanges {
-  return _displayNameController.text.trim() != _initialDisplayName ||
-      (_selectedCity ?? '') != _initialCity ||
-      _bioController.text.trim() != _initialBio ||
-      _shippingPolicyController.text.trim() != _initialShippingPolicy ||
+  return _displayNameController.text.trim() != _initialDisplayName.trim() ||
+      (_selectedCity ?? '').trim() != _initialCity.trim() ||
+      _bioController.text.trim() != _initialBio.trim() ||
+      _shippingPolicyController.text.trim() != _initialShippingPolicy.trim() ||
       _selectedProfileImage != null ||
       _selectedCoverImage != null;
 }
@@ -383,14 +383,21 @@ class _CoverSection extends StatelessWidget {
                     ),
                   ),
                 Positioned(
-                  right: AppSpacing.sm,
-                  bottom: AppSpacing.sm,
-                  child: LovenSecondaryButton(
-                    label: 'Change cover',
-                    onPressed: onPickCover,
-                    expand: false,
-                  ),
-                ),
+  right: AppSpacing.sm,
+  bottom: AppSpacing.sm,
+  child: CircleAvatar(
+    radius: AppSizes.iconMd,
+    backgroundColor: AppColors.brandPrimary,
+    child: IconButton(
+      icon: Icon(
+        Icons.camera_alt_outlined,
+        size: AppSizes.iconSm,
+        color: AppColors.textOnBrand,
+      ),
+      onPressed: onPickCover,
+    ),
+  ),
+),
               ],
             ),
           );

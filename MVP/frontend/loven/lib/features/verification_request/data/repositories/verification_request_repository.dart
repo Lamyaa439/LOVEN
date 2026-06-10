@@ -20,8 +20,6 @@ class VerificationRequestRepository {
     return Map<String, dynamic>.from(data as Map);
   }
 
-  /// Submits a verification request for the authenticated artist.
-  /// Returns the decoded JSON body (typically confirmation or request record).
   Future<Map<String, dynamic>> submitRequest({
     required String documentType,
     required String institutionName,
@@ -41,7 +39,17 @@ class VerificationRequestRepository {
 
   Future<List<dynamic>> fetchAllRequests() async {
     final response = await _apiClient.get(ApiConstants.verificationRequests);
-    return response.data['requests'] ?? response.data['data'] ?? [];
+    final data = response.data;
+
+    if (data is List) {
+      return data;
+    }
+
+    if (data is Map) {
+      return data['requests'] ?? data['data'] ?? [];
+    }
+
+    return [];
   }
 
   Future<void> updateRequestStatus({
@@ -49,7 +57,7 @@ class VerificationRequestRepository {
     required String status,
   }) async {
     await _apiClient.patch(
-      '${ApiConstants.verificationRequests}/$requestId',
+      '${ApiConstants.verificationRequests}/$requestId/status',
       data: {
         'status': status,
       },
