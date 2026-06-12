@@ -1,8 +1,6 @@
 flutter_native_splash:
   color: "#D0B1E6"
   image: assets/images/loven-logo.png
-  image_android_width: 180
-  image_ios_width: 180
   android: true
   ios: true
   android_gravity: center
