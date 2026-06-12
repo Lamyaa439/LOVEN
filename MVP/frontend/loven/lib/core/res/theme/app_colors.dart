@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Semantic color tokens for the LOVEN art marketplace.
-///
-/// Use these names in UI code — not raw hex values or Material [Colors].
-/// Legacy brand names (`primaryBlue`, etc.) are kept as aliases for migration.
 class AppColors {
   AppColors._();
 
@@ -11,6 +7,9 @@ class AppColors {
   static const Color brandPrimary = Color(0xFF293CAE);
   static const Color brandSecondary = Color(0xFFBB84D4);
   static const Color brandAccent = Color(0xFFD0B1E6);
+
+  // Splash screen background color
+  static const Color splashBackground = Color(0xFFF5EEFC);
 
   /// Legacy aliases — prefer semantic tokens in new code.
   static const Color primaryBlue = brandPrimary;
@@ -127,11 +126,11 @@ class AppColors {
   );
 
   static const LinearGradient brandWash = LinearGradient(
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-  colors: [
-    Color(0x1AD0B1E6),
-    Color(0x1A293CAE),
-  ],
-);
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0x1AD0B1E6),
+      Color(0x1A293CAE),
+    ],
+  );
 }

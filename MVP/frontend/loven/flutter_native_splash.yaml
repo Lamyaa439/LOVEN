@@ -1,5 +1,5 @@
 flutter_native_splash:
-  color: "#D0B1E6"
+  color: "#F5EEFC"
   image: assets/images/loven-logo.png
   android: true
   ios: true
