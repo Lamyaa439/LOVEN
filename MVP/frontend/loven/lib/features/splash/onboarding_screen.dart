@@ -50,21 +50,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   List<OnboardingContent> contents = [
     OnboardingContent(
       image: 'assets/images/onboarding1.png',
-      title: 'Now exploring art\nwill be easier',
+      title: 'Discover Art That Speaks to You!',
       description:
-          'Discover unique artworks, join a vibrant artistic community. Start your creative adventure effortlessly with us.',
+          'Discover unique artworks, join a vibrant artistic community. \n Start your creative adventure effortlessly with us.',
     ),
     OnboardingContent(
       image: 'assets/images/onboarding4.png',
-      title: 'Your Artistic Soulmate\nAwaits',
+      title: 'Where Art Meets Soul!',
       description:
-          'Let us be your guide to the perfect masterpiece. Discover art tailored to your tastes for a truly rewarding experience.',
+          'Join us and let us guide you to the perfect masterpiece, \n curated to resonate with your artistic identity.',
     ),
     OnboardingContent(
       image: 'assets/images/onboarding5.png',
-      title: 'Start Your Adventure',
+      title: 'Welcome to LOVEN!',
       description:
-          'Ready to embark on a quest for inspiration and beauty? Your adventure begins now. Let\'s go!',
+          'Ready to embark on a quest for inspiration and beauty? \n Your adventure begins now. Let\'s go!',
     ),
   ];
 
@@ -161,8 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () =>
-                        _completeOnboardingAndGo(AppRoutes.login),
+                    onPressed: () => _completeOnboardingAndGo(AppRoutes.login),
                     child: const Text('Sign in'),
                   ),
                 ],
