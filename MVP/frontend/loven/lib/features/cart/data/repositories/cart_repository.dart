@@ -48,18 +48,20 @@ class CartRepository {
   /// [quantity] — units to add (defaults to 1 at the call site).
   ///
   /// Errors (out of stock, invalid artwork) propagate from [ApiClient].
-  Future<void> addToCart({
-    required String artworkId,
-    required int quantity,
-  }) async {
-    await _apiClient.post(
-      ApiConstants.cartItems,
-      data: {
-        'artwork_id': artworkId,
-        'quantity': quantity,
-      },
-    );
-  }
+Future<CartModel> addToCart({
+  required String artworkId,
+  required int quantity,
+}) async {
+  await _apiClient.post(
+    ApiConstants.cartItems,
+    data: {
+      'artwork_id': artworkId,
+      'quantity': quantity,
+    },
+  );
+
+  return getCart();
+}
 
   /// Updates the quantity of an existing cart line item.
   ///
@@ -67,29 +69,33 @@ class CartRepository {
   /// [quantity] — new quantity; backend validates against stock.
   ///
   /// Errors propagate from [ApiClient]; callers should refetch via [getCart].
-  Future<void> updateCartItem({
-    required String itemId,
-    required int quantity,
-  }) async {
-    await _apiClient.patch(
-      ApiConstants.cartItemById(itemId),
-      data: {'quantity': quantity},
-    );
-  }
+Future<CartModel> updateCartItem({
+  required String itemId,
+  required int quantity,
+}) async {
+  await _apiClient.patch(
+    ApiConstants.cartItemById(itemId),
+    data: {'quantity': quantity},
+  );
+
+  return getCart();
+}
 
   /// Removes a single line item from the cart.
   ///
   /// [itemId] — UUID of the cart item to delete.
   ///
   /// Errors propagate from [ApiClient]; callers should refetch via [getCart].
-  Future<void> removeCartItem({required String itemId}) async {
-    await _apiClient.delete(ApiConstants.cartItemById(itemId));
-  }
+Future<CartModel> removeCartItem({required String itemId}) async {
+  await _apiClient.delete(ApiConstants.cartItemById(itemId));
+  return getCart();
+}
 
   /// Empties the entire cart for the authenticated user.
   ///
   /// Errors propagate from [ApiClient]; callers should refetch via [getCart].
-  Future<void> clearCart() async {
-    await _apiClient.delete(ApiConstants.cart);
-  }
+Future<CartModel> clearCart() async {
+  await _apiClient.delete(ApiConstants.cart);
+  return getCart();
+}
 }

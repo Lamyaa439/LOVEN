@@ -20,6 +20,7 @@ import 'package:loven/features/order/view/models/order_success_extra.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:moyasar/moyasar.dart';
 import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
+import 'package:loven/features/payment/controller/cubit/payment_state.dart';
 
 enum CheckoutStep {
   account,
@@ -221,6 +222,25 @@ Future<void> _verifyMoyasarPayment({
 
   if (!mounted || verifyResponse == null) return;
 
+  final paymentPayload = verifyResponse['payment'];
+  final payment = paymentPayload is Map
+      ? Map<String, dynamic>.from(paymentPayload)
+      : <String, dynamic>{};
+
+  final paymentStatus = payment['status']?.toString().toLowerCase();
+  final verified = paymentStatus == 'paid' ||
+      verifyResponse['message']?.toString().toLowerCase().contains('verified') ==
+          true;
+
+  if (!verified) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Payment could not be verified. Please try again.'),
+      ),
+    );
+    return;
+  }
+
   await context.read<CartCubit>().clearCart();
 
   if (!mounted) return;
@@ -241,24 +261,37 @@ Future<void> _verifyMoyasarPayment({
   );
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<OrderCubit, OrderState>(
-      listener: (context, state) async {
-        if (state is OrderError) {
-          if (state.shouldRefreshCart) {
-            await context.read<CartCubit>().getCart();
+@override
+Widget build(BuildContext context) {
+  return MultiBlocListener(
+    listeners: [
+      BlocListener<OrderCubit, OrderState>(
+        listener: (context, state) async {
+          if (state is OrderError) {
+            if (state.shouldRefreshCart) {
+              await context.read<CartCubit>().getCart();
+            }
+
+            if (!context.mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
-
-          if (!context.mounted) return;
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
+        },
+      ),
+      BlocListener<PaymentCubit, PaymentState>(
+        listener: (context, state) {
+          if (state is PaymentError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+      ),
+    ],
+    child: BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
           final userLabel = checkoutUserDisplayLabel(authState);
 
           return Scaffold(
