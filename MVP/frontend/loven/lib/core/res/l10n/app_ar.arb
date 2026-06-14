@@ -101,5 +101,19 @@
   "tryAgain": "حاول مجدداً",
   "results": "النتائج",
   "galleryAwaitsTitle": "المعرض في انتظارك",
-  "galleryAwaitsSubtitle": "ستظهر الأعمال الأصلية لفنانينا هنا قريبًا."
+  "galleryAwaitsSubtitle": "ستظهر الأعمال الأصلية لفنانينا هنا قريبًا.",
+  "artistProfileTitle": "فنان",
+  "myProfileTitle": "ملفي الشخصي",
+  "loadingProfile": "جاري تحميل الملف الشخصي…",
+  "couldNotLoadProfile": "تعذر تحميل الملف الشخصي",
+  "retry": "إعادة المحاولة",
+  "somethingWentWrong": "حدث خطأ ما",
+  "noArtistGallery": "لا يوجد معرض فني",
+  "customerNoPortfolio": "حسابات العملاء ليس لديها ملفات أعمال فنية.",
+  "portfolio": "ملف الأعمال",
+  "worksCount": "{count, plural, =0 { } =1 {عمل فني واحد} other {{count} أعمال فنية}}",
+  "noArtworksYet": "لا توجد أعمال فنية بعد",
+  "publicNoArtworks": "هذا الفنان لم ينشر أي أعمال بعد.",
+  "ownerNoArtworks": "سيظهر ملف أعمالك هنا بمجرد إضافة أعمال فنية.",
+  "artworkDeleted": "تم حذف العمل الفني"
 }

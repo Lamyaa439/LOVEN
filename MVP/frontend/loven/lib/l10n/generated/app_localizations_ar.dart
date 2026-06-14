@@ -331,4 +331,56 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get galleryAwaitsSubtitle =>
       'ستظهر الأعمال الأصلية لفنانينا هنا قريبًا.';
+
+  @override
+  String get artistProfileTitle => 'فنان';
+
+  @override
+  String get myProfileTitle => 'ملفي الشخصي';
+
+  @override
+  String get loadingProfile => 'جاري تحميل الملف الشخصي…';
+
+  @override
+  String get couldNotLoadProfile => 'تعذر تحميل الملف الشخصي';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get somethingWentWrong => 'حدث خطأ ما';
+
+  @override
+  String get noArtistGallery => 'لا يوجد معرض فني';
+
+  @override
+  String get customerNoPortfolio =>
+      'حسابات العملاء ليس لديها ملفات أعمال فنية.';
+
+  @override
+  String get portfolio => 'ملف الأعمال';
+
+  @override
+  String worksCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count أعمال فنية',
+      one: 'عمل فني واحد',
+      zero: ' ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noArtworksYet => 'لا توجد أعمال فنية بعد';
+
+  @override
+  String get publicNoArtworks => 'هذا الفنان لم ينشر أي أعمال بعد.';
+
+  @override
+  String get ownerNoArtworks => 'سيظهر ملف أعمالك هنا بمجرد إضافة أعمال فنية.';
+
+  @override
+  String get artworkDeleted => 'تم حذف العمل الفني';
 }

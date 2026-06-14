@@ -715,6 +715,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Original works from our artists will appear here soon.'**
   String get galleryAwaitsSubtitle;
+
+  /// No description provided for @artistProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist'**
+  String get artistProfileTitle;
+
+  /// No description provided for @myProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My profile'**
+  String get myProfileTitle;
+
+  /// No description provided for @loadingProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading profile…'**
+  String get loadingProfile;
+
+  /// No description provided for @couldNotLoadProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load profile'**
+  String get couldNotLoadProfile;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @somethingWentWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get somethingWentWrong;
+
+  /// No description provided for @noArtistGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'No artist gallery'**
+  String get noArtistGallery;
+
+  /// No description provided for @customerNoPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer accounts do not have artist portfolios.'**
+  String get customerNoPortfolio;
+
+  /// No description provided for @portfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio'**
+  String get portfolio;
+
+  /// No description provided for @worksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0 { } =1 {1 work} other {{count} works}}'**
+  String worksCount(num count);
+
+  /// No description provided for @noArtworksYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No artworks yet'**
+  String get noArtworksYet;
+
+  /// No description provided for @publicNoArtworks.
+  ///
+  /// In en, this message translates to:
+  /// **'This artist has not published any works.'**
+  String get publicNoArtworks;
+
+  /// No description provided for @ownerNoArtworks.
+  ///
+  /// In en, this message translates to:
+  /// **'Your portfolio will appear here once you add artworks.'**
+  String get ownerNoArtworks;
+
+  /// No description provided for @artworkDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Artwork deleted'**
+  String get artworkDeleted;
 }
 
 class _AppLocalizationsDelegate

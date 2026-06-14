@@ -329,4 +329,57 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get galleryAwaitsSubtitle =>
       'Original works from our artists will appear here soon.';
+
+  @override
+  String get artistProfileTitle => 'Artist';
+
+  @override
+  String get myProfileTitle => 'My profile';
+
+  @override
+  String get loadingProfile => 'Loading profile…';
+
+  @override
+  String get couldNotLoadProfile => 'Could not load profile';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get noArtistGallery => 'No artist gallery';
+
+  @override
+  String get customerNoPortfolio =>
+      'Customer accounts do not have artist portfolios.';
+
+  @override
+  String get portfolio => 'Portfolio';
+
+  @override
+  String worksCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count works',
+      one: '1 work',
+      zero: ' ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noArtworksYet => 'No artworks yet';
+
+  @override
+  String get publicNoArtworks => 'This artist has not published any works.';
+
+  @override
+  String get ownerNoArtworks =>
+      'Your portfolio will appear here once you add artworks.';
+
+  @override
+  String get artworkDeleted => 'Artwork deleted';
 }

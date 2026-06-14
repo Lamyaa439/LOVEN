@@ -101,5 +101,19 @@
   "tryAgain": "Try again",
   "results": "Results",
   "galleryAwaitsTitle": "The gallery awaits",
-  "galleryAwaitsSubtitle": "Original works from our artists will appear here soon."
+  "galleryAwaitsSubtitle": "Original works from our artists will appear here soon.",
+  "artistProfileTitle": "Artist",
+  "myProfileTitle": "My profile",
+  "loadingProfile": "Loading profile…",
+  "couldNotLoadProfile": "Could not load profile",
+  "retry": "Retry",
+  "somethingWentWrong": "Something went wrong",
+  "noArtistGallery": "No artist gallery",
+  "customerNoPortfolio": "Customer accounts do not have artist portfolios.",
+  "portfolio": "Portfolio",
+  "worksCount": "{count, plural, =0 { } =1 {1 work} other {{count} works}}",
+  "noArtworksYet": "No artworks yet",
+  "publicNoArtworks": "This artist has not published any works.",
+  "ownerNoArtworks": "Your portfolio will appear here once you add artworks.",
+  "artworkDeleted": "Artwork deleted"
 }
