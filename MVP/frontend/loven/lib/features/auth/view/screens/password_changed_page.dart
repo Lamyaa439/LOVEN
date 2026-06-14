@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Post-reset confirmation — manual login only.
 class PasswordChangedPage extends StatelessWidget {
@@ -15,6 +16,7 @@ class PasswordChangedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: false,
@@ -39,12 +41,12 @@ class PasswordChangedPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 Text(
-                  'Password changed',
+                  l10n.passwordChangedTitle,
                   style: theme.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Your password has been updated. Sign in with your new password.',
+                  l10n.passwordChangedSubtitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
@@ -53,7 +55,7 @@ class PasswordChangedPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sectionGap),
                 LovenPrimaryButton(
-                  label: 'Sign in',
+                  label: l10n.signIn,
                   onPressed: () => _goToLogin(context),
                 ),
                 const Spacer(),

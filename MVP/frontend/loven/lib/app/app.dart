@@ -24,6 +24,8 @@ import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
 import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
 import 'package:loven/features/payment/data/repositories/payment_repository.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Root widget: global providers and [MaterialApp.router].
 class LovenApp extends StatefulWidget {
@@ -66,7 +68,7 @@ class _LovenAppState extends State<LovenApp> {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<AppPreferences>.value(
+        ChangeNotifierProvider<AppPreferences>.value(
           value: _deps.appPreferences,
         ),
         RepositoryProvider<ArtistRepository>.value(
@@ -85,72 +87,76 @@ class _LovenAppState extends State<LovenApp> {
           value: _deps.orderRepository,
         ),
         RepositoryProvider<PaymentRepository>.value(
-  value: _deps.paymentRepository,
-),
+          value: _deps.paymentRepository,
+        ),
       ],
       child: ChangeNotifierProvider<SplashMinDurationNotifier>.value(
         value: _deps.splashMinDurationNotifier,
         child: MultiBlocProvider(
           providers: [
-          BlocProvider.value(value: _deps.authCubit),
-          BlocProvider.value(value: _deps.accountCubit),
-          BlocProvider.value(value: _deps.notificationsCubit),
-          BlocProvider(create: (context) => NavigationBarCubit()),
-          BlocProvider(
-            create: (context) => HomeBloc(
-              artworkRepository: _deps.artworkRepository,
-            )..add(FetchHomeData()),
-          ),
-          BlocProvider(create: (context) => ThemeBloc()),
-          BlocProvider(
-            create: (_) => CartCubit(
-              _deps.cartRepository,
-              authCubit: _deps.authCubit,
+            BlocProvider.value(value: _deps.authCubit),
+            BlocProvider.value(value: _deps.accountCubit),
+            BlocProvider.value(value: _deps.notificationsCubit),
+            BlocProvider(create: (context) => NavigationBarCubit()),
+            BlocProvider(
+              create: (context) => HomeBloc(
+                artworkRepository: _deps.artworkRepository,
+              )..add(FetchHomeData()),
             ),
-          ),
-          BlocProvider(
-            create: (context) => ArtworkCubit(_deps.artworkRepository),
-          ),
-          BlocProvider(
-  create: (_) => OrderCubit(
-    _deps.orderRepository,
-    authCubit: _deps.authCubit,
-  ),
-),
-          BlocProvider(
-            create: (context) => FeedbackCubit(_deps.feedbackRepository),
-          ),
-          BlocProvider(
-            create: (context) => ReportCubit(_deps.reportRepository),
-          ),
-          BlocProvider(
-            create: (_) => FavoritesCubit(
-              _deps.favoritesRepository,
-              authCubit: _deps.authCubit,
+            BlocProvider(create: (context) => ThemeBloc()),
+            BlocProvider(
+              create: (_) => CartCubit(
+                _deps.cartRepository,
+                authCubit: _deps.authCubit,
+              ),
             ),
-          ),
-          BlocProvider(
-            create: (_) => VerificationRequestCubit(
-              _deps.verificationRequestRepository,
+            BlocProvider(
+              create: (context) => ArtworkCubit(_deps.artworkRepository),
             ),
-          ),
-          BlocProvider(
-  create: (_) => PaymentCubit(
-    _deps.paymentRepository,
-    authCubit: _deps.authCubit,
-  ),
-),
+            BlocProvider(
+              create: (_) => OrderCubit(
+                _deps.orderRepository,
+                authCubit: _deps.authCubit,
+              ),
+            ),
+            BlocProvider(
+              create: (context) => FeedbackCubit(_deps.feedbackRepository),
+            ),
+            BlocProvider(
+              create: (context) => ReportCubit(_deps.reportRepository),
+            ),
+            BlocProvider(
+              create: (_) => FavoritesCubit(
+                _deps.favoritesRepository,
+                authCubit: _deps.authCubit,
+              ),
+            ),
+            BlocProvider(
+              create: (_) => VerificationRequestCubit(
+                _deps.verificationRequestRepository,
+              ),
+            ),
+            BlocProvider(
+              create: (_) => PaymentCubit(
+                _deps.paymentRepository,
+                authCubit: _deps.authCubit,
+              ),
+            ),
           ],
           child: BlocBuilder<ThemeBloc, ThemeMode>(
             builder: (context, themeMode) {
+              final appPrefs = context.watch<AppPreferences>();
+
               return MaterialApp.router(
                 title: 'LOVEN',
                 debugShowCheckedModeBanner: false,
+                locale: Locale(appPrefs.languageCode),
                 routerConfig: _deps.appRouter.router,
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeMode,
-                localizationsDelegates: const [
+                localizationsDelegates: [
+                  AppLocalizations.delegate,
                   GlobalMaterialLocalizations.delegate,
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,

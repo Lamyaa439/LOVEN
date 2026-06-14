@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Post-verification confirmation before the user signs in for a LOVEN JWT.
 class SignupSuccessPage extends StatelessWidget {
@@ -15,6 +16,7 @@ class SignupSuccessPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: false,
@@ -49,13 +51,12 @@ class SignupSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 Text(
-                  'You\'re verified',
+                  l10n.verifiedTitle,
                   style: theme.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Your email is confirmed and your LOVEN account is ready. '
-                  'Sign in to start exploring art from local creators.',
+                  l10n.verifiedSubtitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
@@ -64,7 +65,7 @@ class SignupSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sectionGap),
                 LovenPrimaryButton(
-                  label: 'Continue to login',
+                  label: l10n.continueToLogin,
                   onPressed: () => _continueToLogin(context),
                 ),
                 const Spacer(),

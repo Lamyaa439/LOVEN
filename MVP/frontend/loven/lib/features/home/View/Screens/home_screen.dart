@@ -17,6 +17,7 @@ import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/home/controller/bloc/home_state.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// LOVEN Discover home — editorial layout aligned with reference composition.
 class HomeScreen extends StatefulWidget {
@@ -37,18 +38,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         if (state is HomeLoading) {
-          return const GalleryLoadingState(message: 'Preparing discovery…');
+          return GalleryLoadingState(message: l10n.preparingDiscovery);
         }
 
         if (state is HomeError) {
           return GalleryEmptyState(
             icon: Icons.wifi_off_rounded,
-            title: 'Could not load artworks',
+            title: l10n.couldNotLoadArtworks,
             subtitle: state.message,
-            actionLabel: 'Try again',
+            actionLabel: l10n.tryAgain,
             onAction: () => context.read<HomeBloc>().add(FetchHomeData()),
             usePrimaryAction: true,
           );
@@ -62,10 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        return const GalleryEmptyState(
+        return GalleryEmptyState(
           icon: Icons.palette_outlined,
-          title: 'The gallery awaits',
-          subtitle: 'Original works from our artists will appear here soon.',
+          title: l10n.galleryAwaitsTitle,
+          subtitle: l10n.galleryAwaitsSubtitle,
         );
       },
     );
@@ -97,6 +100,7 @@ class _HomeDiscoverBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final artworks = state.artPieces;
     final allArtworks = state.allArtworks;
+    final l10n = AppLocalizations.of(context)!;
 
     return SafeArea(
       bottom: false,
@@ -120,7 +124,7 @@ class _HomeDiscoverBody extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: GalleryChip(
                     label: state.selectedCategory == 'All'
-                        ? 'Clear filters'
+                        ? l10n.clearFilters
                         : '${state.selectedCategory} · Clear',
                     selected: true,
                     onTap: onClearAllFilters,
@@ -133,18 +137,17 @@ class _HomeDiscoverBody extends StatelessWidget {
               hasScrollBody: false,
               child: GalleryEmptyState(
                 icon: Icons.search_off_rounded,
-                title: _isFiltered ? 'No matching works' : 'Gallery is quiet',
-                subtitle: _isFiltered
-                    ? 'Try a different search or style.'
-                    : 'New artworks will be added soon.',
-                actionLabel: _isFiltered ? 'Reset' : null,
+                title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
+                subtitle:
+                    _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
+                actionLabel: _isFiltered ? l10n.reset : null,
                 onAction: _isFiltered ? onClearAllFilters : null,
               ),
             )
           else if (_isFiltered)
-            ..._buildFilteredSlivers(context, artworks)
+            ..._buildFilteredSlivers(context, artworks, l10n)
           else
-            ..._buildDiscoverSlivers(context, artworks, allArtworks),
+            ..._buildDiscoverSlivers(context, artworks, allArtworks, l10n),
           const SliverToBoxAdapter(
             child: SizedBox(height: AppSpacing.bottomNavClearance),
           ),
@@ -153,21 +156,19 @@ class _HomeDiscoverBody extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildFilteredSlivers(
-    BuildContext context,
-    List<ArtworkModel> artworks,
-  ) {
+  List<Widget> _buildFilteredSlivers(BuildContext context,
+      List<ArtworkModel> artworks, AppLocalizations l10n) {
     return [
       SliverToBoxAdapter(
         child: HomeDiscoverSectionHeader(
-          label: 'Results',
+          label: l10n.results,
           onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
         ),
       ),
       SliverToBoxAdapter(
         child: _DiscoverHorizontalRail(
           artworks: artworks,
-          badge: 'Match',
+          badge: l10n.match,
         ),
       ),
       SliverPadding(
@@ -199,10 +200,10 @@ class _HomeDiscoverBody extends StatelessWidget {
   }
 
   List<Widget> _buildDiscoverSlivers(
-    BuildContext context,
-    List<ArtworkModel> artworks,
-    List<ArtworkModel> allArtworks,
-  ) {
+      BuildContext context,
+      List<ArtworkModel> artworks,
+      List<ArtworkModel> allArtworks,
+      AppLocalizations l10n) {
     final heroItems = artworks.take(5).toList();
     final mosaicItems = artworks.take(4).toList();
     final artists = _uniqueArtists(allArtworks);
@@ -215,7 +216,7 @@ class _HomeDiscoverBody extends StatelessWidget {
       const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sectionGap)),
       SliverToBoxAdapter(
         child: HomeDiscoverSectionHeader(
-          label: 'Masterpieces',
+          label: l10n.masterpieces,
           onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
         ),
       ),
@@ -225,7 +226,7 @@ class _HomeDiscoverBody extends StatelessWidget {
       if (artists.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
-            label: 'Artists',
+            label: l10n.artists,
             onSeeAll: () => context.push(AppRoutes.artists),
           ),
         ),
@@ -234,7 +235,7 @@ class _HomeDiscoverBody extends StatelessWidget {
       if (genres.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
-            label: 'Genres',
+            label: l10n.genre,
             showDivider: true,
             onSeeAll: () => _openGenreSheet(context),
           ),
@@ -252,28 +253,30 @@ class _HomeDiscoverBody extends StatelessWidget {
       if (collections.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
-            label: 'Collections',
-            onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
+            label: l10n.collection,
+            onSeeAll: () =>
+                context.push(AppRoutes.artworksListPath('featured')),
           ),
         ),
         SliverToBoxAdapter(
           child: _DiscoverHorizontalRail(
             artworks: collections,
-            badge: 'Collection',
+            badge: l10n.collection,
           ),
         ),
       ],
       if (trending.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
-            label: 'Trending works',
-            onSeeAll: () => context.push(AppRoutes.artworksListPath('trending')),
+            label: l10n.trendingWorks,
+            onSeeAll: () =>
+                context.push(AppRoutes.artworksListPath('trending')),
           ),
         ),
         SliverToBoxAdapter(
           child: _DiscoverHorizontalRail(
             artworks: trending,
-            badge: 'Trending',
+            badge: l10n.trending,
           ),
         ),
       ],
@@ -307,6 +310,8 @@ class _HomeDiscoverBody extends StatelessWidget {
   }
 
   void _openSearchSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -324,13 +329,13 @@ class _HomeDiscoverBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Search the gallery',
+                    l10n.searchGallery,
                     style: Theme.of(sheetContext).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   LovenSearchField(
                     controller: searchController,
-                    hintText: 'Artworks, artists, styles…',
+                    hintText: l10n.searchHint,
                     onChanged: (text) {
                       context.read<HomeBloc>().add(
                             FilterArtworks(searchText: text),
@@ -355,6 +360,8 @@ class _HomeDiscoverBody extends StatelessWidget {
   }
 
   void _openGenreSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -367,7 +374,7 @@ class _HomeDiscoverBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Browse by style',
+                  l10n.browseByStyle,
                   style: Theme.of(sheetContext).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -405,6 +412,7 @@ class _DiscoverPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -418,12 +426,12 @@ class _DiscoverPageHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'Discovery',
+              l10n.homeTitle,
               style: theme.textTheme.displayLarge,
             ),
           ),
           IconButton(
-            tooltip: 'Search',
+            tooltip: l10n.searchTooltip,
             visualDensity: VisualDensity.compact,
             onPressed: onSearchTap,
             icon: Icon(
@@ -432,7 +440,7 @@ class _DiscoverPageHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Toggle theme',
+            tooltip: l10n.themeTooltip,
             visualDensity: VisualDensity.compact,
             onPressed: () => context.read<ThemeBloc>().toggleTheme(),
             icon: Icon(
@@ -455,7 +463,7 @@ class _DiscoverPageHeader extends StatelessWidget {
                   unreadCount > 99 ? '99+' : unreadCount.toString();
 
               return IconButton(
-                tooltip: 'Notifications',
+                tooltip: l10n.notificationTooltip,
                 visualDensity: VisualDensity.compact,
                 onPressed: () => context.push(AppRoutes.notifications),
                 icon: Badge(
@@ -521,8 +529,7 @@ class _GenreRail extends StatelessWidget {
 
   ArtworkModel? _sampleForGenre(String genre) {
     for (final art in allArtworks) {
-      final haystack =
-          '${art.title} ${art.description ?? ''}'.toLowerCase();
+      final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
       final normalized = genre.toLowerCase();
       if (haystack.contains(normalized)) {
         return art;
@@ -538,6 +545,8 @@ class _GenreRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SizedBox(
       height: AppSizes.discoverRailCardHeight,
       child: ListView.separated(
@@ -555,7 +564,7 @@ class _GenreRail extends StatelessWidget {
             title: genre,
             imageUrl: sample?.artworkImageUrl,
             variant: LovenArtworkCardVariant.overlay,
-            badge: 'Genre',
+            badge: l10n.genres,
             onTap: () => onGenreTap(genre),
           );
         },

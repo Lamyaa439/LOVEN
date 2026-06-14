@@ -41,6 +41,7 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   firebase_auth: ^6.5.1
   # google_sign_in: ^7.2.0
+
   dio: ^5.9.2
   flutter_dotenv: ^6.0.1
   widgetbook: ^3.23.0
@@ -73,6 +74,7 @@ flutter_launcher_icons:
   # --- Flutter Specific Configuration ---
   # --- It must be at the very edge ---
 flutter:
+  generate: true
   uses-material-design: true
 
   fonts:
