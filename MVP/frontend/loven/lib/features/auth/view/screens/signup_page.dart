@@ -1,8 +1,6 @@
 /// ========================================================================
 /// Signup Page
 ///
-/// Implements the Figma "Sign Up" screens (2.2, 2.3, 2.4).
-///
 /// Design system compliance:
 /// - All typography via `Theme.of(context).textTheme.*`.
 /// - All colors via `Theme.of(context).colorScheme.*` or [AppColors].
@@ -26,6 +24,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 import '../../controller/cubit/auth_cubit.dart';
 import '../../controller/cubit/auth_state.dart';
@@ -124,7 +123,7 @@ class _SignupPageState extends State<SignupPage> {
 
     if (!emailRegex.hasMatch(email)) {
       setState(() {
-        _emailAsyncError = 'Enter a valid email address';
+        _emailAsyncError = AppLocalizations.of(context)?.emailInvalidError;
       });
 
       return;
@@ -142,11 +141,12 @@ class _SignupPageState extends State<SignupPage> {
 
         if (!mounted) return;
 
+        final l10n = AppLocalizations.of(context);
+
         setState(() {
           _isEmailChecking = false;
 
-          _emailAsyncError =
-              isTaken ? 'This email is already registered' : null;
+          _emailAsyncError = isTaken ? l10n?.emailTakenError : null;
         });
       },
     );
@@ -219,8 +219,8 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
@@ -261,7 +261,7 @@ class _SignupPageState extends State<SignupPage> {
                         fontSize: 34,
                       ),
                       children: [
-                        const TextSpan(text: 'Sign Up '),
+                        TextSpan(text: '${l10n.signupTitle} '),
                         TextSpan(
                           text: '🎨',
                           style: theme.textTheme.displayLarge?.copyWith(
@@ -273,7 +273,7 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Create your account and start discovering art',
+                    l10n.signupSubtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       fontSize: 13,
@@ -281,7 +281,7 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 20),
                   _FieldLabel(
-                    text: 'Name',
+                    text: l10n.name,
                     theme: theme,
                   ),
                   TextFormField(
@@ -294,8 +294,8 @@ class _SignupPageState extends State<SignupPage> {
                         _emailFocusNode,
                       );
                     },
-                    decoration: const InputDecoration(
-                      hintText: 'Your name',
+                    decoration: InputDecoration(
+                      hintText: l10n.hintName,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 14,
@@ -304,7 +304,7 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: 14),
                   _FieldLabel(
-                    text: 'Email',
+                    text: l10n.email,
                     theme: theme,
                   ),
                   TextFormField(
@@ -319,7 +319,7 @@ class _SignupPageState extends State<SignupPage> {
                       );
                     },
                     decoration: InputDecoration(
-                      hintText: 'Your email',
+                      hintText: l10n.hintEmail,
                       errorText: _emailAsyncError,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -345,7 +345,7 @@ class _SignupPageState extends State<SignupPage> {
                   Row(
                     children: [
                       _FieldLabel(
-                        text: 'Password',
+                        text: l10n.password,
                         theme: theme,
                       ),
                       const SizedBox(width: 8),
@@ -362,7 +362,7 @@ class _SignupPageState extends State<SignupPage> {
                     obscureText: _obscurePassword,
                     enabled: !_isSubmitting,
                     decoration: InputDecoration(
-                      hintText: 'Your password',
+                      hintText: l10n.hintPassword,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 14,
@@ -387,26 +387,26 @@ class _SignupPageState extends State<SignupPage> {
                   if (_passwordController.text.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     _PasswordRule(
-                      text: 'Minimum 8 characters',
+                      text: l10n.passwordMinLength,
                       isMet: _hasMinLength,
                       theme: theme,
                     ),
                     const SizedBox(height: 2),
                     _PasswordRule(
-                      text: 'At least 1 number',
+                      text: l10n.passwordAtLeastNumber,
                       isMet: _hasDigits,
                       theme: theme,
                     ),
                     const SizedBox(height: 2),
                     _PasswordRule(
-                      text: 'Contains letters',
+                      text: l10n.passwordContainsLetters,
                       isMet: _hasUppercase,
                       theme: theme,
                     ),
                   ],
                   const SizedBox(height: 16),
                   _FieldLabel(
-                    text: 'Account Type',
+                    text: l10n.accountType,
                     theme: theme,
                   ),
                   const SizedBox(height: 8),
@@ -421,16 +421,17 @@ class _SignupPageState extends State<SignupPage> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   LovenPrimaryButton(
-                    label: 'Register',
+                    label: l10n.register,
                     isLoading: _isSubmitting,
-                    onPressed: (_isFormValid && !_isSubmitting) ? _signup : null,
+                    onPressed:
+                        (_isFormValid && !_isSubmitting) ? _signup : null,
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Have an account? ',
+                        l10n.haveAccount,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontSize: 13,
                           color: colorScheme.onSurfaceVariant,
@@ -445,7 +446,7 @@ class _SignupPageState extends State<SignupPage> {
                                 );
                               },
                         child: Text(
-                          'Log In',
+                          l10n.logIn,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontSize: 13,
                             color: colorScheme.primary,
@@ -458,7 +459,7 @@ class _SignupPageState extends State<SignupPage> {
                   const SizedBox(height: 18),
                   Center(
                     child: Text(
-                      'By registering, you agree to our terms and policies.',
+                      l10n.termsAgreement,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontSize: 11,
@@ -596,11 +597,13 @@ class RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Row(
       children: [
         Expanded(
           child: _RoleOption(
-            title: 'Customer',
+            title: l10n.customer,
             icon: Icons.shopping_bag_outlined,
             value: 'customer',
             selectedRole: selectedRole,
@@ -611,7 +614,7 @@ class RoleSelector extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _RoleOption(
-            title: 'Artist',
+            title: l10n.artist,
             icon: Icons.brush_outlined,
             value: 'artist',
             selectedRole: selectedRole,

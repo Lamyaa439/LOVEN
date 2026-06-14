@@ -5,6 +5,7 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Password-reset entry screen — Firebase link-based only.
 class ForgotPasswordPage extends StatefulWidget {
@@ -53,6 +54,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -79,12 +81,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   icon: const Icon(Icons.arrow_back),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text('Forgot password', style: theme.textTheme.displaySmall),
+                Text(l10n.forgotPasswordTitle,
+                    style: theme.textTheme.displaySmall),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   _emailSent
-                      ? 'If an account exists, a link was sent.'
-                      : 'Enter your email to receive a password reset link.',
+                      ? l10n.emailSentSubtitle
+                      : l10n.forgotPasswordSubtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
                   ),
@@ -92,23 +95,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const SizedBox(height: AppSpacing.xxl),
                 LovenTextField(
                   controller: _emailController,
-                  labelText: 'Email',
-                  hintText: 'Your email',
+                  labelText: l10n.email,
+                  hintText: l10n.hintEmail,
                   keyboardType: TextInputType.emailAddress,
                   readOnly: _emailSent,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Email is required';
+                      return l10n.emailRequired;
                     }
                     if (!value.contains('@')) {
-                      return 'Enter a valid email';
+                      return l10n.invalidEmail;
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: AppSpacing.xxl),
                 LovenPrimaryButton(
-                  label: _emailSent ? 'Back to login' : 'Send reset link',
+                  label: _emailSent ? l10n.backToLogin : l10n.sendResetLink,
                   isLoading: _isSubmitting,
                   onPressed: _isSubmitting
                       ? null

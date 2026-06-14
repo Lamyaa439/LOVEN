@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// App-level feature flags persisted across launches (non-secret).
@@ -11,25 +12,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// Load via [init] from composition root ([main]) before [runApp] so
 /// [redirect_policy] can read onboarding synchronously on first redirect.
-class AppPreferences {
+class AppPreferences extends ChangeNotifier {
   static const String _onboardingCompletedKey = 'onboarding_completed';
+  static const String _languageCodeKey = 'language_code';
 
   bool _hasCompletedOnboarding = false;
+  String _languageCode = 'en';
   SharedPreferences? _prefs;
 
   /// In-memory value; accurate after [init] or [setOnboardingCompleted].
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
+  String get languageCode => _languageCode;
 
   /// Loads persisted flags. Required before relying on [hasCompletedOnboarding].
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    _hasCompletedOnboarding =
-        _prefs!.getBool(_onboardingCompletedKey) ?? false;
+    _hasCompletedOnboarding = _prefs!.getBool(_onboardingCompletedKey) ?? false;
+    _languageCode = _prefs!.getString(_languageCodeKey) ?? 'en';
   }
 
   /// Marks onboarding complete; updates memory immediately, then persists.
   Future<void> setOnboardingCompleted() async {
     _hasCompletedOnboarding = true;
     await _prefs?.setBool(_onboardingCompletedKey, true);
+    notifyListeners();
+  }
+
+  /// Sets the language code; updates memory immediately, then persists.
+  Future<void> setLanguageCode(String code) async {
+    _languageCode = code;
+    notifyListeners();
+    await _prefs?.setString(_languageCodeKey, code);
   }
 }

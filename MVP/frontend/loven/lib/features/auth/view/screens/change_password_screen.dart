@@ -6,6 +6,7 @@ import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Authenticated password change — Firebase owns credentials for email/password users.
 class ChangePasswordScreen extends StatefulWidget {
@@ -55,12 +56,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Password changed successfully'),
+            SnackBar(
+              content: Text(l10n.passwordChangedSuccess),
             ),
           );
           context.pop();
@@ -81,7 +84,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           appBar: AppBar(
             leading: lovenPushedScreenBackLeading(context),
             centerTitle: true,
-            title: const Text('Change password'),
+            title: Text(l10n.changePasswordTitle),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -95,7 +98,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               child: Column(
                 children: [
                   _PasswordField(
-                    label: 'Current password',
+                    label: l10n.currentPassword,
                     controller: currentPasswordController,
                     obscure: obscureCurrent,
                     onToggle: () {
@@ -104,7 +107,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _PasswordField(
-                    label: 'New password',
+                    label: l10n.newPassword,
                     controller: newPasswordController,
                     obscure: obscureNew,
                     onToggle: () {
@@ -113,7 +116,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _PasswordField(
-                    label: 'Confirm password',
+                    label: l10n.confirmPassword,
                     controller: confirmPasswordController,
                     obscure: obscureConfirm,
                     onToggle: () {
@@ -121,14 +124,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     },
                     validator: (value) {
                       if (value != newPasswordController.text) {
-                        return 'Passwords do not match';
+                        return l10n.passwordsDoNotMatch;
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.sectionGap),
                   LovenPrimaryButton(
-                    label: 'Save changes',
+                    label: l10n.saveChanges,
                     isLoading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _submit,
                   ),
@@ -159,6 +162,8 @@ class _PasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return LovenTextField(
       controller: controller,
       labelText: label,
@@ -167,10 +172,10 @@ class _PasswordField extends StatelessWidget {
       validator: validator ??
           (value) {
             if (value == null || value.isEmpty) {
-              return '$label is required';
+              return l10n.fieldRequired(label);
             }
             if (value.length < 8) {
-              return 'Minimum 8 characters';
+              return l10n.min8Characters;
             }
             return null;
           },

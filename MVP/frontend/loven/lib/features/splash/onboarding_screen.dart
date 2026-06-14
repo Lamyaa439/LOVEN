@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/storage/app_preferences.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// First-launch onboarding carousel; marks completion before leaving the flow.
 class OnboardingScreen extends StatefulWidget {
@@ -47,30 +48,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     context.go(location);
   }
 
-  List<OnboardingContent> contents = [
-    OnboardingContent(
-      image: 'assets/images/onboarding1.png',
-      title: 'Discover Art That Speaks to You!',
-      description:
-          'Discover unique artworks, join a vibrant artistic community. \n Start your creative adventure effortlessly with us.',
-    ),
-    OnboardingContent(
-      image: 'assets/images/onboarding4.png',
-      title: 'Where Art Meets Soul!',
-      description:
-          'Join us and let us guide you to the perfect masterpiece, \n curated to resonate with your artistic identity.',
-    ),
-    OnboardingContent(
-      image: 'assets/images/onboarding5.png',
-      title: 'Welcome to LOVEN!',
-      description:
-          'Ready to embark on a quest for inspiration and beauty? \n Your adventure begins now. Let\'s go!',
-    ),
-  ];
+  List<OnboardingContent> get contents {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      OnboardingContent(
+        image: 'assets/images/onboarding1.png',
+        title: l10n.onboardingTitle1,
+        description: l10n.onboardingDesc1,
+      ),
+      OnboardingContent(
+        image: 'assets/images/onboarding4.png',
+        title: l10n.onboardingTitle2,
+        description: l10n.onboardingDesc2,
+      ),
+      OnboardingContent(
+        image: 'assets/images/onboarding5.png',
+        title: l10n.onboardingTitle3,
+        description: l10n.onboardingDesc3,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    context.watch<AppPreferences>();
+
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final primaryColor = theme.colorScheme.primary;
 
     return Scaffold(
@@ -79,10 +83,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             Align(
               alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: () => _completeOnboardingAndGo(AppRoutes.home),
-                child: const Text('Skip'),
-              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                TextButton(
+                  onPressed: () async {
+                    final prefs = context.read<AppPreferences>();
+                    final newCode = (prefs.languageCode == 'en') ? 'ar' : 'en';
+                    await prefs.setLanguageCode(newCode);
+                    setState(() {});
+                  },
+                  child: Text(
+                      context.read<AppPreferences>().languageCode == 'en'
+                          ? 'العربية'
+                          : 'English'),
+                ),
+                TextButton(
+                  onPressed: () => _completeOnboardingAndGo(AppRoutes.home),
+                  child: Text(l10n.skip),
+                )
+              ]),
             ),
             Expanded(
               child: PageView.builder(
@@ -154,15 +172,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       },
                       child: Text(
                         currentIndex == contents.length - 1
-                            ? 'Get Started'
-                            : 'Continue',
+                            ? l10n.getStarted
+                            : l10n.continueBtn,
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => _completeOnboardingAndGo(AppRoutes.login),
-                    child: const Text('Sign in'),
+                    child: Text(l10n.signIn),
                   ),
                 ],
               ),

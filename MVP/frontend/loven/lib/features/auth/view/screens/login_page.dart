@@ -6,6 +6,7 @@ import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Login screen for email/password auth.
 class LoginPage extends StatefulWidget {
@@ -55,6 +56,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
@@ -100,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextSpan(
                       style: theme.textTheme.displaySmall,
                       children: [
-                        const TextSpan(text: 'Welcome back '),
+                        TextSpan(text: l10n.welcomeBack),
                         TextSpan(
                           text: '👋',
                           style: theme.textTheme.displaySmall?.copyWith(
@@ -114,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Sign in to your account',
+                    l10n.signInSubtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -122,15 +124,15 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: AppSpacing.xxl),
                   LovenTextField(
                     controller: emailController,
-                    labelText: 'Email',
-                    hintText: 'Your email',
+                    labelText: l10n.email,
+                    hintText: l10n.hintEmail,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Email is required';
+                        return l10n.emailRequired;
                       }
                       if (!value.contains('@')) {
-                        return 'Enter a valid email';
+                        return l10n.invalidEmail;
                       }
                       return null;
                     },
@@ -138,8 +140,8 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: AppSpacing.lg),
                   LovenTextField(
                     controller: passwordController,
-                    labelText: 'Password',
-                    hintText: 'Your password',
+                    labelText: l10n.password,
+                    hintText: l10n.hintPassword,
                     obscureText: obscurePassword,
                     suffixIcon: IconButton(
                       onPressed: _isSubmitting
@@ -158,17 +160,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Password is required';
+                        return l10n.passwordRequired;
                       }
                       if (value.length < 8) {
-                        return 'Password must be at least 8 characters';
+                        return l10n.passwordTooShort;
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Align(
-                    alignment: Alignment.centerLeft,
+                    alignment: AlignmentDirectional.centerStart,
                     child: TextButton(
                       onPressed: _isSubmitting
                           ? null
@@ -178,12 +180,12 @@ class _LoginPageState extends State<LoginPage> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Forgot password?'),
+                      child: Text(l10n.forgotPassword),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   LovenPrimaryButton(
-                    label: 'Sign in',
+                    label: l10n.signIn,
                     isLoading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _login,
                   ),
@@ -192,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Don’t have an account? ',
+                        l10n.dontHaveAccount,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.textMuted,
                         ),
@@ -202,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                             ? null
                             : () => context.go(AppRoutes.auth),
                         child: Text(
-                          'Sign up',
+                          l10n.signUp,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: AppColors.brandPrimary,
                             fontWeight: FontWeight.w600,

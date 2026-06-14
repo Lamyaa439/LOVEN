@@ -5,6 +5,7 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import '../../controller/cubit/auth_cubit.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Link-based email verification after Firebase signup.
 class SignupVerificationEmailPage extends StatefulWidget {
@@ -36,8 +37,8 @@ class _SignupVerificationEmailPageState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Verification email sent. Check your inbox.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.verificationEmailSent),
         ),
       );
     } catch (e) {
@@ -62,8 +63,7 @@ class _SignupVerificationEmailPageState
     setState(() => _isChecking = true);
 
     try {
-      final isVerified =
-          await context.read<AuthCubit>().checkEmailVerified();
+      final isVerified = await context.read<AuthCubit>().checkEmailVerified();
 
       if (!mounted) return;
 
@@ -73,8 +73,9 @@ class _SignupVerificationEmailPageState
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email verified successfully.'),
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.emailVerifiedSuccessfully),
           ),
         );
         context.go(AppRoutes.signupSuccess);
@@ -82,9 +83,9 @@ class _SignupVerificationEmailPageState
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Email not verified yet. Open the link in your inbox, then tap Continue.',
+            AppLocalizations.of(context)!.emailNotVerifiedYet,
           ),
         ),
       );
@@ -107,6 +108,8 @@ class _SignupVerificationEmailPageState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     final isBusy = _isResending || _isChecking;
 
     return Scaffold(
@@ -134,14 +137,14 @@ class _SignupVerificationEmailPageState
               const SizedBox(height: AppSpacing.sectionGap),
               Center(
                 child: Text(
-                  'Verify your email',
+                  l10n.verifyEmailTitle,
                   style: theme.textTheme.displaySmall,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Center(
                 child: Text(
-                  'We sent a verification link to',
+                  l10n.verificationSentSubtitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textMuted,
@@ -166,7 +169,7 @@ class _SignupVerificationEmailPageState
               const SizedBox(height: AppSpacing.xxl),
               Center(
                 child: Text(
-                  'Open the link in your email, then return here and tap Continue.',
+                  l10n.openLinkInstruction,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
@@ -186,13 +189,13 @@ class _SignupVerificationEmailPageState
                         )
                       : Text.rich(
                           TextSpan(
-                            text: "Didn't receive the email? ",
+                            text: l10n.didntReceiveEmail,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: AppColors.textMuted,
                             ),
-                            children: const [
+                            children: [
                               TextSpan(
-                                text: 'Resend',
+                                text: l10n.resend,
                                 style: TextStyle(
                                   color: AppColors.brandPrimary,
                                   fontWeight: FontWeight.w600,
@@ -205,7 +208,7 @@ class _SignupVerificationEmailPageState
               ),
               const SizedBox(height: AppSpacing.sectionGap),
               LovenPrimaryButton(
-                label: 'Continue',
+                label: l10n.continueText,
                 isLoading: _isChecking,
                 onPressed: isBusy ? null : _checkVerification,
               ),
