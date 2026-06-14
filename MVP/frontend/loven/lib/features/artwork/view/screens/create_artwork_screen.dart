@@ -15,6 +15,7 @@ import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 class CreateArtworkScreen extends StatefulWidget {
   const CreateArtworkScreen({super.key});
@@ -79,7 +80,9 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an artwork image')),
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.pleaseSelectArtworkImage)),
       );
       return;
     }
@@ -88,8 +91,8 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
     if (!authStateHasSession(authState)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please login again before uploading artwork'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseLoginAgain),
         ),
       );
       return;
@@ -126,7 +129,9 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image upload failed: $e')),
+        SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.imageUploadFailed(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _isUploadingImage = false);
@@ -135,11 +140,13 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocConsumer<ArtworkCubit, ArtworkState>(
       listener: (context, state) {
         if (state is ArtworkLoaded) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Artwork uploaded successfully')),
+            SnackBar(content: Text(l10n.artworkUploadedSuccessfully)),
           );
 
           context.read<HomeBloc>().add(FetchHomeData());
@@ -160,7 +167,7 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
-            title: const Text('Upload artwork'),
+            title: Text(l10n.uploadArtwork),
           ),
           body: SafeArea(
             child: SingleChildScrollView(
@@ -181,27 +188,27 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sectionGap),
                     CheckoutFieldSection(
-                      label: 'Artwork title',
+                      label: l10n.artworkTitle,
                       child: LovenTextField(
                         controller: titleController,
-                        hintText: 'Enter artwork title',
+                        hintText: l10n.enterArtworkTitle,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Title is required';
+                            return l10n.titleIsRequired;
                           }
                           return null;
                         },
                       ),
                     ),
                     CheckoutFieldSection(
-                      label: 'Description',
+                      label: l10n.description,
                       child: LovenTextField(
                         controller: descriptionController,
-                        hintText: 'Describe your artwork',
+                        hintText: l10n.describeYourArtwork,
                         maxLines: 5,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Description is required';
+                            return l10n.descriptionIsRequired;
                           }
                           return null;
                         },
@@ -211,14 +218,14 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                       children: [
                         Expanded(
                           child: CheckoutFieldSection(
-                            label: 'Price (SAR)',
+                            label: l10n.priceSAR,
                             child: LovenTextField(
                               controller: priceController,
                               hintText: '0.00',
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Required';
+                                  return l10n.required;
                                 }
                                 return null;
                               },
@@ -228,14 +235,14 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: CheckoutFieldSection(
-                            label: 'Shipping (SAR)',
+                            label: l10n.shippingSAR,
                             child: LovenTextField(
                               controller: shippingFeeController,
                               hintText: '0.00',
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'Required';
+                                  return l10n.required;
                                 }
                                 return null;
                               },
@@ -245,14 +252,14 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                       ],
                     ),
                     CheckoutFieldSection(
-                      label: 'Quantity',
+                      label: l10n.quantity,
                       child: LovenTextField(
                         controller: quantityController,
-                        hintText: 'Quantity available',
+                        hintText: l10n.quantityAvailable,
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Quantity is required';
+                            return l10n.quantityIsRequired;
                           }
                           return null;
                         },
@@ -277,16 +284,15 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                               children: [
                                 Text(
                                   isVerifiedArtist
-                                      ? 'Available for sale'
-                                      : 'Portfolio showcase only',
-                                  style:
-                                      Theme.of(context).textTheme.titleSmall,
+                                      ? l10n.availableForSale
+                                      : l10n.portfolioShowcaseOnly,
+                                  style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 const SizedBox(height: AppSpacing.xxs),
                                 Text(
                                   isVerifiedArtist
-                                      ? 'This artwork will be listed for purchase.'
-                                      : 'Visible in your portfolio until verification is approved.',
+                                      ? l10n.willBeListedForPurchase
+                                      : l10n.visibleInPortfolioUntilVerified,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -315,13 +321,13 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Portfolio mode',
+                                    l10n.portfolioMode,
                                     style:
                                         Theme.of(context).textTheme.titleSmall,
                                   ),
                                   const SizedBox(height: AppSpacing.xxs),
                                   Text(
-                                    'Unverified artists can showcase work in their portfolio. Purchases unlock after verification.',
+                                    l10n.unverifiedArtistNote,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodySmall
@@ -339,10 +345,10 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                     const SizedBox(height: AppSpacing.sectionGap),
                     LovenPrimaryButton(
                       label: isLoading
-                          ? 'Uploading…'
+                          ? l10n.uploading
                           : isVerifiedArtist
-                              ? 'Publish artwork'
-                              : 'Save to portfolio',
+                              ? l10n.publishArtwork
+                              : l10n.saveToPortfolio,
                       icon: Icons.cloud_upload_outlined,
                       onPressed: isLoading ? null : _submit,
                       isLoading: isLoading,
@@ -405,7 +411,7 @@ class _ArtworkImagePicker extends StatelessWidget {
                         right: AppSpacing.sm,
                         bottom: AppSpacing.sm,
                         child: LovenSecondaryButton(
-                          label: 'Change image',
+                          label: AppLocalizations.of(context)!.changeImage,
                           onPressed: onTap,
                           expand: false,
                         ),
@@ -433,12 +439,12 @@ class _ArtworkImagePicker extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        'Add artwork image',
+                        AppLocalizations.of(context)!.addArtworkImage,
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: AppSpacing.xxs),
                       Text(
-                        'PNG or JPG from your gallery',
+                        AppLocalizations.of(context)!.pngOrJpg,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.textMuted,
                             ),

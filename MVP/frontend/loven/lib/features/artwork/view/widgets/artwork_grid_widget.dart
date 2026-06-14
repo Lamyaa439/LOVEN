@@ -3,6 +3,7 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/res/responsive/responsive_extensions.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 class ArtworkGridWidget extends StatelessWidget {
   const ArtworkGridWidget({
@@ -20,6 +21,7 @@ class ArtworkGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     if (artworks.isEmpty) {
@@ -27,7 +29,7 @@ class ArtworkGridWidget extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.xxxl),
         child: Center(
           child: Text(
-            'No artworks yet',
+            l10n.noArtworksYet,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.textMuted,
             ),
@@ -38,18 +40,21 @@ class ArtworkGridWidget extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: context.responsive(mobile: AppSpacing.md, tablet: AppSpacing.lg),
+        horizontal:
+            context.responsive(mobile: AppSpacing.md, tablet: AppSpacing.lg),
       ),
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: artworks.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: context.responsive(
-            mobile: 2,
-            tablet: 3,
-            desktop: 4,
-          ).toInt(),
+          crossAxisCount: context
+              .responsive(
+                mobile: 2,
+                tablet: 3,
+                desktop: 4,
+              )
+              .toInt(),
           crossAxisSpacing: context.responsive(
             mobile: AppSpacing.sm,
             tablet: AppSpacing.md,

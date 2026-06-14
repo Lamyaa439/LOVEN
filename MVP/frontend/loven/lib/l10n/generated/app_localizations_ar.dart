@@ -242,6 +242,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get required => 'مطلوب';
+
+  @override
   String get min8Characters => '8 أحرف كحد أدنى';
 
   @override
@@ -383,4 +386,242 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get artworkDeleted => 'تم حذف العمل الفني';
+
+  @override
+  String get editProfileTitle => 'تعديل الملف الشخصي';
+
+  @override
+  String get updateStorefront => 'حدث كيف يرى الجامعون متجرك.';
+
+  @override
+  String get displayName => 'اسم العرض';
+
+  @override
+  String get location => 'الموقع';
+
+  @override
+  String get selectCity => 'اختر المدينة';
+
+  @override
+  String get bio => 'السيرة الذاتية';
+
+  @override
+  String get writeBioHint => 'اكتب سيرة ذاتية قصيرة كفنان';
+
+  @override
+  String get shippingPolicy => 'سياسة الشحن';
+
+  @override
+  String get shippingPolicyHint => 'صف توافر الشحن والتوقيت';
+
+  @override
+  String get saving => 'جاري الحفظ...';
+
+  @override
+  String get fixHighlighted => 'يرجى تصحيح الحقول المحددة';
+
+  @override
+  String get sessionExpired => 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.';
+
+  @override
+  String couldNotUpdate(Object error) {
+    return 'تعذر تحديث الملف الشخصي: $error';
+  }
+
+  @override
+  String get about => 'حول الفنان';
+
+  @override
+  String get noBioYet => 'لم يضف هذا الفنان سيرة ذاتية بعد.';
+
+  @override
+  String get verified => 'موثق';
+
+  @override
+  String get ships => 'يشحن';
+
+  @override
+  String get editArtistProfile => 'تعديل ملف الفنان';
+
+  @override
+  String get uploadArtwork => 'رفع عمل فني';
+
+  @override
+  String get pleaseSelectArtworkImage => 'يرجى اختيار صورة للعمل الفني';
+
+  @override
+  String get pleaseLoginAgain =>
+      'يرجى تسجيل الدخول مرة أخرى قبل رفع العمل الفني';
+
+  @override
+  String imageUploadFailed(Object error) {
+    return 'فشل رفع الصورة: $error';
+  }
+
+  @override
+  String get artworkUploadedSuccessfully => 'تم رفع العمل الفني بنجاح';
+
+  @override
+  String get artworkTitle => 'عنوان العمل الفني';
+
+  @override
+  String get enterArtworkTitle => 'أدخل عنوان العمل الفني';
+
+  @override
+  String get titleIsRequired => 'العنوان مطلوب';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String get describeYourArtwork => 'صف عملك الفني';
+
+  @override
+  String get descriptionIsRequired => 'الوصف مطلوب';
+
+  @override
+  String get priceSAR => 'السعر (ر.س)';
+
+  @override
+  String get shippingSAR => 'الشحن (ر.س)';
+
+  @override
+  String get quantity => 'الكمية';
+
+  @override
+  String get quantityAvailable => 'الكمية المتاحة';
+
+  @override
+  String get quantityIsRequired => 'الكمية مطلوبة';
+
+  @override
+  String get availableForSale => 'متاح للبيع';
+
+  @override
+  String get portfolioShowcaseOnly => 'للعرض في ملف الأعمال فقط';
+
+  @override
+  String get willBeListedForPurchase => 'سيتم إدراج هذا العمل الفني للبيع.';
+
+  @override
+  String get visibleInPortfolioUntilVerified =>
+      'مرئي في ملف أعمالك حتى يتم اعتماد التوثيق.';
+
+  @override
+  String get portfolioMode => 'وضع ملف الأعمال';
+
+  @override
+  String get unverifiedArtistNote =>
+      'يمكن للفنانين غير الموثقين عرض أعمالهم في ملف الأعمال. تُفتح عمليات الشراء بعد التوثيق.';
+
+  @override
+  String get uploading => 'جاري الرفع...';
+
+  @override
+  String get publishArtwork => 'نشر العمل الفني';
+
+  @override
+  String get saveToPortfolio => 'حفظ في ملف الأعمال';
+
+  @override
+  String get changeImage => 'تغيير الصورة';
+
+  @override
+  String get addArtworkImage => 'إضافة صورة للعمل الفني';
+
+  @override
+  String get pngOrJpg => 'صيغة PNG أو JPG من معرض الصور';
+
+  @override
+  String get logout => 'تسجيل الخروج';
+
+  @override
+  String get logoutConfirmation => 'هل أنت متأكد أنك تريد تسجيل الخروج؟';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get account => 'الحساب';
+
+  @override
+  String get accountDetails => 'تفاصيل الحساب';
+
+  @override
+  String get accountDetailsSubtitle => 'الاسم، البريد الإلكتروني، وصورة الحساب';
+
+  @override
+  String get switchToCustomer => 'التبديل إلى عميل';
+
+  @override
+  String get becomeArtist => 'كن فناناً';
+
+  @override
+  String get useLovenAsCustomer => 'استخدم LOVEN كحساب عميل';
+
+  @override
+  String get createAndShowcase => 'أنشئ واعرض أعمالك الفنية';
+
+  @override
+  String get savedAddresses => 'العناوين المحفوظة';
+
+  @override
+  String get manageDelivery => 'إدارة مواقع التوصيل';
+
+  @override
+  String get changePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get updatePassword => 'تحديث كلمة مرور حسابك';
+
+  @override
+  String get myArtistProfile => 'ملف الفنان الخاص بي';
+
+  @override
+  String get manageStorefront => 'إدارة متجرك وملف أعمالك';
+
+  @override
+  String get incomingOrders => 'الطلبات الواردة';
+
+  @override
+  String get reviewOrders => 'مراجعة وإتمام طلبات المشترين';
+
+  @override
+  String get requestVerification => 'طلب توثيق';
+
+  @override
+  String get applyVerifiedBadge => 'تقدم بطلب للحصول على شارة فنان موثق';
+
+  @override
+  String get activity => 'النشاط';
+
+  @override
+  String get yourFavorites => 'مفضلاتك';
+
+  @override
+  String get savedArtworks => 'الأعمال الفنية التي حفظتها';
+
+  @override
+  String get orderHistory => 'سجل الطلبات';
+
+  @override
+  String get viewPreviousOrders => 'عرض طلباتك السابقة';
+
+  @override
+  String get support => 'الدعم';
+
+  @override
+  String get sendFeedback => 'إرسال ملاحظات';
+
+  @override
+  String get shareThoughts => 'شاركنا أفكارك';
+
+  @override
+  String get signOut => 'تسجيل الخروج من حسابك';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get currentLanguage => 'العربية';
 }

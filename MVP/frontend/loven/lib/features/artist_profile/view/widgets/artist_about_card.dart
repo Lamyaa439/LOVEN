@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Readable about section — bio and shipping policy when available.
 class ArtistAboutCard extends StatelessWidget {
@@ -13,6 +14,7 @@ class ArtistAboutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final hasBio = artist.bio != null && artist.bio!.trim().isNotEmpty;
     final hasShipping = artist.shippingPolicy != null &&
@@ -27,7 +29,7 @@ class ArtistAboutCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('About', style: theme.textTheme.headlineSmall),
+          Text(l10n.about, style: theme.textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           if (hasBio)
             Text(
@@ -39,7 +41,7 @@ class ArtistAboutCard extends StatelessWidget {
             )
           else if (!hasShipping)
             Text(
-              'This artist has not added a bio yet.',
+              l10n.noBioYet,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textMuted,
                 fontStyle: FontStyle.italic,

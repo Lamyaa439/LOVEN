@@ -5,6 +5,7 @@ import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Editorial artist identity header — cover, avatar, name, and real stats only.
 class ArtistProfileHeroWidget extends StatelessWidget {
@@ -23,16 +24,17 @@ class ArtistProfileHeroWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final sessionUser = isOwner
-        ? authStateSessionUser(context.watch<AuthCubit>().state)
-        : null;
-    final resolvedImageUrl = _resolveProfileImageUrl(sessionUser?.profileImageUrl);
+    final sessionUser =
+        isOwner ? authStateSessionUser(context.watch<AuthCubit>().state) : null;
+    final resolvedImageUrl =
+        _resolveProfileImageUrl(sessionUser?.profileImageUrl);
     final hasCover =
         artist.coverImageUrl != null && artist.coverImageUrl!.isNotEmpty;
     final hasCity = artist.city != null && artist.city!.trim().isNotEmpty;
-    final hasShipping =
-        artist.shippingPolicy != null && artist.shippingPolicy!.trim().isNotEmpty;
+    final hasShipping = artist.shippingPolicy != null &&
+        artist.shippingPolicy!.trim().isNotEmpty;
 
     return Column(
       children: [
@@ -62,7 +64,8 @@ class ArtistProfileHeroWidget extends StatelessWidget {
         ),
         SizedBox(height: (AppSizes.avatarXl / 2) + AppSpacing.lg),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
           child: Column(
             children: [
               Row(
@@ -105,7 +108,7 @@ class ArtistProfileHeroWidget extends StatelessWidget {
               if (isOwner) ...[
                 const SizedBox(height: AppSpacing.lg),
                 LovenSecondaryButton(
-                  label: 'Edit artist profile',
+                  label: l10n.editArtistProfile,
                   icon: Icons.edit_outlined,
                   expand: false,
                   onPressed: onEdit,
@@ -208,20 +211,21 @@ class _ArtistStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     final stats = <Widget>[
       _StatChip(
-        label: artworkCount == 1 ? '1 work' : '$artworkCount works',
+        label: l10n.worksCount(artworkCount),
       ),
       if (isVerified)
         _StatChip(
-          label: 'Verified',
+          label: l10n.verified,
           icon: Icons.verified_outlined,
         ),
       if (hasShipping)
         _StatChip(
-          label: 'Ships',
+          label: l10n.ships,
           icon: Icons.local_shipping_outlined,
         ),
     ];

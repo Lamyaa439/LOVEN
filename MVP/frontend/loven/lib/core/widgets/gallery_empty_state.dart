@@ -14,6 +14,7 @@ class GalleryEmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.usePrimaryAction = false,
+    required Color backgroundColor,
   });
 
   final IconData icon;
