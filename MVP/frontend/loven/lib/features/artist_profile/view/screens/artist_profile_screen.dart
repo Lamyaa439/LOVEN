@@ -8,6 +8,7 @@ import 'package:loven/features/artwork/controller/cubit/artwork_cubit.dart';
 import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
@@ -70,13 +71,15 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         centerTitle: true,
         leading: _isPublicView ? null : lovenPushedScreenBackLeading(context),
-        title: Text(_isPublicView ? 'Artist' : 'My profile'),
+        title:
+            Text(_isPublicView ? l10n.artistProfileTitle : l10n.myProfileTitle),
       ),
       body: BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
         listenWhen: (previous, current) =>
@@ -89,7 +92,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
             ..showSnackBar(
               SnackBar(
                 content: Text(
-                  state.errorMessage ?? 'Something went wrong',
+                  state.errorMessage ?? l10n.somethingWentWrong,
                 ),
                 behavior: SnackBarBehavior.floating,
               ),
@@ -107,17 +110,17 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
                 );
               }
 
-              return const GalleryLoadingState(
-                message: 'Loading profile…',
+              return GalleryLoadingState(
+                message: l10n.loadingProfile,
               );
 
             case ArtistProfileStatus.error:
               if (state.artist == null) {
                 return GalleryEmptyState(
                   icon: Icons.error_outline,
-                  title: 'Could not load profile',
-                  subtitle: state.errorMessage ?? 'An unexpected error occurred',
-                  actionLabel: 'Retry',
+                  title: l10n.couldNotLoadProfile,
+                  subtitle: state.errorMessage ?? l10n.somethingWentWrong,
+                  actionLabel: l10n.retry,
                   onAction: _reload,
                 );
               }
@@ -154,6 +157,7 @@ class _SuccessContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final artist = state.artist!;
     final sessionRole =
         authStateSessionUser(context.watch<AuthCubit>().state)?.systemRole;
@@ -191,20 +195,19 @@ class _SuccessContent extends StatelessWidget {
               hasScrollBody: false,
               child: GalleryEmptyState(
                 icon: Icons.palette_outlined,
-                title: 'No artist gallery',
-                subtitle:
-                    'Customer accounts do not have artist portfolios.',
+                title: l10n.noArtistGallery,
+                subtitle: l10n.customerNoPortfolio,
               ),
             ),
           if (showArtistFeatures) ...[
             SliverToBoxAdapter(
               child: GallerySectionHeader(
-                title: 'Portfolio',
+                title: l10n.portfolio,
                 subtitle: artworkCount == 0
                     ? null
                     : artworkCount == 1
-                        ? '1 work'
-                        : '$artworkCount works',
+                        ? null
+                        : l10n.worksCount(artworkCount),
                 padding: const EdgeInsets.only(
                   left: AppSpacing.screenPadding,
                   right: AppSpacing.screenPadding,
@@ -217,10 +220,10 @@ class _SuccessContent extends StatelessWidget {
                 hasScrollBody: false,
                 child: GalleryEmptyState(
                   icon: Icons.image_outlined,
-                  title: 'No artworks yet',
+                  title: l10n.noArtworksYet,
                   subtitle: isPublicView
-                      ? 'This artist has not published any works.'
-                      : 'Your portfolio will appear here once you add artworks.',
+                      ? l10n.publicNoArtworks
+                      : l10n.ownerNoArtworks,
                 ),
               )
             else
@@ -235,8 +238,8 @@ class _SuccessContent extends StatelessWidget {
 
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Artwork deleted'),
+                        SnackBar(
+                          content: Text(l10n.artworkDeleted),
                         ),
                       );
 
