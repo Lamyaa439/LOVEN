@@ -78,4 +78,19 @@ class CartItemModel {
 
     return int.tryParse(value.toString()) ?? 1;
   }
+
+  CartItemModel copyWith({
+  int? quantity,
+}) {
+  return CartItemModel(
+    id: id,
+    artworkId: artworkId,
+    title: title,
+    imageUrl: imageUrl,
+    price: price,
+    shippingFee: shippingFee,
+    quantity: quantity ?? this.quantity,
+    stockQuantity: stockQuantity,
+  );
+}
 }

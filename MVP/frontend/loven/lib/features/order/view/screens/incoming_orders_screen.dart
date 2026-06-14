@@ -6,6 +6,7 @@ import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/cart/view/widgets/checkout_shared.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
+import 'package:loven/features/order/view/widgets/order_item_display.dart';
 
 class IncomingOrdersScreen extends StatefulWidget {
   const IncomingOrdersScreen({
@@ -205,9 +206,24 @@ class _IncomingOrderCardState extends State<_IncomingOrderCard> {
     final id = widget.order['id']?.toString() ?? '';
     final total = widget.order['total_amount']?.toString() ?? '0';
     final createdAt = widget.order['created_at']?.toString() ?? '';
-    final items = widget.order['items'];
-    final itemCount = items is List ? items.length : 0;
-    final showShippingFields = _selectedStatus == 'shipped';
+        final buyerPayload = widget.order['buyer'];
+final buyer = buyerPayload is Map
+    ? Map<String, dynamic>.from(buyerPayload)
+    : <String, dynamic>{};
+
+final buyerLabel = buyer['full_name']?.toString().trim().isNotEmpty == true
+    ? buyer['full_name'].toString()
+    : buyer['username']?.toString().trim().isNotEmpty == true
+        ? buyer['username'].toString()
+        : buyer['email']?.toString().trim().isNotEmpty == true
+            ? buyer['email'].toString()
+            : 'Buyer account';
+    final displayItems = OrderItemDisplay.listFromOrder(widget.order);
+final itemCount = displayItems.isEmpty
+    ? 0
+    : displayItems.fold<int>(0, (sum, item) => sum + item.quantity);
+    final showShippingFields =
+        _selectedStatus == 'shipped' || _selectedStatus == 'delivered';
 
     return LovenSurfaceCard(
       child: Column(
@@ -230,25 +246,35 @@ class _IncomingOrderCardState extends State<_IncomingOrderCard> {
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Order #${id.length > 8 ? id.substring(0, 8) : id}',
-                      style: theme.textTheme.titleSmall,
-                    ),
-                    if (createdAt.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        createdAt,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Order #${id.length > 8 ? id.substring(0, 8) : id}',
+        style: theme.textTheme.titleSmall,
+      ),
+
+      if (createdAt.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          createdAt,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColors.textMuted,
+          ),
+        ),
+      ],
+
+      const SizedBox(height: AppSpacing.xxs),
+
+      Text(
+        buyerLabel,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: AppColors.textMuted,
+        ),
+      ),
+    ],
+  ),
+),
               Text(
                 '$total SAR',
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -264,6 +290,12 @@ class _IncomingOrderCardState extends State<_IncomingOrderCard> {
               color: AppColors.textMuted,
             ),
           ),
+          if (displayItems.isNotEmpty) ...[
+  const SizedBox(height: AppSpacing.md),
+  ...displayItems.map(
+    (item) => OrderItemRow(item: item),
+  ),
+],
           const SizedBox(height: AppSpacing.lg),
           CheckoutFieldSection(
             label: 'Order status',

@@ -72,24 +72,33 @@ class _CartScreenState extends State<CartScreen> {
           },
         ),
       ),
-      body: BlocBuilder<CartCubit, CartState>(
-        builder: (context, state) {
-          if (state is CartInitial || state is CartLoading) {
-            return const GalleryLoadingState(message: 'Loading cart…');
-          }
+body: BlocConsumer<CartCubit, CartState>(
+  listener: (context, state) {
+    if (state is CartError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.message)),
+      );
+    }
+  },
+  builder: (context, state) {
+    if (state is CartInitial || state is CartLoading) {
+      return const GalleryLoadingState(
+        message: 'Loading cart…',
+      );
+    }
 
-          if (state is CartError) {
-            return GalleryEmptyState(
-              icon: Icons.error_outline,
-              title: 'Could not load cart',
-              subtitle: state.message,
-              actionLabel: 'Retry',
-              onAction: () => context.read<CartCubit>().getCart(),
-            );
-          }
+    if (state is CartError && state.previousCart == null) {
+      return GalleryEmptyState(
+        icon: Icons.error_outline,
+        title: 'Could not load cart',
+        subtitle: state.message,
+        actionLabel: 'Retry',
+        onAction: () => context.read<CartCubit>().getCart(),
+      );
+    }
 
-          if (state is CartLoaded) {
-            final cart = state.cart;
+    if (state is CartLoaded) {
+      final cart = state.cart;
 
             if (cart.items.isEmpty) {
               return GalleryEmptyState(

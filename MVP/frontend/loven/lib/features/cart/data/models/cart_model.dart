@@ -40,4 +40,27 @@ class CartModel {
       totalAmount: subtotal + shippingFee,
     );
   }
+  CartModel copyWith({
+  List<CartItemModel>? items,
+}) {
+  final nextItems = items ?? this.items;
+
+  final nextSubtotal = nextItems.fold<double>(
+    0,
+    (sum, item) => sum + (item.price * item.quantity),
+  );
+
+  final nextShippingFee = nextItems.fold<double>(
+    0,
+    (sum, item) => sum + item.shippingFee,
+  );
+
+  return CartModel(
+    id: id,
+    items: nextItems,
+    subtotal: nextSubtotal,
+    shippingFee: nextShippingFee,
+    totalAmount: nextSubtotal + nextShippingFee,
+  );
+}
 }

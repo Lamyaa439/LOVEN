@@ -61,91 +61,113 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  Future<void> addItem({
-    required String artworkId,
-    int quantity = 1,
-  }) async {
-    if (!_hasSession || isClosed) {
-      return;
+Future<void> addItem({
+  required String artworkId,
+  int quantity = 1,
+}) async {
+  if (!_hasSession || isClosed) return;
+
+  final previousCart = state is CartLoaded ? (state as CartLoaded).cart : null;
+
+  try {
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart, isMutating: true));
     }
 
-    try {
-      await _repository.addToCart(
-        artworkId: artworkId,
-        quantity: quantity,
-      );
+    final cart = await _repository.addToCart(
+      artworkId: artworkId,
+      quantity: quantity,
+    );
 
-      await getCart();
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
+    if (!isClosed) emit(CartLoaded(cart));
+  } catch (e) {
+    if (isClosed) return;
 
-      emit(CartError(e.toString()));
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart));
     }
+
+    emit(CartError(e.toString(), previousCart: previousCart));
   }
+}
 
-  Future<void> updateItem({
-    required String itemId,
-    required int quantity,
-  }) async {
-    if (!_hasSession || isClosed) {
-      return;
+Future<void> updateItem({
+  required String itemId,
+  required int quantity,
+}) async {
+  if (!_hasSession || isClosed) return;
+
+  final previousCart = state is CartLoaded ? (state as CartLoaded).cart : null;
+
+  try {
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart, isMutating: true));
     }
 
-    try {
-      await _repository.updateCartItem(
-        itemId: itemId,
-        quantity: quantity,
-      );
+    final cart = await _repository.updateCartItem(
+      itemId: itemId,
+      quantity: quantity,
+    );
 
-      await getCart();
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
+    if (!isClosed) emit(CartLoaded(cart));
+  } catch (e) {
+    if (isClosed) return;
 
-      emit(CartError(e.toString()));
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart));
     }
+
+    emit(CartError(e.toString(), previousCart: previousCart));
   }
+}
 
-  Future<void> removeItem({
-    required String itemId,
-  }) async {
-    if (!_hasSession || isClosed) {
-      return;
+Future<void> removeItem({
+  required String itemId,
+}) async {
+  if (!_hasSession || isClosed) return;
+
+  final previousCart = state is CartLoaded ? (state as CartLoaded).cart : null;
+
+  try {
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart, isMutating: true));
     }
 
-    try {
-      await _repository.removeCartItem(
-        itemId: itemId,
-      );
+    final cart = await _repository.removeCartItem(itemId: itemId);
 
-      await getCart();
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
+    if (!isClosed) emit(CartLoaded(cart));
+  } catch (e) {
+    if (isClosed) return;
 
-      emit(CartError(e.toString()));
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart));
     }
+
+    emit(CartError(e.toString(), previousCart: previousCart));
   }
+}
 
-  Future<void> clearCart() async {
-    if (!_hasSession || isClosed) {
-      return;
+Future<void> clearCart() async {
+  if (!_hasSession || isClosed) return;
+
+  final previousCart = state is CartLoaded ? (state as CartLoaded).cart : null;
+
+  try {
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart, isMutating: true));
     }
 
-    try {
-      await _repository.clearCart();
+    final cart = await _repository.clearCart();
 
-      await getCart();
-    } catch (e) {
-      if (isClosed) {
-        return;
-      }
+    if (!isClosed) emit(CartLoaded(cart));
+  } catch (e) {
+    if (isClosed) return;
 
-      emit(CartError(e.toString()));
+    if (previousCart != null) {
+      emit(CartLoaded(previousCart));
     }
+
+    emit(CartError(e.toString(), previousCart: previousCart));
   }
+}
 }

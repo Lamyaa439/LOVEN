@@ -165,29 +165,27 @@ return order;
     }
   }
 
-  Future<void> updateOrderStatus({
-    required String orderId,
-    required String status,
-    String? shippingCompany,
-    String? trackingNumber,
-  }) async {
-    if (!_guardSession()) {
-      return;
-    }
-
-    _emit(OrderLoading());
-
-    try {
-      final order = await _repository.updateOrderStatus(
-        orderId: orderId,
-        status: status,
-        shippingCompany: shippingCompany,
-        trackingNumber: trackingNumber,
-      );
-
-      _emit(OrderLoaded(order));
-    } catch (e) {
-      _emit(OrderError(e.toString()));
-    }
+Future<void> updateOrderStatus({
+  required String orderId,
+  required String status,
+  String? shippingCompany,
+  String? trackingNumber,
+}) async {
+  if (!_guardSession()) {
+    return;
   }
+
+  try {
+    final order = await _repository.updateOrderStatus(
+      orderId: orderId,
+      status: status,
+      shippingCompany: shippingCompany,
+      trackingNumber: trackingNumber,
+    );
+
+    _emit(OrderLoaded(order));
+  } catch (e) {
+    _emit(OrderError(e.toString()));
+  }
+}
 }
