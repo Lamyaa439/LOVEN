@@ -48,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (state is HomeError) {
           return GalleryEmptyState(
+              backgroundColor: Theme.of(context).colorScheme.surface,
             icon: Icons.wifi_off_rounded,
             title: l10n.couldNotLoadArtworks,
             subtitle: state.message,
@@ -66,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         return GalleryEmptyState(
+            backgroundColor: Theme.of(context).colorScheme.surface,
           icon: Icons.palette_outlined,
           title: l10n.galleryAwaitsTitle,
           subtitle: l10n.galleryAwaitsSubtitle,
@@ -136,6 +138,7 @@ class _HomeDiscoverBody extends StatelessWidget {
             SliverFillRemaining(
               hasScrollBody: false,
               child: GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.search_off_rounded,
                 title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
                 subtitle:

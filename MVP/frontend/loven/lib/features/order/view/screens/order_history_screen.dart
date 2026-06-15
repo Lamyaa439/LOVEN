@@ -46,6 +46,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
           if (state is OrderError) {
             return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.error_outline_rounded,
               title: 'Could not load orders',
               subtitle: state.message,
@@ -54,7 +55,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return const GalleryEmptyState(
+              return GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.receipt_long_outlined,
                 title: 'No orders yet',
                 subtitle:

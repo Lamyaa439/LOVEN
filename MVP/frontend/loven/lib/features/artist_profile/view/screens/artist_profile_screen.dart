@@ -117,6 +117,7 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
             case ArtistProfileStatus.error:
               if (state.artist == null) {
                 return GalleryEmptyState(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                   icon: Icons.error_outline,
                   title: l10n.couldNotLoadProfile,
                   subtitle: state.errorMessage ?? l10n.somethingWentWrong,
@@ -194,6 +195,7 @@ class _SuccessContent extends StatelessWidget {
             SliverFillRemaining(
               hasScrollBody: false,
               child: GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.palette_outlined,
                 title: l10n.noArtistGallery,
                 subtitle: l10n.customerNoPortfolio,
@@ -219,6 +221,7 @@ class _SuccessContent extends StatelessWidget {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: GalleryEmptyState(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                   icon: Icons.image_outlined,
                   title: l10n.noArtworksYet,
                   subtitle: isPublicView

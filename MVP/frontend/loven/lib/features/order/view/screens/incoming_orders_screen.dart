@@ -68,6 +68,7 @@ class _IncomingOrdersScreenState extends State<IncomingOrdersScreen> {
 
           if (state is OrderError) {
             return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.error_outline_rounded,
               title: 'Could not load orders',
               subtitle: state.message,
@@ -76,7 +77,8 @@ class _IncomingOrdersScreenState extends State<IncomingOrdersScreen> {
 
           if (state is OrdersLoaded) {
             if (state.orders.isEmpty) {
-              return const GalleryEmptyState(
+              return GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.inventory_2_outlined,
                 title: 'No incoming orders yet',
                 subtitle: 'Orders for your artworks will appear here.',

@@ -43,6 +43,7 @@ class ArtworksListScreen extends StatelessWidget {
 
           if (state is HomeError) {
             return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.error_outline,
               title: 'Could not load artworks',
               subtitle: state.message,
@@ -54,7 +55,8 @@ class ArtworksListScreen extends StatelessWidget {
           }
 
           if (state is! HomeLoaded) {
-            return const GalleryEmptyState(
+            return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.palette_outlined,
               title: 'No artworks found',
               subtitle: 'Check back soon for new works.',
@@ -66,7 +68,8 @@ class ArtworksListScreen extends StatelessWidget {
               : state.allArtworks;
 
           if (artworks.isEmpty) {
-            return const GalleryEmptyState(
+            return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.palette_outlined,
               title: 'No artworks found',
               subtitle: 'New pieces will appear here as artists publish.',

@@ -80,6 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           if (state is NotificationsError) {
             return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.error_outline,
               title: 'Could not load notifications',
               subtitle: state.message,
@@ -97,10 +98,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     context.read<NotificationsCubit>().refreshNotifications(),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  children: const [
+                  children: [
                     SizedBox(
                       height: 320,
                       child: GalleryEmptyState(
+                          backgroundColor: Theme.of(context).colorScheme.surface,
                         icon: Icons.notifications_none_outlined,
                         title: 'No notifications yet',
                         subtitle:

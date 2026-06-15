@@ -89,6 +89,7 @@ body: BlocConsumer<CartCubit, CartState>(
 
     if (state is CartError && state.previousCart == null) {
       return GalleryEmptyState(
+          backgroundColor: Theme.of(context).colorScheme.surface,
         icon: Icons.error_outline,
         title: 'Could not load cart',
         subtitle: state.message,
@@ -102,6 +103,7 @@ body: BlocConsumer<CartCubit, CartState>(
 
             if (cart.items.isEmpty) {
               return GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.shopping_bag_outlined,
                 title: 'Your cart is empty',
                 subtitle: 'Add artworks you love and they will appear here.',

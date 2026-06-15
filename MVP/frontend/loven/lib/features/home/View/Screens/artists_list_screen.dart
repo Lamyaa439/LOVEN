@@ -49,6 +49,7 @@ class ArtistsListScreen extends StatelessWidget {
 
           if (state is HomeError) {
             return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.error_outline,
               title: 'Could not load artists',
               subtitle: state.message,
@@ -56,7 +57,8 @@ class ArtistsListScreen extends StatelessWidget {
           }
 
           if (state is! HomeLoaded) {
-            return const GalleryEmptyState(
+            return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.person_outline,
               title: 'No artists found',
             );
@@ -65,7 +67,8 @@ class ArtistsListScreen extends StatelessWidget {
           final artists = _uniqueArtistsFromArtworks(state.allArtworks);
 
           if (artists.isEmpty) {
-            return const GalleryEmptyState(
+            return GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
               icon: Icons.person_outline,
               title: 'No artists found',
               subtitle: 'Artists will appear here as works are published.',

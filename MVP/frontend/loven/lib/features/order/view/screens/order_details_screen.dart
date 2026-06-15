@@ -89,6 +89,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     if (_error != null && _order == null) {
       return GalleryEmptyState(
+          backgroundColor: Theme.of(context).colorScheme.surface,
         icon: Icons.error_outline_rounded,
         title: 'Could not load order',
         subtitle: _error!,
@@ -99,7 +100,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     final order = _order;
     if (order == null) {
-      return const GalleryEmptyState(
+      return GalleryEmptyState(
+          backgroundColor: Theme.of(context).colorScheme.surface,
         icon: Icons.receipt_long_outlined,
         title: 'Order not found',
       );
