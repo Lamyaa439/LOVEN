@@ -104,12 +104,17 @@ class _HomeDiscoverBody extends StatelessWidget {
     final allArtworks = state.allArtworks;
     final l10n = AppLocalizations.of(context)!;
 
-    return SafeArea(
-      bottom: false,
-      child: CustomScrollView(
+return SafeArea(
+  bottom: false,
+  child: RefreshIndicator(
+    onRefresh: () async {
+      context.read<HomeBloc>().add(FetchHomeData());
+    },
+    child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
+    ),
         slivers: [
           SliverToBoxAdapter(
             child: _DiscoverPageHeader(
