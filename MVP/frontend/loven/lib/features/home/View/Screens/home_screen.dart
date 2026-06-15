@@ -527,21 +527,26 @@ class _GenreRail extends StatelessWidget {
   final List<ArtworkModel> allArtworks;
   final ValueChanged<String> onGenreTap;
 
-  ArtworkModel? _sampleForGenre(String genre) {
-    for (final art in allArtworks) {
-      final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
-      final normalized = genre.toLowerCase();
-      if (haystack.contains(normalized)) {
+  ArtworkModel? _sampleForGenre(String genre, int index) {
+  if (allArtworks.isEmpty) return null;
+
+  for (final art in allArtworks) {
+    final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
+    final normalized = genre.toLowerCase();
+
+    if (haystack.contains(normalized)) {
+      return art;
+    }
+
+    for (final word in normalized.split(RegExp(r'\s+'))) {
+      if (word.length >= 4 && haystack.contains(word)) {
         return art;
       }
-      for (final word in normalized.split(RegExp(r'\s+'))) {
-        if (word.length >= 4 && haystack.contains(word)) {
-          return art;
-        }
-      }
     }
-    return allArtworks.isNotEmpty ? allArtworks.first : null;
   }
+
+  return allArtworks[index % allArtworks.length];
+}
 
   @override
   Widget build(BuildContext context) {
@@ -558,7 +563,7 @@ class _GenreRail extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
         itemBuilder: (context, index) {
           final genre = genres[index];
-          final sample = _sampleForGenre(genre);
+          final sample = _sampleForGenre(genre, index);
 
           return LovenArtworkCard(
             title: genre,
