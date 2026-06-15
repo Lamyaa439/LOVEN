@@ -536,6 +536,12 @@ abstract class AppLocalizations {
   /// **'{fieldName} is required'**
   String fieldRequired(Object fieldName);
 
+  /// No description provided for @required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
   /// No description provided for @min8Characters.
   ///
   /// In en, this message translates to:
@@ -799,6 +805,468 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Artwork deleted'**
   String get artworkDeleted;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @updateStorefront.
+  ///
+  /// In en, this message translates to:
+  /// **'Update how collectors see your storefront.'**
+  String get updateStorefront;
+
+  /// No description provided for @displayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayName;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @selectCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Select city'**
+  String get selectCity;
+
+  /// No description provided for @bio.
+  ///
+  /// In en, this message translates to:
+  /// **'Bio'**
+  String get bio;
+
+  /// No description provided for @writeBioHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a short artist bio'**
+  String get writeBioHint;
+
+  /// No description provided for @shippingPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping policy'**
+  String get shippingPolicy;
+
+  /// No description provided for @shippingPolicyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe shipping availability and timing'**
+  String get shippingPolicyHint;
+
+  /// No description provided for @saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get saving;
+
+  /// No description provided for @fixHighlighted.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fix the highlighted fields'**
+  String get fixHighlighted;
+
+  /// No description provided for @sessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please sign in again.'**
+  String get sessionExpired;
+
+  /// No description provided for @couldNotUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update profile: {error}'**
+  String couldNotUpdate(Object error);
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @noBioYet.
+  ///
+  /// In en, this message translates to:
+  /// **'This artist has not added a bio yet.'**
+  String get noBioYet;
+
+  /// No description provided for @verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verified;
+
+  /// No description provided for @ships.
+  ///
+  /// In en, this message translates to:
+  /// **'Ships'**
+  String get ships;
+
+  /// No description provided for @editArtistProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit artist profile'**
+  String get editArtistProfile;
+
+  /// No description provided for @uploadArtwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload artwork'**
+  String get uploadArtwork;
+
+  /// No description provided for @pleaseSelectArtworkImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select an artwork image'**
+  String get pleaseSelectArtworkImage;
+
+  /// No description provided for @pleaseLoginAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Please login again before uploading artwork'**
+  String get pleaseLoginAgain;
+
+  /// No description provided for @imageUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Image upload failed: {error}'**
+  String imageUploadFailed(Object error);
+
+  /// No description provided for @artworkUploadedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Artwork uploaded successfully'**
+  String get artworkUploadedSuccessfully;
+
+  /// No description provided for @artworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Artwork title'**
+  String get artworkTitle;
+
+  /// No description provided for @enterArtworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter artwork title'**
+  String get enterArtworkTitle;
+
+  /// No description provided for @titleIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get titleIsRequired;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @describeYourArtwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your artwork'**
+  String get describeYourArtwork;
+
+  /// No description provided for @descriptionIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Description is required'**
+  String get descriptionIsRequired;
+
+  /// No description provided for @priceSAR.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (SAR)'**
+  String get priceSAR;
+
+  /// No description provided for @shippingSAR.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping (SAR)'**
+  String get shippingSAR;
+
+  /// No description provided for @quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantity;
+
+  /// No description provided for @quantityAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity available'**
+  String get quantityAvailable;
+
+  /// No description provided for @quantityIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity is required'**
+  String get quantityIsRequired;
+
+  /// No description provided for @availableForSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Available for sale'**
+  String get availableForSale;
+
+  /// No description provided for @portfolioShowcaseOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio showcase only'**
+  String get portfolioShowcaseOnly;
+
+  /// No description provided for @willBeListedForPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'This artwork will be listed for purchase.'**
+  String get willBeListedForPurchase;
+
+  /// No description provided for @visibleInPortfolioUntilVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible in your portfolio until verification is approved.'**
+  String get visibleInPortfolioUntilVerified;
+
+  /// No description provided for @portfolioMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Portfolio mode'**
+  String get portfolioMode;
+
+  /// No description provided for @unverifiedArtistNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified artists can showcase work in their portfolio. Purchases unlock after verification.'**
+  String get unverifiedArtistNote;
+
+  /// No description provided for @uploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get uploading;
+
+  /// No description provided for @publishArtwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish artwork'**
+  String get publishArtwork;
+
+  /// No description provided for @saveToPortfolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to portfolio'**
+  String get saveToPortfolio;
+
+  /// No description provided for @changeImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Change image'**
+  String get changeImage;
+
+  /// No description provided for @addArtworkImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add artwork image'**
+  String get addArtworkImage;
+
+  /// No description provided for @pngOrJpg.
+  ///
+  /// In en, this message translates to:
+  /// **'PNG or JPG from your gallery'**
+  String get pngOrJpg;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get logout;
+
+  /// No description provided for @logoutConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logoutConfirmation;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @accountDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Account details'**
+  String get accountDetails;
+
+  /// No description provided for @accountDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, email, and account image'**
+  String get accountDetailsSubtitle;
+
+  /// No description provided for @switchToCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to customer'**
+  String get switchToCustomer;
+
+  /// No description provided for @becomeArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Become an artist'**
+  String get becomeArtist;
+
+  /// No description provided for @useLovenAsCustomer.
+  ///
+  /// In en, this message translates to:
+  /// **'Use LOVEN as a customer'**
+  String get useLovenAsCustomer;
+
+  /// No description provided for @createAndShowcase.
+  ///
+  /// In en, this message translates to:
+  /// **'Create and showcase your artworks'**
+  String get createAndShowcase;
+
+  /// No description provided for @savedAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved addresses'**
+  String get savedAddresses;
+
+  /// No description provided for @manageDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage delivery locations'**
+  String get manageDelivery;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get changePassword;
+
+  /// No description provided for @updatePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your account password'**
+  String get updatePassword;
+
+  /// No description provided for @myArtistProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My artist profile'**
+  String get myArtistProfile;
+
+  /// No description provided for @manageStorefront.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your storefront and portfolio'**
+  String get manageStorefront;
+
+  /// No description provided for @incomingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming orders'**
+  String get incomingOrders;
+
+  /// No description provided for @reviewOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and fulfill buyer orders'**
+  String get reviewOrders;
+
+  /// No description provided for @requestVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Request verification'**
+  String get requestVerification;
+
+  /// No description provided for @applyVerifiedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply for a verified artist badge'**
+  String get applyVerifiedBadge;
+
+  /// No description provided for @activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activity;
+
+  /// No description provided for @yourFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Your favorites'**
+  String get yourFavorites;
+
+  /// No description provided for @savedArtworks.
+  ///
+  /// In en, this message translates to:
+  /// **'Artworks you have saved'**
+  String get savedArtworks;
+
+  /// No description provided for @orderHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Order history'**
+  String get orderHistory;
+
+  /// No description provided for @viewPreviousOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'View your previous orders'**
+  String get viewPreviousOrders;
+
+  /// No description provided for @support.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get support;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @shareThoughts.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your thoughts'**
+  String get shareThoughts;
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of your account'**
+  String get signOut;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @currentLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get currentLanguage;
 }
 
 class _AppLocalizationsDelegate

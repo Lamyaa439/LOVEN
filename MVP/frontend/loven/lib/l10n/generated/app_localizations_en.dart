@@ -240,6 +240,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get required => 'Required';
+
+  @override
   String get min8Characters => 'Minimum 8 characters';
 
   @override
@@ -382,4 +385,242 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get artworkDeleted => 'Artwork deleted';
+
+  @override
+  String get editProfileTitle => 'Edit Profile';
+
+  @override
+  String get updateStorefront => 'Update how collectors see your storefront.';
+
+  @override
+  String get displayName => 'Display name';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get selectCity => 'Select city';
+
+  @override
+  String get bio => 'Bio';
+
+  @override
+  String get writeBioHint => 'Write a short artist bio';
+
+  @override
+  String get shippingPolicy => 'Shipping policy';
+
+  @override
+  String get shippingPolicyHint => 'Describe shipping availability and timing';
+
+  @override
+  String get saving => 'Saving...';
+
+  @override
+  String get fixHighlighted => 'Please fix the highlighted fields';
+
+  @override
+  String get sessionExpired => 'Session expired. Please sign in again.';
+
+  @override
+  String couldNotUpdate(Object error) {
+    return 'Could not update profile: $error';
+  }
+
+  @override
+  String get about => 'About';
+
+  @override
+  String get noBioYet => 'This artist has not added a bio yet.';
+
+  @override
+  String get verified => 'Verified';
+
+  @override
+  String get ships => 'Ships';
+
+  @override
+  String get editArtistProfile => 'Edit artist profile';
+
+  @override
+  String get uploadArtwork => 'Upload artwork';
+
+  @override
+  String get pleaseSelectArtworkImage => 'Please select an artwork image';
+
+  @override
+  String get pleaseLoginAgain => 'Please login again before uploading artwork';
+
+  @override
+  String imageUploadFailed(Object error) {
+    return 'Image upload failed: $error';
+  }
+
+  @override
+  String get artworkUploadedSuccessfully => 'Artwork uploaded successfully';
+
+  @override
+  String get artworkTitle => 'Artwork title';
+
+  @override
+  String get enterArtworkTitle => 'Enter artwork title';
+
+  @override
+  String get titleIsRequired => 'Title is required';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get describeYourArtwork => 'Describe your artwork';
+
+  @override
+  String get descriptionIsRequired => 'Description is required';
+
+  @override
+  String get priceSAR => 'Price (SAR)';
+
+  @override
+  String get shippingSAR => 'Shipping (SAR)';
+
+  @override
+  String get quantity => 'Quantity';
+
+  @override
+  String get quantityAvailable => 'Quantity available';
+
+  @override
+  String get quantityIsRequired => 'Quantity is required';
+
+  @override
+  String get availableForSale => 'Available for sale';
+
+  @override
+  String get portfolioShowcaseOnly => 'Portfolio showcase only';
+
+  @override
+  String get willBeListedForPurchase =>
+      'This artwork will be listed for purchase.';
+
+  @override
+  String get visibleInPortfolioUntilVerified =>
+      'Visible in your portfolio until verification is approved.';
+
+  @override
+  String get portfolioMode => 'Portfolio mode';
+
+  @override
+  String get unverifiedArtistNote =>
+      'Unverified artists can showcase work in their portfolio. Purchases unlock after verification.';
+
+  @override
+  String get uploading => 'Uploading…';
+
+  @override
+  String get publishArtwork => 'Publish artwork';
+
+  @override
+  String get saveToPortfolio => 'Save to portfolio';
+
+  @override
+  String get changeImage => 'Change image';
+
+  @override
+  String get addArtworkImage => 'Add artwork image';
+
+  @override
+  String get pngOrJpg => 'PNG or JPG from your gallery';
+
+  @override
+  String get logout => 'Log out';
+
+  @override
+  String get logoutConfirmation => 'Are you sure you want to log out?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get accountDetails => 'Account details';
+
+  @override
+  String get accountDetailsSubtitle => 'Name, email, and account image';
+
+  @override
+  String get switchToCustomer => 'Switch to customer';
+
+  @override
+  String get becomeArtist => 'Become an artist';
+
+  @override
+  String get useLovenAsCustomer => 'Use LOVEN as a customer';
+
+  @override
+  String get createAndShowcase => 'Create and showcase your artworks';
+
+  @override
+  String get savedAddresses => 'Saved addresses';
+
+  @override
+  String get manageDelivery => 'Manage delivery locations';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get updatePassword => 'Update your account password';
+
+  @override
+  String get myArtistProfile => 'My artist profile';
+
+  @override
+  String get manageStorefront => 'Manage your storefront and portfolio';
+
+  @override
+  String get incomingOrders => 'Incoming orders';
+
+  @override
+  String get reviewOrders => 'Review and fulfill buyer orders';
+
+  @override
+  String get requestVerification => 'Request verification';
+
+  @override
+  String get applyVerifiedBadge => 'Apply for a verified artist badge';
+
+  @override
+  String get activity => 'Activity';
+
+  @override
+  String get yourFavorites => 'Your favorites';
+
+  @override
+  String get savedArtworks => 'Artworks you have saved';
+
+  @override
+  String get orderHistory => 'Order history';
+
+  @override
+  String get viewPreviousOrders => 'View your previous orders';
+
+  @override
+  String get support => 'Support';
+
+  @override
+  String get sendFeedback => 'Send feedback';
+
+  @override
+  String get shareThoughts => 'Share your thoughts';
+
+  @override
+  String get signOut => 'Sign out of your account';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get currentLanguage => 'English';
 }

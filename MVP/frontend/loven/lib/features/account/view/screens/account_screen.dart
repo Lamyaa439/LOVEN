@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
+import 'package:loven/core/storage/app_preferences.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_cubit.dart';
 import 'package:loven/features/artist_profile/controller/artist_profile_state.dart';
@@ -11,6 +12,7 @@ import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/auth/data/models/auth_user.dart';
 import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 import 'package:loven/features/account/controller/cubit/account_cubit.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Single account hub for guests and signed-in users (`/profile`).
 class AccountScreen extends StatefulWidget {
@@ -36,20 +38,22 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _confirmLogout() async {
+    final l10n = AppLocalizations.of(context)!;
+
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
+          title: Text(l10n.logout),
+          content: Text(l10n.logoutConfirmation),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Logout'),
+              child: Text(l10n.logout),
             ),
           ],
         );
@@ -103,20 +107,22 @@ class _SignedInAccountHub extends StatelessWidget {
   final VoidCallback onLogout;
   final VoidCallback onOpenFavorites;
 
-  bool get _isArtist => user.systemRole == 'artist';
+  bool get _isArtist => user.systemRole == AuthUser.roleArtist;
 
   Future<void> _changeRole(BuildContext context) async {
-    final nextRole = _isArtist ? 'customer' : 'artist';
+    final nextRole = _isArtist ? AuthUser.roleCustomer : AuthUser.roleArtist;
 
     await context.read<AccountCubit>().updateRole(systemRole: nextRole);
 
-    if (nextRole == 'artist') {
+    if (nextRole == AuthUser.roleArtist) {
       context.read<ArtistProfileCubit>().fetchMyProfileData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
@@ -135,41 +141,40 @@ class _SignedInAccountHub extends StatelessWidget {
               role: user.systemRole,
             ),
             const SizedBox(height: AppSpacing.sectionGap),
-            const _AccountSectionHeader(title: 'Account'),
+            _AccountSectionHeader(title: l10n.account),
             if (!_isArtist)
-  _AccountTile(
-    icon: Icons.person_outline,
-    title: 'Account details',
-    subtitle: 'Name, email, and account photo',
-    onTap: () => context.push(AppRoutes.profileEdit),
-  ),
+              _AccountTile(
+                icon: Icons.person_outline,
+                title: l10n.accountDetails,
+                subtitle: l10n.accountDetailsSubtitle,
+                onTap: () => context.push(AppRoutes.profileEdit),
+              ),
             _AccountTile(
               icon: _isArtist ? Icons.person_outline : Icons.brush_outlined,
-              title: _isArtist ? 'Switch to customer' : 'Become an artist',
-              subtitle: _isArtist
-                  ? 'Use LOVEN as a customer account'
-                  : 'Create and showcase your artwork',
+              title: _isArtist ? l10n.switchToCustomer : l10n.becomeArtist,
+              subtitle:
+                  _isArtist ? l10n.useLovenAsCustomer : l10n.createAndShowcase,
               onTap: () => _changeRole(context),
             ),
             _AccountTile(
               icon: Icons.location_on_outlined,
-              title: 'Saved addresses',
-              subtitle: 'Manage your delivery locations',
+              title: l10n.savedAddresses,
+              subtitle: l10n.manageDelivery,
               onTap: () => context.push(AppRoutes.location),
             ),
             _AccountTile(
               icon: Icons.lock_outline,
-              title: 'Change password',
-              subtitle: 'Update your account password',
+              title: l10n.changePassword,
+              subtitle: l10n.updatePassword,
               onTap: () => context.push(AppRoutes.changePassword),
             ),
             if (_isArtist) ...[
               const SizedBox(height: AppSpacing.xl),
-              const _AccountSectionHeader(title: 'Artist'),
+              _AccountSectionHeader(title: l10n.artist),
               _AccountTile(
                 icon: Icons.storefront_outlined,
-                title: 'My artist profile',
-                subtitle: 'Manage your storefront and portfolio',
+                title: l10n.myArtistProfile,
+                subtitle: l10n.manageStorefront,
                 onTap: () => context.go(AppRoutes.myProfile),
               ),
               BlocBuilder<ArtistProfileCubit, ArtistProfileState>(
@@ -183,8 +188,8 @@ class _SignedInAccountHub extends StatelessWidget {
                     children: [
                       _AccountTile(
                         icon: Icons.inventory_2_outlined,
-                        title: 'Incoming orders',
-                        subtitle: 'Review and fulfill buyer orders',
+                        title: l10n.incomingOrders,
+                        subtitle: l10n.reviewOrders,
                         onTap: () {
                           context.push(
                             AppRoutes.ordersIncoming,
@@ -195,8 +200,8 @@ class _SignedInAccountHub extends StatelessWidget {
                       if (!artist.isVerified)
                         _AccountTile(
                           icon: Icons.verified_outlined,
-                          title: 'Request verification',
-                          subtitle: 'Apply for a verified artist badge',
+                          title: l10n.requestVerification,
+                          subtitle: l10n.applyVerifiedBadge,
                           onTap: () {
                             context.go(AppRoutes.verificationRequest);
                           },
@@ -207,35 +212,46 @@ class _SignedInAccountHub extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.xl),
-            const _AccountSectionHeader(title: 'Activity'),
+            _AccountSectionHeader(title: l10n.activity),
             _AccountTile(
-              icon: Icons.favorite_border,
-              title: 'Your favorites',
-              subtitle: 'Artworks you have saved',
-              onTap: onOpenFavorites,
-            ),
+                icon: Icons.favorite_border,
+                title: l10n.yourFavorites,
+                subtitle: l10n.savedArtworks,
+                onTap: onOpenFavorites),
             _AccountTile(
-              icon: Icons.shopping_bag_outlined,
-              title: 'Order history',
-              subtitle: 'View your previous orders',
-              onTap: () => context.go(AppRoutes.ordersHistory),
+                icon: Icons.shopping_bag_outlined,
+                title: l10n.orderHistory,
+                subtitle: l10n.viewPreviousOrders,
+                onTap: () => context.go(AppRoutes.ordersHistory)),
+            const SizedBox(height: AppSpacing.xl),
+            _AccountSectionHeader(title: l10n.support),
+            _AccountTile(
+                icon: Icons.feedback_outlined,
+                title: l10n.sendFeedback,
+                subtitle: l10n.shareThoughts,
+                onTap: () => context.go(AppRoutes.feedback)),
+            _AccountSectionHeader(title: l10n.language),
+            _AccountTile(
+              icon: Icons.language_outlined,
+              title: l10n.language,
+              subtitle: l10n.currentLanguage,
+              onTap: () {
+                // 1. Get the current language code
+                final appPrefs = context.read<AppPreferences>();
+                final currentCode = appPrefs.languageCode;
+
+                // 2. Toggle the code
+                final newCode = currentCode == 'ar' ? 'en' : 'ar';
+                appPrefs.setLanguageCode(newCode);
+              },
             ),
             const SizedBox(height: AppSpacing.xl),
-            const _AccountSectionHeader(title: 'Support'),
             _AccountTile(
-              icon: Icons.feedback_outlined,
-              title: 'Send feedback',
-              subtitle: 'Share your thoughts with us',
-              onTap: () => context.go(AppRoutes.feedback),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            _AccountTile(
-              icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
-              isDanger: true,
-              onTap: onLogout,
-            ),
+                icon: Icons.logout,
+                title: l10n.logout,
+                subtitle: l10n.signOut,
+                isDanger: true,
+                onTap: onLogout),
           ],
         ),
       ),
@@ -279,7 +295,11 @@ class _AccountHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+
+    final String localizedRole =
+        role == AuthUser.roleArtist ? l10n.artist : l10n.customer;
 
     return LovenSurfaceCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -322,7 +342,7 @@ class _AccountHeader extends StatelessWidget {
                     border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Text(
-                    role.toUpperCase(),
+                    localizedRole.toUpperCase(),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
                       letterSpacing: 0.5,
@@ -364,18 +384,18 @@ class _AccountTile extends StatelessWidget {
         onTap: onTap,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
+          vertical: AppSpacing.sm,
         ),
         child: Row(
           children: [
             Container(
-              width: AppSizes.avatarMd,
-              height: AppSizes.avatarMd,
+              width: AppSizes.avatarSm,
+              height: AppSizes.avatarSm,
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, color: iconColor, size: AppSizes.iconMd),
+              child: Icon(icon, color: iconColor, size: AppSizes.iconSm),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -415,12 +435,13 @@ class _GuestAccountView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return GalleryEmptyState(
       icon: Icons.person_outline,
-      title: 'Sign in to view your profile',
-      subtitle:
-          'Create an account or log in to manage your orders, addresses, and more.',
-      actionLabel: 'Sign up / Log in',
+      title: l10n.signIn,
+      subtitle: l10n.signInSubtitle,
+      actionLabel: l10n.signUp,
       onAction: () => context.push(AppRoutes.auth),
       usePrimaryAction: true,
     );

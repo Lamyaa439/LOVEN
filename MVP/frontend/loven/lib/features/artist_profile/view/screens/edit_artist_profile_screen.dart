@@ -16,6 +16,7 @@ import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/features/home/controller/bloc/home_bloc.dart';
 import 'package:loven/features/home/controller/bloc/home_event.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 class EditArtistProfileScreen extends StatefulWidget {
   const EditArtistProfileScreen({
@@ -97,14 +98,15 @@ class _EditArtistProfileScreenState extends State<EditArtistProfileScreen> {
     super.dispose();
   }
 
-bool get _hasChanges {
-  return _displayNameController.text.trim() != _initialDisplayName.trim() ||
-      (_selectedCity ?? '').trim() != _initialCity.trim() ||
-      _bioController.text.trim() != _initialBio.trim() ||
-      _shippingPolicyController.text.trim() != _initialShippingPolicy.trim() ||
-      _selectedProfileImage != null ||
-      _selectedCoverImage != null;
-}
+  bool get _hasChanges {
+    return _displayNameController.text.trim() != _initialDisplayName.trim() ||
+        (_selectedCity ?? '').trim() != _initialCity.trim() ||
+        _bioController.text.trim() != _initialBio.trim() ||
+        _shippingPolicyController.text.trim() !=
+            _initialShippingPolicy.trim() ||
+        _selectedProfileImage != null ||
+        _selectedCoverImage != null;
+  }
 
   Future<void> _pickProfileImage() async {
     final image = await _picker.pickImage(
@@ -127,18 +129,19 @@ bool get _hasChanges {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_hasChanges) return;
 
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fix the highlighted fields')),
+        SnackBar(content: Text(l10n.fixHighlighted)),
       );
       return;
     }
 
     if (!authStateHasSession(context.read<AuthCubit>().state)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Session expired. Please sign in again.')),
+        SnackBar(content: Text(l10n.sessionExpired)),
       );
       return;
     }
@@ -188,7 +191,7 @@ bool get _hasChanges {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update profile: $e')),
+        SnackBar(content: Text(l10n.couldNotUpdate(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _isUploadingImages = false);
@@ -207,12 +210,14 @@ bool get _hasChanges {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocConsumer<ArtistProfileCubit, ArtistProfileState>(
       listener: (context, state) {
         if (state.status == ArtistProfileStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage ?? 'Could not update profile'),
+              content: Text(state.errorMessage ?? l10n.couldNotUpdate('')),
             ),
           );
         }
@@ -224,7 +229,7 @@ bool get _hasChanges {
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
-            title: const Text('Artist profile'),
+            title: Text(l10n.editProfileTitle),
             leading: lovenPushedScreenBackLeading(context),
           ),
           body: SafeArea(
@@ -241,7 +246,7 @@ bool get _hasChanges {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Update how collectors see your storefront.',
+                      l10n.updateStorefront,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.textMuted,
@@ -257,29 +262,28 @@ bool get _hasChanges {
                     _AvatarSection(
                       artist: widget.artist,
                       selectedProfileImage: _selectedProfileImage,
-                      onPickProfileImage:
-                          isLoading ? null : _pickProfileImage,
+                      onPickProfileImage: isLoading ? null : _pickProfileImage,
                     ),
                     const SizedBox(height: AppSpacing.sectionGap),
                     CheckoutFieldSection(
-                      label: 'Display name',
+                      label: l10n.displayName,
                       child: LovenTextField(
                         controller: _displayNameController,
-                        hintText: 'Display name',
+                        hintText: l10n.displayName,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Display name is required';
+                            return l10n.fieldRequired(l10n.displayName);
                           }
                           return null;
                         },
                       ),
                     ),
                     CheckoutFieldSection(
-                      label: 'Location',
+                      label: l10n.location,
                       child: DropdownButtonFormField<String>(
                         value: _selectedCity,
                         decoration: checkoutInputDecoration(
-                          hint: 'Select city',
+                          hint: l10n.selectCity,
                           icon: Icons.location_on_outlined,
                         ),
                         items: _cityOptions
@@ -296,23 +300,23 @@ bool get _hasChanges {
                       ),
                     ),
                     CheckoutFieldSection(
-                      label: 'Bio',
+                      label: l10n.bio,
                       child: LovenTextField(
                         controller: _bioController,
-                        hintText: 'Write a short artist bio',
+                        hintText: l10n.writeBioHint,
                         maxLines: 7,
                       ),
                     ),
                     CheckoutFieldSection(
-                      label: 'Shipping policy',
+                      label: l10n.shippingPolicy,
                       child: LovenTextField(
                         controller: _shippingPolicyController,
-                        hintText: 'Describe shipping availability and timing',
+                        hintText: l10n.shippingPolicyHint,
                         maxLines: 3,
                       ),
                     ),
                     LovenPrimaryButton(
-                      label: isLoading ? 'Saving…' : 'Save changes',
+                      label: isLoading ? l10n.saving : l10n.saveChanges,
                       onPressed: (isLoading || !_hasChanges) ? null : _save,
                       isLoading: isLoading,
                     ),
@@ -383,21 +387,21 @@ class _CoverSection extends StatelessWidget {
                     ),
                   ),
                 Positioned(
-  right: AppSpacing.sm,
-  bottom: AppSpacing.sm,
-  child: CircleAvatar(
-    radius: AppSizes.iconMd,
-    backgroundColor: AppColors.brandPrimary,
-    child: IconButton(
-      icon: Icon(
-        Icons.camera_alt_outlined,
-        size: AppSizes.iconSm,
-        color: AppColors.textOnBrand,
-      ),
-      onPressed: onPickCover,
-    ),
-  ),
-),
+                  right: AppSpacing.sm,
+                  bottom: AppSpacing.sm,
+                  child: CircleAvatar(
+                    radius: AppSizes.iconMd,
+                    backgroundColor: AppColors.brandPrimary,
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.camera_alt_outlined,
+                        size: AppSizes.iconSm,
+                        color: AppColors.textOnBrand,
+                      ),
+                      onPressed: onPickCover,
+                    ),
+                  ),
+                ),
               ],
             ),
           );
@@ -450,9 +454,10 @@ class _AvatarSection extends StatelessWidget {
                           artist.displayName.isNotEmpty
                               ? artist.displayName[0].toUpperCase()
                               : '?',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: AppColors.brandPrimary,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: AppColors.brandPrimary,
+                                  ),
                         )
                       : null,
                 ),
