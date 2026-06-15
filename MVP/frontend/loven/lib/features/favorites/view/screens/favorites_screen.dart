@@ -49,6 +49,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
             if (state is FavoritesError) {
               return GalleryEmptyState(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.error_outline,
                 title: 'Could not load favorites',
                 subtitle: state.message,
@@ -63,7 +64,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               final favorites = state.favorites;
 
               if (favorites.isEmpty) {
-                return const GalleryEmptyState(
+                return GalleryEmptyState(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
                   icon: Icons.favorite_border_rounded,
                   title: 'No favorites yet',
                   subtitle:

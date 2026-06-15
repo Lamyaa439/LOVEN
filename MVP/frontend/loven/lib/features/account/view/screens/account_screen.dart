@@ -438,6 +438,7 @@ class _GuestAccountView extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return GalleryEmptyState(
+        backgroundColor: Theme.of(context).colorScheme.surface,
       icon: Icons.person_outline,
       title: l10n.signIn,
       subtitle: l10n.signInSubtitle,

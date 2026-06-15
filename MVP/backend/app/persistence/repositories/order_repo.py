@@ -193,12 +193,26 @@ class OrderRepository(SQLAlchemyRepository):
             raise
 
     def get_orders_by_buyer(self, buyer_id):
-        """Return all orders for a buyer, newest first."""
+        """Return visible buyer orders, newest first.
+        Excludes abandoned checkout orders that are still pending payment.
+        """
         if not buyer_id:
             return []
-
+        
+        visible_statuses = [
+            "paid",
+            "confirmed",
+            "processing",
+            "shipped",
+            "delivered",
+            "completed",
+            "cancelled",
+            "refunded",
+        ]
+        
         return (
-            Order.query.filter_by(buyer_id=buyer_id)
+            Order.query.filter(Order.buyer_id == buyer_id)
+            .filter(Order.status.in_(visible_statuses))
             .order_by(Order.created_at.desc())
             .all()
         )

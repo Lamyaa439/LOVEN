@@ -4,6 +4,7 @@ from app.models.order import Order
 from app.persistence.repositories.artist_profile_repo import ArtistProfileRepository
 from app.persistence.repositories.order_repo import order_repo
 from app.services.notification_service import notification_service
+from app.models.user import User
 
 import logging
 
@@ -27,6 +28,22 @@ def _serialize_order_items(items):
         serialized.append(payload)
 
     return serialized
+
+def _serialize_buyer(buyer_id):
+    """Return buyer account info for artist/buyer order display."""
+    if not buyer_id:
+        return None
+
+    buyer = db.session.get(User, buyer_id)
+    if not buyer:
+        return None
+
+    return {
+        "id": str(buyer.id),
+        "full_name": getattr(buyer, "full_name", None),
+        "username": getattr(buyer, "username", None),
+        "email": getattr(buyer, "email", None),
+    }
 
 # =========================================================
 # Service: Order Service
@@ -177,6 +194,7 @@ def get_artist_orders(artist_profile_id):
         payload = order.to_dict()
         _, items = order_repo.get_order_with_items(order.id)
         payload["items"] = _serialize_order_items(items)
+        payload["buyer"] = _serialize_buyer(order.buyer_id)
         order_payloads.append(payload)
 
     return {
