@@ -129,7 +129,7 @@ class _SignedInAccountHub extends StatelessWidget {
           AppSpacing.screenPadding,
           AppSpacing.lg,
           AppSpacing.screenPadding,
-          AppSpacing.bottomNavClearance,
+          AppSpacing.bottomNavClearance + 20.0,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,6 +252,19 @@ class _SignedInAccountHub extends StatelessWidget {
                 subtitle: l10n.signOut,
                 isDanger: true,
                 onTap: onLogout),
+            const SizedBox(height: AppSpacing.xxl),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Text(
+                  "© 2026 DevNext. All rights reserved.",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -438,7 +451,7 @@ class _GuestAccountView extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return GalleryEmptyState(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       icon: Icons.person_outline,
       title: l10n.signIn,
       subtitle: l10n.signInSubtitle,
