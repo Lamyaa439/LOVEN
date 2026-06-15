@@ -229,15 +229,19 @@ class _ArtistFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: AppSizes.floatingNavFabSize,
         height: AppSizes.floatingNavFabSize,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.brandSecondary,
+          color: isDark
+              ? AppColors.brandSecondary      // Blue in dark mode
+              : AppColors.brandPrimary,   // Purple in light mode
           boxShadow: AppShadows.floatingNavFab,
         ),
         child: Icon(
