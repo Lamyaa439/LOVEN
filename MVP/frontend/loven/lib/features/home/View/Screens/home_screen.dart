@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (state is HomeError) {
           return GalleryEmptyState(
-              backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             icon: Icons.wifi_off_rounded,
             title: l10n.couldNotLoadArtworks,
             subtitle: state.message,
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         return GalleryEmptyState(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           icon: Icons.palette_outlined,
           title: l10n.galleryAwaitsTitle,
           subtitle: l10n.galleryAwaitsSubtitle,
@@ -138,7 +138,7 @@ class _HomeDiscoverBody extends StatelessWidget {
             SliverFillRemaining(
               hasScrollBody: false,
               child: GalleryEmptyState(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.search_off_rounded,
                 title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
                 subtitle:
@@ -152,7 +152,7 @@ class _HomeDiscoverBody extends StatelessWidget {
           else
             ..._buildDiscoverSlivers(context, artworks, allArtworks, l10n),
           const SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.bottomNavClearance),
+            child: SizedBox(height: AppSpacing.bottomNavClearance + 40.0),
           ),
         ],
       ),
@@ -531,25 +531,25 @@ class _GenreRail extends StatelessWidget {
   final ValueChanged<String> onGenreTap;
 
   ArtworkModel? _sampleForGenre(String genre, int index) {
-  if (allArtworks.isEmpty) return null;
+    if (allArtworks.isEmpty) return null;
 
-  for (final art in allArtworks) {
-    final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
-    final normalized = genre.toLowerCase();
+    for (final art in allArtworks) {
+      final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
+      final normalized = genre.toLowerCase();
 
-    if (haystack.contains(normalized)) {
-      return art;
-    }
-
-    for (final word in normalized.split(RegExp(r'\s+'))) {
-      if (word.length >= 4 && haystack.contains(word)) {
+      if (haystack.contains(normalized)) {
         return art;
       }
-    }
-  }
 
-  return allArtworks[index % allArtworks.length];
-}
+      for (final word in normalized.split(RegExp(r'\s+'))) {
+        if (word.length >= 4 && haystack.contains(word)) {
+          return art;
+        }
+      }
+    }
+
+    return allArtworks[index % allArtworks.length];
+  }
 
   @override
   Widget build(BuildContext context) {
