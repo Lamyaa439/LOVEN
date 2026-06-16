@@ -42,7 +42,11 @@ class CartCubit extends Cubit<CartState> {
       return;
     }
 
-    emit(CartLoading());
+    final hadCartLoaded = state is CartLoaded;
+
+if (!hadCartLoaded) {
+  emit(CartLoading());
+}
 
     try {
       final cart = await _repository.getCart();
@@ -57,7 +61,9 @@ class CartCubit extends Cubit<CartState> {
         return;
       }
 
-      emit(CartError(e.toString()));
+      if (!hadCartLoaded) {
+  emit(CartError(e.toString()));
+}
     }
   }
 

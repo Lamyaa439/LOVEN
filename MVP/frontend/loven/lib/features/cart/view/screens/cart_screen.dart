@@ -39,7 +39,12 @@ class _CartScreenState extends State<CartScreen> {
         centerTitle: true,
         title: BlocBuilder<CartCubit, CartState>(
           builder: (context, state) {
-            final itemCount = state is CartLoaded ? state.cart.items.length : 0;
+            final itemCount = state is CartLoaded
+    ? state.cart.items.fold<int>(
+        0,
+        (sum, item) => sum + item.quantity,
+      )
+    : 0;
 
             return Row(
               mainAxisSize: MainAxisSize.min,
@@ -102,7 +107,8 @@ class _CartScreenState extends State<CartScreen> {
           }
 
           if (state is CartLoaded) {
-            final cart = state.cart;
+  final cart = state.cart;
+  final isMutating = state.isMutating;
 
             if (cart.items.isEmpty) {
               return GalleryEmptyState(
@@ -133,6 +139,7 @@ class _CartScreenState extends State<CartScreen> {
 
                       return _CartItemCard(
                         item: item,
+                        isUpdating: isMutating,
                         onIncrease: () {
                           if (item.quantity >= item.stockQuantity) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +184,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 _CartSummary(
                   cart: cart,
+                  isMutating: isMutating,
                   onCheckout: () {
                     context.push(AppRoutes.checkout, extra: cart);
                   },
@@ -198,12 +206,14 @@ class _CartItemCard extends StatelessWidget {
     required this.onIncrease,
     required this.onDecrease,
     required this.onRemove,
+    this.isUpdating = false,
   });
 
   final CartItemModel item;
   final VoidCallback onIncrease;
   final VoidCallback onDecrease;
   final VoidCallback onRemove;
+  final bool isUpdating;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +256,7 @@ class _CartItemCard extends StatelessWidget {
                         minWidth: AppSizes.touchTargetMin,
                         minHeight: AppSizes.touchTargetMin,
                       ),
-                      onPressed: onRemove,
+                      onPressed: isUpdating ? null : onRemove,
                       icon: Icon(
                         Icons.delete_outline,
                         size: AppSizes.iconSm,
@@ -265,6 +275,7 @@ class _CartItemCard extends StatelessWidget {
                   children: [
                     _QuantityStepper(
                       quantity: item.quantity,
+                      isUpdating: isUpdating,
                       onDecrease: onDecrease,
                       onIncrease: onIncrease,
                     ),
@@ -289,11 +300,13 @@ class _QuantityStepper extends StatelessWidget {
     required this.quantity,
     required this.onDecrease,
     required this.onIncrease,
+    this.isUpdating = false,
   });
 
   final int quantity;
   final VoidCallback onDecrease;
   final VoidCallback onIncrease;
+  final bool isUpdating;
 
   @override
   Widget build(BuildContext context) {
@@ -315,14 +328,20 @@ class _QuantityStepper extends StatelessWidget {
               minWidth: AppSizes.touchTargetMin,
               minHeight: 32,
             ),
-            onPressed: onDecrease,
+            onPressed: isUpdating ? null : onDecrease,
             icon: Icon(
               Icons.remove,
               size: AppSizes.iconSm,
               color: AppColors.textMuted,
             ),
           ),
-          Text('$quantity', style: theme.textTheme.titleSmall),
+          isUpdating
+    ? const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      )
+    : Text('$quantity', style: theme.textTheme.titleSmall),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.all(AppSpacing.xs),
@@ -330,7 +349,7 @@ class _QuantityStepper extends StatelessWidget {
               minWidth: AppSizes.touchTargetMin,
               minHeight: 32,
             ),
-            onPressed: onIncrease,
+            onPressed: isUpdating ? null : onIncrease,
             icon: Icon(
               Icons.add,
               size: AppSizes.iconSm,
@@ -347,10 +366,12 @@ class _CartSummary extends StatelessWidget {
   const _CartSummary({
     required this.cart,
     required this.onCheckout,
+    this.isMutating = false,
   });
 
   final CartModel cart;
   final VoidCallback onCheckout;
+  final bool isMutating;
 
   @override
   Widget build(BuildContext context) {
@@ -401,10 +422,12 @@ class _CartSummary extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             LovenSecondaryButton(
-              label: l10n.clearCart,
-              expand: true,
-              onPressed: () => context.read<CartCubit>().clearCart(),
-            ),
+  label: isMutating ? 'Clearing cart...' : l10n.clearCart,
+  expand: true,
+  onPressed: isMutating
+      ? null
+      : () => context.read<CartCubit>().clearCart(),
+),
           ],
         ),
       ),

@@ -39,6 +39,15 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
   XFile? _selectedImage;
   bool _isUploadingImage = false;
 
+  String? _selectedCategory;
+
+List<String> _artworkCategories(AppLocalizations l10n) => [
+  l10n.oilPainting,
+  l10n.calligraphy,
+  l10n.photography,
+  l10n.digitalArt,
+];
+
   @override
   void initState() {
     super.initState();
@@ -118,7 +127,8 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
 
       context.read<ArtworkCubit>().createArtwork(
             title: titleController.text.trim(),
-            description: descriptionController.text.trim(),
+            description:
+    '[Category: $_selectedCategory]\n${descriptionController.text.trim()}',
             price: double.parse(priceController.text.trim()),
             quantityAvailable: int.parse(quantityController.text.trim()),
             shippingFee: double.parse(shippingFeeController.text.trim()),
@@ -200,6 +210,63 @@ class _CreateArtworkScreenState extends State<CreateArtworkScreen> {
                         },
                       ),
                     ),
+CheckoutFieldSection(
+  label: l10n.category,
+  child: LovenSurfaceCard(
+    onTap: isLoading
+        ? null
+        : () async {
+            final selected = await showModalBottomSheet<String>(
+              context: context,
+              showDragHandle: true,
+              builder: (sheetContext) {
+                final categories = _artworkCategories(l10n);
+
+                return SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: categories.map((category) {
+                        final isSelected = category == _selectedCategory;
+
+                        return ListTile(
+                          title: Text(category),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_rounded)
+                              : null,
+                          onTap: () => Navigator.pop(sheetContext, category),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                );
+              },
+            );
+
+            if (selected != null) {
+              setState(() => _selectedCategory = selected);
+            }
+          },
+    child: Row(
+      children: [
+        const Icon(Icons.category_outlined, size: 20),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            _selectedCategory ?? l10n.selectCategory,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: _selectedCategory == null
+                      ? AppColors.textMuted
+                      : null,
+                ),
+          ),
+        ),
+        const Icon(Icons.keyboard_arrow_down_rounded),
+      ],
+    ),
+  ),
+),
                     CheckoutFieldSection(
                       label: l10n.description,
                       child: LovenTextField(

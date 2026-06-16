@@ -474,6 +474,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get titleIsRequired => 'العنوان مطلوب';
 
   @override
+  String get category => 'التصنيف';
+
+  @override
+  String get selectCategory => 'اختر التصنيف';
+
+  @override
+  String get categoryIsRequired => 'التصنيف مطلوب';
+
+  @override
+  String get oilPainting => 'الرسم الزيتي';
+
+  @override
+  String get calligraphy => 'فن الخط';
+
+  @override
+  String get photography => 'الفوتوغرافي';
+
+  @override
+  String get digitalArt => 'الفن الرقمي';
+
+  @override
   String get description => 'الوصف';
 
   @override
