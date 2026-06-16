@@ -692,6 +692,12 @@ abstract class AppLocalizations {
   /// **'Preparing discovery...'**
   String get preparingDiscovery;
 
+  /// No description provided for @splashLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading LOVEN…'**
+  String get splashLoading;
+
   /// No description provided for @couldNotLoadArtworks.
   ///
   /// In en, this message translates to:
