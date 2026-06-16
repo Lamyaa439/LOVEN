@@ -9,25 +9,25 @@ class VerificationRequestCubit extends Cubit<VerificationRequestState> {
   VerificationRequestCubit(this._repository)
       : super(VerificationRequestInitial());
 
-  Future<void> submitRequest({
-    required String documentType,
-    required String institutionName,
-    required String documentNumber,
-  }) async {
-    emit(VerificationRequestLoading());
+Future<void> submitRequest({
+  required String documentType,
+  required String institutionName,
+  required String documentNumber,
+}) async {
+  emit(VerificationRequestLoading());
 
-    try {
-      await _repository.submitRequest(
-        documentType: documentType,
-        institutionName: institutionName,
-        documentNumber: documentNumber,
-      );
+  try {
+    await _repository.submitRequest(
+      documentType: documentType,
+      institutionName: institutionName,
+      documentNumber: documentNumber,
+    );
 
-      emit(VerificationRequestSuccess('Verification request submitted'));
-    } catch (e) {
-      emit(VerificationRequestError(e.toString()));
-    }
+    await fetchMyRequest();
+  } catch (e) {
+    emit(VerificationRequestError(e.toString()));
   }
+}
 
   Future<void> fetchAllRequests() async {
     emit(VerificationRequestLoading());
@@ -43,6 +43,23 @@ class VerificationRequestCubit extends Cubit<VerificationRequestState> {
       emit(VerificationRequestError(e.toString()));
     }
   }
+
+  Future<void> fetchMyRequest() async {
+  emit(VerificationRequestLoading());
+
+  try {
+    final raw = await _repository.fetchAllRequests();
+
+    final requests =
+        (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
+
+    final myRequest = requests.isNotEmpty ? requests.first : null;
+
+    emit(VerificationMyRequestLoaded(myRequest));
+  } catch (e) {
+    emit(VerificationRequestError(e.toString()));
+  }
+}
 
   Future<void> approveRequest(String requestId) async {
     try {

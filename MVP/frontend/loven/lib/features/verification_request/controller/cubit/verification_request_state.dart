@@ -16,6 +16,12 @@ class VerificationRequestError extends VerificationRequestState {
   VerificationRequestError(this.message);
 }
 
+class VerificationMyRequestLoaded extends VerificationRequestState {
+  final Map<String, dynamic>? request;
+
+  VerificationMyRequestLoaded(this.request);
+}
+
 class VerificationRequestsLoaded extends VerificationRequestState {
   final List<Map<String, dynamic>> requests;
 

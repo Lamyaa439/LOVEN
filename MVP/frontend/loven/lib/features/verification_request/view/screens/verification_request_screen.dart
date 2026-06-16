@@ -35,6 +35,16 @@ class _VerificationRequestScreenState extends State<VerificationRequestScreen> {
   ];
 
   @override
+void initState() {
+  super.initState();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!mounted) return;
+    context.read<VerificationRequestCubit>().fetchMyRequest();
+  });
+}
+
+  @override
   void dispose() {
     _institutionNameController.dispose();
     _documentNumberController.dispose();
@@ -63,7 +73,6 @@ class _VerificationRequestScreenState extends State<VerificationRequestScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
-          context.pop(true);
         }
 
         if (state is VerificationRequestError) {
@@ -82,6 +91,49 @@ class _VerificationRequestScreenState extends State<VerificationRequestScreen> {
         body: BlocBuilder<VerificationRequestCubit, VerificationRequestState>(
           builder: (context, state) {
             final isLoading = state is VerificationRequestLoading;
+
+            if (state is VerificationMyRequestLoaded && state.request != null) {
+  final request = state.request!;
+  final status = request['status']?.toString() ?? 'pending';
+
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.screenPadding),
+      child: LovenSurfaceCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.verified_outlined,
+              size: AppSizes.iconLg,
+              color: AppColors.brandPrimary,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Verification request submitted',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Status: ${status.toUpperCase()}',
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'You can only have one verification request. Admins will review it soon.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
