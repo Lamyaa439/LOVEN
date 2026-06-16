@@ -266,7 +266,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get artists => 'الفنانون';
 
   @override
-  String get genres => 'الأنماط الفنية';
+  String get genres => 'الأنواع الفنية';
 
   @override
   String get collections => 'مجموعات';
@@ -281,7 +281,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchHint => 'أعمال فنية، فنانون، أنماط...';
 
   @override
-  String get browseByStyle => 'تصفح حسب النمط';
+  String get browseByStyle => 'تصفح حسب الفن';
 
   @override
   String get seeAll => 'عرض الكل';
@@ -296,7 +296,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get galleryIsQuiet => 'المعرض هادئ حالياً';
 
   @override
-  String get noResultsSubtitle => 'جرب بحثاً مختلفاً أو نمطاً آخر.';
+  String get noResultsSubtitle => 'جرب بحثاً مختلفاً أو فن آخر.';
 
   @override
   String get emptySubtitle => 'سيتم إضافة أعمال فنية جديدة قريباً.';
@@ -314,7 +314,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get trending => 'رائج';
 
   @override
-  String get genre => 'نمط';
+  String get genre => 'فن';
 
   @override
   String get preparingDiscovery => 'جاري تجهيز الاكتشاف...';
@@ -627,4 +627,117 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get currentLanguage => 'العربية';
+
+  @override
+  String get categoryAll => 'الكل';
+
+  @override
+  String get categoryPainting => 'رسم';
+
+  @override
+  String get categorySculpture => 'نحت';
+
+  @override
+  String get categoryPhotography => 'تصوير';
+
+  @override
+  String get categoryDigitalArt => 'فن رقمي';
+
+  @override
+  String get categoryCalligraphy => 'خط عربي';
+
+  @override
+  String get loadingCollection => 'جاري تحميل مجموعتك...';
+
+  @override
+  String get couldNotLoadFavorites => 'تعذر تحميل المفضلة';
+
+  @override
+  String get noFavoritesYet => 'لا توجد مفضلة بعد';
+
+  @override
+  String get noFavoritesSubtitle =>
+      'احفظ الأعمال الفنية التي تحبها لتجدها بسهولة لاحقاً.';
+
+  @override
+  String get yourCollection => 'مجموعتك';
+
+  @override
+  String savedWorksCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count أعمال محفوظة',
+      one: 'عمل فني واحد محفوظ',
+      zero: 'لا توجد أعمال محفوظة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cart => 'عربة التسوق';
+
+  @override
+  String get loadingCart => 'جاري تحميل العربة…';
+
+  @override
+  String get couldNotLoadCart => 'تعذر تحميل العربة';
+
+  @override
+  String get yourCartIsEmpty => 'عربتك فارغة';
+
+  @override
+  String get cartEmptySubtitle => 'أضف الأعمال الفنية التي تحبها وستظهر هنا.';
+
+  @override
+  String get exploreArtworks => 'استكشف الأعمال الفنية';
+
+  @override
+  String get onlyOneItemAvailable => 'قطعة واحدة فقط متوفرة في المخزون.';
+
+  @override
+  String itemsAvailableInStock(Object count) {
+    return '$count قطع فقط متوفرة في المخزون.';
+  }
+
+  @override
+  String get subtotal => 'المجموع الفرعي';
+
+  @override
+  String get shipping => 'الشحن';
+
+  @override
+  String get free => 'مجاني';
+
+  @override
+  String get total => 'الإجمالي';
+
+  @override
+  String get checkout => 'إتمام الشراء';
+
+  @override
+  String get clearCart => 'مسح العربة';
+
+  @override
+  String get each => 'لكل منها';
+
+  @override
+  String get paymentExpired =>
+      'انتهت صلاحية جلسة الدفع السابقة. جاري إنشاء طلب جديد...';
+
+  @override
+  String get couldNotReadOrderId => 'تعذر قراءة معرف الطلب';
+
+  @override
+  String get moyasarKeyMissing => 'مفتاح Moyasar مفقود';
+
+  @override
+  String get confirmingPayment => 'جاري تأكيد عملية الدفع...';
+
+  @override
+  String get paymentFailed => 'فشلت عملية الدفع';
+
+  @override
+  String get paymentNotConfirmed =>
+      'تعذر تأكيد الدفع. يرجى المحاولة مرة أخرى من صفحة إتمام الشراء.';
 }

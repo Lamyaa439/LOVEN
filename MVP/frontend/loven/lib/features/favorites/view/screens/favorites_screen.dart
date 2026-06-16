@@ -5,6 +5,7 @@ import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/artist_profile/model/artist_model.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_cubit.dart';
 import 'package:loven/features/favorites/controller/cubit/favorites_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Saved gallery — personal collection of favorited artworks.
 class FavoritesScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -42,18 +44,18 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         child: BlocBuilder<FavoritesCubit, FavoritesState>(
           builder: (context, state) {
             if (state is FavoritesLoading) {
-              return const GalleryLoadingState(
-                message: 'Loading your collection…',
+              return GalleryLoadingState(
+                message: l10n.loadingCollection,
               );
             }
 
             if (state is FavoritesError) {
               return GalleryEmptyState(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.error_outline,
-                title: 'Could not load favorites',
+                title: l10n.couldNotLoadFavorites,
                 subtitle: state.message,
-                actionLabel: 'Retry',
+                actionLabel: l10n.tryAgain,
                 onAction: () {
                   context.read<FavoritesCubit>().loadFavorites();
                 },
@@ -65,11 +67,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
               if (favorites.isEmpty) {
                 return GalleryEmptyState(
-                    backgroundColor: Theme.of(context).colorScheme.surface,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   icon: Icons.favorite_border_rounded,
-                  title: 'No favorites yet',
-                  subtitle:
-                      'Save artworks you love to easily find them later.',
+                  title: l10n.noFavoritesYet,
+                  subtitle: l10n.noFavoritesSubtitle,
                 );
               }
 
@@ -87,14 +88,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Your collection',
+                          l10n.yourCollection,
                           style: theme.textTheme.headlineSmall,
                         ),
                         const SizedBox(height: AppSpacing.xxs),
                         Text(
-                          favorites.length == 1
-                              ? '1 saved work'
-                              : '${favorites.length} saved works',
+                          l10n.savedWorksCount(favorites.length),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.textMuted,
                           ),

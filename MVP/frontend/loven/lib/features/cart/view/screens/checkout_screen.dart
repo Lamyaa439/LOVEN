@@ -22,6 +22,7 @@ import 'package:moyasar/moyasar.dart';
 import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
 import 'package:loven/features/payment/controller/cubit/payment_state.dart';
 import 'package:loven/features/payment/pending_payment_store.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 enum CheckoutStep {
   account,
@@ -90,284 +91,283 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _leaveCheckout();
   }
 
-Future<void> _placeOrder() async {
-  final pendingOrderId = await PendingPaymentStore.readOrderId();
-  if (pendingOrderId != null) {
-    final resumed = await _initiateAndOpenPayment(orderId: pendingOrderId);
-    if (resumed) {
-      return;
+  Future<void> _placeOrder() async {
+    final l10n = AppLocalizations.of(context)!;
+    final pendingOrderId = await PendingPaymentStore.readOrderId();
+    if (pendingOrderId != null) {
+      final resumed = await _initiateAndOpenPayment(orderId: pendingOrderId);
+      if (resumed) {
+        return;
+      }
+
+      if (_shouldResetPendingOrder()) {
+        await PendingPaymentStore.clear();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.paymentExpired)),
+        );
+      } else {
+        return;
+      }
     }
 
-    if (_shouldResetPendingOrder()) {
-      await PendingPaymentStore.clear();
-      if (!mounted) return;
+    final items = widget.cart.items.map((item) {
+      return {
+        'artwork_id': item.artworkId,
+        'quantity': item.quantity,
+      };
+    }).toList();
+
+    final orderResponse = await context.read<OrderCubit>().createOrder(
+          subtotal: widget.cart.subtotal,
+          shippingFee: widget.cart.shippingFee,
+          totalAmount: widget.cart.totalAmount,
+          items: items,
+        );
+
+    if (!mounted || orderResponse == null) return;
+
+    final orderId = _orderIdFromResponse(orderResponse);
+
+    if (orderId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your previous payment session expired. Creating a new order...'),
-        ),
+        SnackBar(content: Text(l10n.couldNotReadOrderId)),
       );
-    } else {
       return;
     }
+
+    await PendingPaymentStore.saveOrderId(orderId);
+    await _initiateAndOpenPayment(orderId: orderId);
   }
 
-  final items = widget.cart.items.map((item) {
-    return {
-      'artwork_id': item.artworkId,
-      'quantity': item.quantity,
-    };
-  }).toList();
+  Future<bool> _initiateAndOpenPayment({
+    required String orderId,
+  }) async {
+    final paymentResponse = await context.read<PaymentCubit>().initiatePayment(
+          orderId: orderId,
+        );
 
-  final orderResponse = await context.read<OrderCubit>().createOrder(
-        subtotal: widget.cart.subtotal,
-        shippingFee: widget.cart.shippingFee,
-        totalAmount: widget.cart.totalAmount,
-        items: items,
-      );
+    if (!mounted || paymentResponse == null) return false;
 
-  if (!mounted || orderResponse == null) return;
+    final amountHalalah = paymentResponse['expected_amount_halalah'] as int? ??
+        (widget.cart.totalAmount * 100).round();
 
-  final orderId = _orderIdFromResponse(orderResponse);
-
-  if (orderId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not read order ID')),
-    );
-    return;
-  }
-
-  await PendingPaymentStore.saveOrderId(orderId);
-  await _initiateAndOpenPayment(orderId: orderId);
-}
-
-Future<bool> _initiateAndOpenPayment({
-  required String orderId,
-}) async {
-  final paymentResponse = await context.read<PaymentCubit>().initiatePayment(
-        orderId: orderId,
-      );
-
-  if (!mounted || paymentResponse == null) return false;
-
-  final amountHalalah =
-      paymentResponse['expected_amount_halalah'] as int? ??
-      (widget.cart.totalAmount * 100).round();
-
-  await _openMoyasarPaymentSheet(
-    orderId: orderId,
-    amountHalalah: amountHalalah,
-  );
-  return true;
-}
-
-String? _orderIdFromResponse(Map<String, dynamic> orderResponse) {
-  final orderPayload = orderResponse['order'];
-
-  if (orderPayload is! Map) {
-    return null;
-  }
-
-  final id = Map<String, dynamic>.from(orderPayload)['id'];
-  return id?.toString();
-}
-
-Future<void> _openMoyasarPaymentSheet({
-  required String orderId,
-  required int amountHalalah,
-}) async {
-  final publishableKey = dotenv.env['MOYASAR_PUBLISHABLE_KEY'] ?? '';
-
-  if (publishableKey.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Moyasar publishable key is missing')),
-    );
-    return;
-  }
-
-  final config = PaymentConfig(
-    publishableApiKey: publishableKey,
-    amount: amountHalalah,
-    currency: 'SAR',
-    description: 'LOVEN order $orderId',
-    metadata: {
-      'order_id': orderId,
-      'source': 'loven_flutter',
-    },
-  );
-
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (sheetContext) {
-      return Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 20,
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-        ),
-        child: SingleChildScrollView(
-          child: CreditCard(
-            config: config,
-            onPaymentResult: (result) async {
-              if (result is PaymentResponse) {
-                if (_shouldAttemptVerification(result)) {
-                  Navigator.of(sheetContext).pop();
-
-                  if (!mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Confirming your payment...'),
-                    ),
-                  );
-
-                  await _verifyMoyasarPayment(
-                    orderId: orderId,
-                    moyasarPaymentId: result.id,
-                  );
-                  return;
-                }
-
-                if (result.status == PaymentStatus.failed) {
-                  Navigator.of(sheetContext).pop();
-
-                  if (!mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Payment failed')),
-                  );
-                }
-              }
-            },
-          ),
-        ),
-      );
-    },
-  );
-}
-
-Future<void> _verifyMoyasarPayment({
-  required String orderId,
-  required String moyasarPaymentId,
-}) async {
-  final verifyResponse = await context.read<PaymentCubit>().verifyPayment(
-        orderId: orderId,
-        moyasarPaymentId: moyasarPaymentId,
-      );
-
-  if (!mounted || verifyResponse == null) return;
-
-  final paymentPayload = verifyResponse['payment'];
-  final payment = paymentPayload is Map
-      ? Map<String, dynamic>.from(paymentPayload)
-      : <String, dynamic>{};
-
-  final paymentStatus = payment['status']?.toString().toLowerCase();
-  final verified = paymentStatus == 'paid' ||
-      verifyResponse['message']?.toString().toLowerCase().contains('verified') ==
-          true;
-
-  if (!verified) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Payment could not be confirmed. Please try again from checkout.',
-        ),
-      ),
-    );
-    return;
-  }
-
-  await context.read<CartCubit>().clearCart();
-  await PendingPaymentStore.clear();
-
-  if (!mounted) return;
-
-  context.read<HomeBloc>().add(FetchHomeData());
-
-  final authState = context.read<AuthCubit>().state;
-  final userLabel = checkoutUserDisplayLabel(authState);
-
-  context.go(
-    AppRoutes.confirmOrder,
-    extra: OrderSuccessExtra(
-      userLabel: userLabel,
-      totalAmount: widget.cart.totalAmount,
-      itemCount: widget.cart.items.length,
+    await _openMoyasarPaymentSheet(
       orderId: orderId,
-    ),
-  );
-}
-
-bool _isSuccessfulPaymentStatus(PaymentStatus status) {
-  return status == PaymentStatus.paid ||
-      status == PaymentStatus.captured ||
-      status == PaymentStatus.authorized;
-}
-
-bool _shouldAttemptVerification(PaymentResponse result) {
-  if (_isSuccessfulPaymentStatus(result.status)) {
-    return result.id.isNotEmpty;
+      amountHalalah: amountHalalah,
+    );
+    return true;
   }
 
-  // In 3DS sandbox flows, SDK may surface "failed" while gateway state is paid.
-  // Backend verification is the source of truth whenever we have a payment id.
-  return result.status == PaymentStatus.failed && result.id.isNotEmpty;
-}
+  String? _orderIdFromResponse(Map<String, dynamic> orderResponse) {
+    final orderPayload = orderResponse['order'];
 
-bool _shouldResetPendingOrder() {
-  final paymentState = context.read<PaymentCubit>().state;
-  if (paymentState is! PaymentError) {
-    return false;
+    if (orderPayload is! Map) {
+      return null;
+    }
+
+    final id = Map<String, dynamic>.from(orderPayload)['id'];
+    return id?.toString();
   }
 
-  final message = paymentState.message.toLowerCase();
-  return message.contains('order not found') ||
-      message.contains('forbidden') ||
-      message.contains('invalid order') ||
-      message.contains('invalid order or buyer id format');
-}
+  Future<void> _openMoyasarPaymentSheet({
+    required String orderId,
+    required int amountHalalah,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final publishableKey = dotenv.env['MOYASAR_PUBLISHABLE_KEY'] ?? '';
 
-@override
-Widget build(BuildContext context) {
-  return MultiBlocListener(
-    listeners: [
-      BlocListener<OrderCubit, OrderState>(
-        listener: (context, state) async {
-          if (state is OrderError) {
-            if (state.shouldRefreshCart) {
-              await context.read<CartCubit>().getCart();
+    if (publishableKey.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Moyasar publishable key is missing')),
+      );
+      return;
+    }
+
+    final config = PaymentConfig(
+      publishableApiKey: publishableKey,
+      amount: amountHalalah,
+      currency: 'SAR',
+      description: 'LOVEN order $orderId',
+      metadata: {
+        'order_id': orderId,
+        'source': 'loven_flutter',
+      },
+    );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 20,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: CreditCard(
+              config: config,
+              onPaymentResult: (result) async {
+                if (result is PaymentResponse) {
+                  if (_shouldAttemptVerification(result)) {
+                    Navigator.of(sheetContext).pop();
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.confirmingPayment)),
+                    );
+
+                    await _verifyMoyasarPayment(
+                      orderId: orderId,
+                      moyasarPaymentId: result.id,
+                    );
+                    return;
+                  }
+
+                  if (result.status == PaymentStatus.failed) {
+                    Navigator.of(sheetContext).pop();
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.paymentFailed)),
+                    );
+                  }
+                }
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _verifyMoyasarPayment({
+    required String orderId,
+    required String moyasarPaymentId,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final verifyResponse = await context.read<PaymentCubit>().verifyPayment(
+          orderId: orderId,
+          moyasarPaymentId: moyasarPaymentId,
+        );
+
+    if (!mounted || verifyResponse == null) return;
+
+    final paymentPayload = verifyResponse['payment'];
+    final payment = paymentPayload is Map
+        ? Map<String, dynamic>.from(paymentPayload)
+        : <String, dynamic>{};
+
+    final paymentStatus = payment['status']?.toString().toLowerCase();
+    final verified = paymentStatus == 'paid' ||
+        verifyResponse['message']
+                ?.toString()
+                .toLowerCase()
+                .contains('verified') ==
+            true;
+
+    if (!verified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.paymentNotConfirmed)),
+      );
+      return;
+    }
+
+    await context.read<CartCubit>().clearCart();
+    await PendingPaymentStore.clear();
+
+    if (!mounted) return;
+
+    context.read<HomeBloc>().add(FetchHomeData());
+
+    final authState = context.read<AuthCubit>().state;
+    final userLabel = checkoutUserDisplayLabel(authState);
+
+    context.go(
+      AppRoutes.confirmOrder,
+      extra: OrderSuccessExtra(
+        userLabel: userLabel,
+        totalAmount: widget.cart.totalAmount,
+        itemCount: widget.cart.items.length,
+        orderId: orderId,
+      ),
+    );
+  }
+
+  bool _isSuccessfulPaymentStatus(PaymentStatus status) {
+    return status == PaymentStatus.paid ||
+        status == PaymentStatus.captured ||
+        status == PaymentStatus.authorized;
+  }
+
+  bool _shouldAttemptVerification(PaymentResponse result) {
+    if (_isSuccessfulPaymentStatus(result.status)) {
+      return result.id.isNotEmpty;
+    }
+
+    // In 3DS sandbox flows, SDK may surface "failed" while gateway state is paid.
+    // Backend verification is the source of truth whenever we have a payment id.
+    return result.status == PaymentStatus.failed && result.id.isNotEmpty;
+  }
+
+  bool _shouldResetPendingOrder() {
+    final paymentState = context.read<PaymentCubit>().state;
+    if (paymentState is! PaymentError) {
+      return false;
+    }
+
+    final message = paymentState.message.toLowerCase();
+    return message.contains('order not found') ||
+        message.contains('forbidden') ||
+        message.contains('invalid order') ||
+        message.contains('invalid order or buyer id format');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<OrderCubit, OrderState>(
+          listener: (context, state) async {
+            if (state is OrderError) {
+              if (state.shouldRefreshCart) {
+                await context.read<CartCubit>().getCart();
+              }
+
+              if (!context.mounted) return;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
             }
-
-            if (!context.mounted) return;
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
-      ),
-      BlocListener<PaymentCubit, PaymentState>(
-        listener: (context, state) {
-          if (state is PaymentError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
-      ),
-    ],
-    child: BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, authState) {
+          },
+        ),
+        BlocListener<PaymentCubit, PaymentState>(
+          listener: (context, state) {
+            if (state is PaymentError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+        ),
+      ],
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
           final userLabel = checkoutUserDisplayLabel(authState);
 
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               centerTitle: true,
-              title: const Text('Checkout'),
+              title: Text(l10n.checkout),
               leading: BackButton(onPressed: _handleAppBarBack),
             ),
             body: Column(

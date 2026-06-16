@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loven/core/res/design_system.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Discover-style section header — rule, caps label, bold "See all".
 ///
@@ -12,9 +13,11 @@ class HomeDiscoverSectionHeader extends StatelessWidget {
     required this.label,
     this.onSeeAll,
     this.showDivider = true,
+    this.actionLabel = 'SEE ALL',
   });
 
   final String label;
+  final String actionLabel;
   final VoidCallback? onSeeAll;
   final bool showDivider;
 
@@ -50,13 +53,13 @@ class HomeDiscoverSectionHeader extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    foregroundColor: AppColors.discoverSeeAll,
+                    foregroundColor: theme.colorScheme.primary,
                   ),
                   child: Text(
-                    'SEE ALL',
+                    actionLabel.toUpperCase(),
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.discoverSeeAll,
+                      color: theme.colorScheme.primary,
                       letterSpacing: 0.4,
                     ),
                   ),
