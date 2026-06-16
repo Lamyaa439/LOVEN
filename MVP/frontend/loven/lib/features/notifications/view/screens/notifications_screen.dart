@@ -8,7 +8,7 @@ import 'package:loven/features/notifications/controller/cubit/notifications_stat
 import 'package:loven/features/notifications/navigation/notification_route_resolver.dart';
 import 'package:loven/features/notifications/view/widgets/notification_list_tile.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
-
+import 'package:flutter/cupertino.dart';
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -93,74 +93,95 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           if (state is NotificationsLoaded) {
             if (state.notifications.isEmpty) {
-              return RefreshIndicator(
-                onRefresh: () =>
-                    context.read<NotificationsCubit>().refreshNotifications(),
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: 320,
-                      child: GalleryEmptyState(
-                          backgroundColor: Theme.of(context).colorScheme.surface,
-                        icon: Icons.notifications_none_outlined,
-                        title: 'No notifications yet',
-                        subtitle:
-                            'Updates about orders and activity will appear here.',
-                      ),
-                    ),
-                  ],
+              return CustomScrollView(
+  physics: const BouncingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
+  ),
+  slivers: [
+    CupertinoSliverRefreshControl(
+      onRefresh: () async {
+        await context.read<NotificationsCubit>().refreshNotifications();
+      },
+    ),
+    SliverFillRemaining(
+      hasScrollBody: false,
+      child: GalleryEmptyState(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        icon: Icons.notifications_none_outlined,
+        title: 'No notifications yet',
+        subtitle:
+            'Updates about orders and activity will appear here.',
+      ),
+    ),
+  ],
+);
+            }
+
+return NotificationListener<ScrollNotification>(
+  onNotification: (scrollInfo) {
+    if (scrollInfo.metrics.pixels >=
+            scrollInfo.metrics.maxScrollExtent - 120 &&
+        state.hasMore &&
+        !state.isLoadingMore) {
+      context.read<NotificationsCubit>().loadMore();
+    }
+    return false;
+  },
+  child: CustomScrollView(
+    physics: const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    ),
+    slivers: [
+      CupertinoSliverRefreshControl(
+        onRefresh: () async {
+          await context.read<NotificationsCubit>().refreshNotifications();
+        },
+      ),
+
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index >= state.notifications.length) {
+              return const Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Center(
+                  child: SizedBox(
+                    width: AppSizes.iconMd,
+                    height: AppSizes.iconMd,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               );
             }
 
-            return RefreshIndicator(
-              onRefresh: () =>
-                  context.read<NotificationsCubit>().refreshNotifications(),
-              child: NotificationListener<ScrollNotification>(
-                onNotification: (scrollInfo) {
-                  if (scrollInfo.metrics.pixels >=
-                          scrollInfo.metrics.maxScrollExtent - 120 &&
-                      state.hasMore &&
-                      !state.isLoadingMore) {
-                    context.read<NotificationsCubit>().loadMore();
-                  }
-                  return false;
-                },
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                    bottom: AppSizes.shellFloatingNavClearance + AppSpacing.lg,
-                  ),
-                  itemCount:
-                      state.notifications.length + (state.isLoadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    color: AppColors.borderLight,
-                  ),
-                  itemBuilder: (context, index) {
-                    if (index >= state.notifications.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(AppSpacing.lg),
-                        child: Center(
-                          child: SizedBox(
-                            width: AppSizes.iconMd,
-                            height: AppSizes.iconMd,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      );
-                    }
+            final notification = state.notifications[index];
 
-                    final notification = state.notifications[index];
-                    return NotificationListTile(
-                      notification: notification,
-                      onTap: () => _onNotificationTap(state, index),
-                    );
-                  },
+            return Column(
+              children: [
+                NotificationListTile(
+                  notification: notification,
+                  onTap: () => _onNotificationTap(state, index),
                 ),
-              ),
+                Divider(
+                  height: 1,
+                  color: AppColors.borderLight,
+                ),
+              ],
             );
+          },
+          childCount:
+              state.notifications.length + (state.isLoadingMore ? 1 : 0),
+        ),
+      ),
+
+      const SliverToBoxAdapter(
+        child: SizedBox(
+          height: AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+        ),
+      ),
+    ],
+  ),
+);
           }
 
           return const SizedBox.shrink();
