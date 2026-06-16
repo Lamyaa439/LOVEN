@@ -320,6 +320,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get preparingDiscovery => 'جاري تجهيز الاكتشاف...';
 
   @override
+  String get splashLoading => 'جاري تحميل LOVEN…';
+
+  @override
   String get couldNotLoadArtworks => 'تعذر تحميل الأعمال الفنية';
 
   @override

@@ -332,12 +332,16 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
         _isOwnArtwork ||
         isOutOfStock;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _SheetHeader(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.xl),
+      ),
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _SheetHeader(
               artworkId: _artwork.id,
               onClose: () => Navigator.pop(context),
               onReport: _showReportDialog,
@@ -442,6 +446,7 @@ class _ArtDetailsScreenState extends State<ArtDetailsScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -468,18 +473,12 @@ class _SheetHeader extends StatelessWidget {
         AppSpacing.xs,
         AppSpacing.none,
       ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onClose,
-            icon: Icon(
-              Icons.close_rounded,
-              color: theme.colorScheme.onSurface,
-              size: AppSizes.iconMd,
-            ),
-          ),
-          Expanded(
-            child: Center(
+      child: SizedBox(
+        height: AppSizes.touchTargetMin,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Center(
               child: Container(
                 width: AppSizes.cartBadgeMinSize * 2,
                 height: AppSpacing.xxs,
@@ -489,18 +488,31 @@ class _SheetHeader extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-          IconButton(
-            onPressed: onReport,
-            tooltip: 'Report artwork',
-            icon: Icon(
-              Icons.flag_outlined,
-              color: AppColors.textMuted,
-              size: AppSizes.iconMd,
+            Row(
+              children: [
+                IconButton(
+                  onPressed: onClose,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: theme.colorScheme.onSurface,
+                    size: AppSizes.iconMd,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: onReport,
+                  tooltip: 'Report artwork',
+                  icon: Icon(
+                    Icons.flag_outlined,
+                    color: AppColors.textMuted,
+                    size: AppSizes.iconMd,
+                  ),
+                ),
+                LovenArtworkFavoriteButton(artworkId: artworkId),
+              ],
             ),
-          ),
-          LovenArtworkFavoriteButton(artworkId: artworkId),
-        ],
+          ],
+        ),
       ),
     );
   }

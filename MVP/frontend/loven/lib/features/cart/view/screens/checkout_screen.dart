@@ -21,6 +21,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:moyasar/moyasar.dart';
 import 'package:loven/features/payment/controller/cubit/payment_cubit.dart';
 import 'package:loven/features/payment/controller/cubit/payment_state.dart';
+import 'package:loven/features/payment/pending_payment_store.dart';
 
 enum CheckoutStep {
   account,
@@ -90,6 +91,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
 Future<void> _placeOrder() async {
+  final pendingOrderId = await PendingPaymentStore.readOrderId();
+  if (pendingOrderId != null) {
+    final resumed = await _initiateAndOpenPayment(orderId: pendingOrderId);
+    if (resumed) {
+      return;
+    }
+
+    if (_shouldResetPendingOrder()) {
+      await PendingPaymentStore.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your previous payment session expired. Creating a new order...'),
+        ),
+      );
+    } else {
+      return;
+    }
+  }
+
   final items = widget.cart.items.map((item) {
     return {
       'artwork_id': item.artworkId,
@@ -115,11 +136,18 @@ Future<void> _placeOrder() async {
     return;
   }
 
+  await PendingPaymentStore.saveOrderId(orderId);
+  await _initiateAndOpenPayment(orderId: orderId);
+}
+
+Future<bool> _initiateAndOpenPayment({
+  required String orderId,
+}) async {
   final paymentResponse = await context.read<PaymentCubit>().initiatePayment(
         orderId: orderId,
       );
 
-  if (!mounted || paymentResponse == null) return;
+  if (!mounted || paymentResponse == null) return false;
 
   final amountHalalah =
       paymentResponse['expected_amount_halalah'] as int? ??
@@ -129,6 +157,7 @@ Future<void> _placeOrder() async {
     orderId: orderId,
     amountHalalah: amountHalalah,
   );
+  return true;
 }
 
 String? _orderIdFromResponse(Map<String, dynamic> orderResponse) {
@@ -183,8 +212,16 @@ Future<void> _openMoyasarPaymentSheet({
             config: config,
             onPaymentResult: (result) async {
               if (result is PaymentResponse) {
-                if (result.status == PaymentStatus.paid) {
+                if (_shouldAttemptVerification(result)) {
                   Navigator.of(sheetContext).pop();
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Confirming your payment...'),
+                    ),
+                  );
 
                   await _verifyMoyasarPayment(
                     orderId: orderId,
@@ -235,13 +272,16 @@ Future<void> _verifyMoyasarPayment({
   if (!verified) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Payment could not be verified. Please try again.'),
+        content: Text(
+          'Payment could not be confirmed. Please try again from checkout.',
+        ),
       ),
     );
     return;
   }
 
   await context.read<CartCubit>().clearCart();
+  await PendingPaymentStore.clear();
 
   if (!mounted) return;
 
@@ -259,6 +299,35 @@ Future<void> _verifyMoyasarPayment({
       orderId: orderId,
     ),
   );
+}
+
+bool _isSuccessfulPaymentStatus(PaymentStatus status) {
+  return status == PaymentStatus.paid ||
+      status == PaymentStatus.captured ||
+      status == PaymentStatus.authorized;
+}
+
+bool _shouldAttemptVerification(PaymentResponse result) {
+  if (_isSuccessfulPaymentStatus(result.status)) {
+    return result.id.isNotEmpty;
+  }
+
+  // In 3DS sandbox flows, SDK may surface "failed" while gateway state is paid.
+  // Backend verification is the source of truth whenever we have a payment id.
+  return result.status == PaymentStatus.failed && result.id.isNotEmpty;
+}
+
+bool _shouldResetPendingOrder() {
+  final paymentState = context.read<PaymentCubit>().state;
+  if (paymentState is! PaymentError) {
+    return false;
+  }
+
+  final message = paymentState.message.toLowerCase();
+  return message.contains('order not found') ||
+      message.contains('forbidden') ||
+      message.contains('invalid order') ||
+      message.contains('invalid order or buyer id format');
 }
 
 @override

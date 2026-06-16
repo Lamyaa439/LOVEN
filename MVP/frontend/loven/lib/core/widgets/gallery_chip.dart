@@ -10,11 +10,13 @@ class GalleryChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.compact = false,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +46,10 @@ class GalleryChip extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.pill),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.xs,
+          alignment: Alignment.center,
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? AppSpacing.sm : AppSpacing.md,
+            vertical: compact ? AppSpacing.xxs : AppSpacing.xs,
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -54,9 +57,11 @@ class GalleryChip extends StatelessWidget {
           ),
           child: Text(
             label,
+            textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
               color: foreground,
               fontWeight: FontWeight.w600,
+              height: 1.1,
             ),
           ),
         ),

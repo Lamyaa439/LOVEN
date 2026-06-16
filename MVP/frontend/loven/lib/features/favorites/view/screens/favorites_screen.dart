@@ -116,11 +116,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       itemBuilder: (context, index) {
                         final artwork = _artworkFromFavorite(favorites[index]);
 
-                        return LovenArtworkCard(
-                          artwork: artwork,
-                          variant: LovenArtworkCardVariant.compact,
-                          showFavorite: true,
-                        );
+                        return _FavoriteItemCard(artwork: artwork);
                       },
                     ),
                   ),
@@ -131,6 +127,55 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             return const SizedBox.shrink();
           },
         ),
+      ),
+    );
+  }
+}
+
+class _FavoriteItemCard extends StatelessWidget {
+  const _FavoriteItemCard({required this.artwork});
+
+  final ArtworkModel artwork;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return LovenSurfaceCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      onTap: () => openArtworkDetail(context, artwork),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: SizedBox(
+              width: AppSizes.listThumbSize + AppSpacing.sm,
+              height: AppSizes.listThumbSize + AppSpacing.lg,
+              child: LovenArtworkImage(imageUrl: artwork.artworkImageUrl),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  artwork.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  formatArtworkPrice(artwork.price),
+                  style: AppTextStyles.priceMuted,
+                ),
+              ],
+            ),
+          ),
+          LovenArtworkFavoriteButton(artworkId: artwork.id),
+        ],
       ),
     );
   }

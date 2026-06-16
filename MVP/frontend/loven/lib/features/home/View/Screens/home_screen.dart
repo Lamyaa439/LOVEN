@@ -255,7 +255,7 @@ return SafeArea(
           child: HomeDiscoverSectionHeader(
             label: l10n.genre,
             showDivider: true,
-            onSeeAll: () => _openGenreSheet(context),
+            onSeeAll: () => _openBrowseArtworks(context),
           ),
         ),
         SliverToBoxAdapter(
@@ -359,11 +359,17 @@ return SafeArea(
                             FilterArtworks(searchText: text),
                           );
                     },
+                    onSubmitted: (text) {
+                      context.read<HomeBloc>().add(
+                            FilterArtworks(searchText: text),
+                          );
+                      Navigator.pop(sheetContext);
+                    },
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.tune_rounded),
                       onPressed: () {
                         Navigator.pop(sheetContext);
-                        _openGenreSheet(context);
+                        _openBrowseArtworks(context);
                       },
                     ),
                   ),
@@ -377,48 +383,8 @@ return SafeArea(
     );
   }
 
-  void _openGenreSheet(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.screenPadding),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.browseByStyle,
-                  style: Theme.of(sheetContext).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Wrap(
-                  spacing: AppSpacing.chipGap,
-                  runSpacing: AppSpacing.chipGap,
-                  children: state.categories.map((category) {
-                    return GalleryChip(
-                      label: category,
-                      selected: category == state.selectedCategory,
-                      onTap: () {
-                        context.read<HomeBloc>().add(
-                              FilterArtworks(category: category),
-                            );
-                        Navigator.pop(sheetContext);
-                      },
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  void _openBrowseArtworks(BuildContext context) {
+    context.push(AppRoutes.artworksListPath('browse'));
   }
 }
 

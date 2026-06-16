@@ -318,6 +318,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get preparingDiscovery => 'Preparing discovery...';
 
   @override
+  String get splashLoading => 'Loading LOVEN…';
+
+  @override
   String get couldNotLoadArtworks => 'Could not load artworks';
 
   @override

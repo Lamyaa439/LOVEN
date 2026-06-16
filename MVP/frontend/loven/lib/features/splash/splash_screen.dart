@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/splash_min_duration_notifier.dart';
-import '../../core/res/theme/app_colors.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 /// Splash UI only; navigation is owned by [AppRouter] redirect policy.
 class SplashScreen extends StatefulWidget {
@@ -17,6 +17,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _loaderFadeAnimation;
 
   @override
   void initState() {
@@ -42,6 +43,11 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
+    _loaderFadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.45, 1.0, curve: Curves.easeIn),
+    );
+
     _runMinimumSplashPresentation();
   }
 
@@ -63,19 +69,53 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.splashBackground,
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Image.asset(
-              'assets/images/loven-logo.png',
-              width: 180,
-              fit: BoxFit.contain,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Image.asset(
+                  'assets/images/loven-logo.png',
+                  width: 180,
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.xxxl),
+            FadeTransition(
+              opacity: _loaderFadeAnimation,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: AppSizes.iconLg,
+                    height: AppSizes.iconLg,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    l10n?.splashLoading ?? 'Loading LOVEN…',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
