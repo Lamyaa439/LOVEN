@@ -18,6 +18,7 @@ import 'package:loven/features/home/controller/bloc/home_state.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 import 'package:loven/l10n/generated/app_localizations.dart';
+import 'package:flutter/cupertino.dart';
 
 /// LOVEN Discover home — editorial layout aligned with reference composition.
 class HomeScreen extends StatefulWidget {
@@ -106,62 +107,71 @@ class _HomeDiscoverBody extends StatelessWidget {
 
 return SafeArea(
   bottom: false,
-  child: RefreshIndicator(
-    onRefresh: () async {
-      context.read<HomeBloc>().add(FetchHomeData());
-    },
-    child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
+  child: CustomScrollView(
+    physics: const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
     ),
-        slivers: [
-          SliverToBoxAdapter(
-            child: _DiscoverPageHeader(
-              onSearchTap: () => _openSearchSheet(context),
-            ),
-          ),
-          if (_isFiltered)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenPadding,
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: GalleryChip(
-                    label: state.selectedCategory == 'All'
-                        ? l10n.clearFilters
-                        : '${state.selectedCategory} · Clear',
-                    selected: true,
-                    onTap: onClearAllFilters,
-                  ),
-                ),
-              ),
-            ),
-          if (artworks.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: GalleryEmptyState(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                icon: Icons.search_off_rounded,
-                title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
-                subtitle:
-                    _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
-                actionLabel: _isFiltered ? l10n.reset : null,
-                onAction: _isFiltered ? onClearAllFilters : null,
-              ),
-            )
-          else if (_isFiltered)
-            ..._buildFilteredSlivers(context, artworks, l10n)
-          else
-            ..._buildDiscoverSlivers(context, artworks, allArtworks, l10n),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.bottomNavClearance + 40.0),
-          ),
-        ],
+    slivers: [
+      CupertinoSliverRefreshControl(
+        onRefresh: () async {
+          context.read<HomeBloc>().add(FetchHomeData(silent: true));
+          await Future.delayed(const Duration(seconds: 1));
+        },
       ),
-    );
+
+      SliverToBoxAdapter(
+        child: _DiscoverPageHeader(
+          onSearchTap: () => _openSearchSheet(context),
+        ),
+      ),
+
+      if (_isFiltered)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenPadding,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GalleryChip(
+                label: state.selectedCategory == 'All'
+                    ? l10n.clearFilters
+                    : '${state.selectedCategory} · Clear',
+                selected: true,
+                onTap: onClearAllFilters,
+              ),
+            ),
+          ),
+        ),
+
+      if (artworks.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: GalleryEmptyState(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            icon: Icons.search_off_rounded,
+            title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
+            subtitle: _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
+            actionLabel: _isFiltered ? l10n.reset : null,
+            onAction: _isFiltered ? onClearAllFilters : null,
+          ),
+        )
+      else if (_isFiltered)
+        ..._buildFilteredSlivers(context, artworks, l10n)
+      else
+        ..._buildDiscoverSlivers(
+          context,
+          artworks,
+          allArtworks,
+          l10n,
+        ),
+
+      const SliverToBoxAdapter(
+        child: SizedBox(height: AppSpacing.bottomNavClearance),
+      ),
+    ],
+  ),
+);
   }
 
   List<Widget> _buildFilteredSlivers(BuildContext context,

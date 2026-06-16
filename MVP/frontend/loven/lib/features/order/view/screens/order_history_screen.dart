@@ -8,6 +8,7 @@ import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/order/controller/cubit/order_cubit.dart';
 import 'package:loven/features/order/controller/cubit/order_state.dart';
 import 'package:loven/features/order/view/widgets/order_item_display.dart';
+import 'package:flutter/cupertino.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -64,26 +65,34 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               );
             }
 
-            return RefreshIndicator(
-              onRefresh: _refreshOrders,
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenPadding,
-                  AppSpacing.md,
-                  AppSpacing.screenPadding,
-                  AppSizes.shellFloatingNavClearance + AppSpacing.lg,
-                ),
-                itemCount: state.orders.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSpacing.md),
-                itemBuilder: (context, index) {
-                  final order = Map<String, dynamic>.from(
-                    state.orders[index] as Map,
-                  );
-                  return _OrderCard(order: order);
-                },
-              ),
-            );
+            return CustomScrollView(
+  physics: const BouncingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
+  ),
+  slivers: [
+    CupertinoSliverRefreshControl(
+      onRefresh: _refreshOrders,
+    ),
+    SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.md,
+        AppSpacing.screenPadding,
+        AppSizes.shellFloatingNavClearance + AppSpacing.lg,
+      ),
+      sliver: SliverList.separated(
+        itemCount: state.orders.length,
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) {
+          final order = Map<String, dynamic>.from(
+            state.orders[index] as Map,
+          );
+          return _OrderCard(order: order);
+        },
+      ),
+    ),
+  ],
+);
           }
 
           return const SizedBox.shrink();
