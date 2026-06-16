@@ -24,14 +24,11 @@ import 'package:loven/features/artist_profile/controller/artist_profile_cubit.da
 List<RouteBase> buildCommerceRoutesEarly(AppRouterDeps deps) {
   return [
     GoRoute(
-      path: AppRoutes.notifications,
-      builder: (context, state) {
-  return const NavigationScreen(
-    initialIndex: 3,
-    accountChild: NotificationsScreen(),
-  );
-},
-    ),
+  path: AppRoutes.notifications,
+  builder: (context, state) {
+    return const NotificationsScreen();
+  },
+),
     GoRoute(
       path: AppRoutes.ordersDetails,
       builder: (context, state) {
