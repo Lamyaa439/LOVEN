@@ -37,33 +37,43 @@ class _AccountScreenState extends State<AccountScreen> {
     });
   }
 
-  Future<void> _confirmLogout() async {
-    final l10n = AppLocalizations.of(context)!;
+Future<void> _confirmLogout() async {
+  final l10n = AppLocalizations.of(context)!;
 
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.logout),
-          content: Text(l10n.logoutConfirmation),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.logout),
-            ),
-          ],
-        );
-      },
-    );
+  final shouldLogout = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirmation),
+        actionsPadding: const EdgeInsets.all(AppSpacing.lg),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(l10n.cancel),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: Text(l10n.logout),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
 
-    if (shouldLogout == true && mounted) {
-      await context.read<AuthCubit>().logout();
-    }
+  if (shouldLogout == true && mounted) {
+    await context.read<AuthCubit>().logout();
   }
+}
 
   void _openFavoritesTab() {
     context.go(AppRoutes.home);
