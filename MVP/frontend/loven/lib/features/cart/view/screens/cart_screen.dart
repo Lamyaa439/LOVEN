@@ -5,6 +5,7 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/cart/data/models/cart_item_model.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 import '../../controller/cubit/cart_cubit.dart';
 import '../../controller/cubit/cart_state.dart';
@@ -30,6 +31,8 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -42,7 +45,7 @@ class _CartScreenState extends State<CartScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Cart',
+                  l10n.cart,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -72,42 +75,42 @@ class _CartScreenState extends State<CartScreen> {
           },
         ),
       ),
-body: BlocConsumer<CartCubit, CartState>(
-  listener: (context, state) {
-    if (state is CartError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.message)),
-      );
-    }
-  },
-  builder: (context, state) {
-    if (state is CartInitial || state is CartLoading) {
-      return const GalleryLoadingState(
-        message: 'Loading cart…',
-      );
-    }
+      body: BlocConsumer<CartCubit, CartState>(
+        listener: (context, state) {
+          if (state is CartError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is CartInitial || state is CartLoading) {
+            return GalleryLoadingState(
+              message: l10n.loadingCart,
+            );
+          }
 
-    if (state is CartError && state.previousCart == null) {
-      return GalleryEmptyState(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-        icon: Icons.error_outline,
-        title: 'Could not load cart',
-        subtitle: state.message,
-        actionLabel: 'Retry',
-        onAction: () => context.read<CartCubit>().getCart(),
-      );
-    }
+          if (state is CartError && state.previousCart == null) {
+            return GalleryEmptyState(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              icon: Icons.error_outline,
+              title: l10n.couldNotLoadCart,
+              subtitle: state.message,
+              actionLabel: l10n.tryAgain,
+              onAction: () => context.read<CartCubit>().getCart(),
+            );
+          }
 
-    if (state is CartLoaded) {
-      final cart = state.cart;
+          if (state is CartLoaded) {
+            final cart = state.cart;
 
             if (cart.items.isEmpty) {
               return GalleryEmptyState(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 icon: Icons.shopping_bag_outlined,
-                title: 'Your cart is empty',
-                subtitle: 'Add artworks you love and they will appear here.',
-                actionLabel: 'Explore artworks',
+                title: l10n.yourCartIsEmpty,
+                subtitle: l10n.cartEmptySubtitle,
+                actionLabel: l10n.exploreArtworks,
                 onAction: () => context.go('/'),
               );
             }
@@ -136,8 +139,9 @@ body: BlocConsumer<CartCubit, CartState>(
                               SnackBar(
                                 content: Text(
                                   item.stockQuantity == 1
-                                      ? 'Only 1 item is available in stock.'
-                                      : 'Only ${item.stockQuantity} items are available in stock.',
+                                      ? l10n.onlyOneItemAvailable
+                                      : l10n.itemsAvailableInStock(
+                                          item.stockQuantity),
                                 ),
                               ),
                             );
@@ -203,6 +207,7 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final total = item.price * item.quantity;
 
@@ -252,7 +257,7 @@ class _CartItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  'SAR ${item.price.toStringAsFixed(2)} each',
+                  'SAR ${item.price.toStringAsFixed(2)} ${l10n.each}',
                   style: AppTextStyles.priceMuted,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -349,6 +354,8 @@ class _CartSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenPadding,
@@ -368,32 +375,33 @@ class _CartSummary extends StatelessWidget {
         child: Column(
           children: [
             _SummaryRow(
-              label: 'Subtotal',
+              label: l10n.subtotal,
               value: 'SAR ${cart.subtotal.toStringAsFixed(2)}',
             ),
             const SizedBox(height: AppSpacing.sm),
             _SummaryRow(
-              label: 'Shipping',
+              label: l10n.shipping,
               value: cart.shippingFee == 0
-                  ? 'Free'
+                  ? l10n.free
                   : 'SAR ${cart.shippingFee.toStringAsFixed(2)}',
               valueColor: cart.shippingFee == 0 ? AppColors.success : null,
             ),
             const SizedBox(height: AppSpacing.md),
             _SummaryRow(
-              label: 'Total',
+              label: l10n.total,
               value: 'SAR ${cart.totalAmount.toStringAsFixed(2)}',
               large: true,
             ),
             const SizedBox(height: AppSpacing.lg),
             LovenPrimaryButton(
-              label: 'Checkout · SAR ${cart.totalAmount.toStringAsFixed(2)}',
+              label:
+                  '${l10n.checkout} · SAR ${cart.totalAmount.toStringAsFixed(2)}',
               icon: Icons.shopping_bag_outlined,
               onPressed: onCheckout,
             ),
             const SizedBox(height: AppSpacing.sm),
             LovenSecondaryButton(
-              label: 'Clear cart',
+              label: l10n.clearCart,
               expand: true,
               onPressed: () => context.read<CartCubit>().clearCart(),
             ),

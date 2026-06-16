@@ -1273,6 +1273,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get currentLanguage;
+
+  /// No description provided for @categoryAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get categoryAll;
+
+  /// No description provided for @categoryPainting.
+  ///
+  /// In en, this message translates to:
+  /// **'Painting'**
+  String get categoryPainting;
+
+  /// No description provided for @categorySculpture.
+  ///
+  /// In en, this message translates to:
+  /// **'Sculpture'**
+  String get categorySculpture;
+
+  /// No description provided for @categoryPhotography.
+  ///
+  /// In en, this message translates to:
+  /// **'Photography'**
+  String get categoryPhotography;
+
+  /// No description provided for @categoryDigitalArt.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital Art'**
+  String get categoryDigitalArt;
+
+  /// No description provided for @categoryCalligraphy.
+  ///
+  /// In en, this message translates to:
+  /// **'Calligraphy'**
+  String get categoryCalligraphy;
+
+  /// No description provided for @loadingCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading your collection…'**
+  String get loadingCollection;
+
+  /// No description provided for @couldNotLoadFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load favorites'**
+  String get couldNotLoadFavorites;
+
+  /// No description provided for @noFavoritesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get noFavoritesYet;
+
+  /// No description provided for @noFavoritesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save artworks you love to easily find them later.'**
+  String get noFavoritesSubtitle;
+
+  /// No description provided for @yourCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Your collection'**
+  String get yourCollection;
+
+  /// No description provided for @savedWorksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1 {1 saved work} other {{count} saved works}}'**
+  String savedWorksCount(num count);
+
+  /// No description provided for @cart.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get cart;
+
+  /// No description provided for @loadingCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading cart…'**
+  String get loadingCart;
+
+  /// No description provided for @couldNotLoadCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load cart'**
+  String get couldNotLoadCart;
+
+  /// No description provided for @yourCartIsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cart is empty'**
+  String get yourCartIsEmpty;
+
+  /// No description provided for @cartEmptySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add artworks you love and they will appear here.'**
+  String get cartEmptySubtitle;
+
+  /// No description provided for @exploreArtworks.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore artworks'**
+  String get exploreArtworks;
+
+  /// No description provided for @onlyOneItemAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Only 1 item is available in stock.'**
+  String get onlyOneItemAvailable;
+
+  /// No description provided for @itemsAvailableInStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {count} items are available in stock.'**
+  String itemsAvailableInStock(Object count);
+
+  /// No description provided for @subtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get subtotal;
+
+  /// No description provided for @shipping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping'**
+  String get shipping;
+
+  /// No description provided for @free.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get free;
+
+  /// No description provided for @total.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get total;
+
+  /// No description provided for @checkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get checkout;
+
+  /// No description provided for @clearCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cart'**
+  String get clearCart;
+
+  /// No description provided for @each.
+  ///
+  /// In en, this message translates to:
+  /// **'each'**
+  String get each;
+
+  /// No description provided for @paymentExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your previous payment session expired. Creating a new order...'**
+  String get paymentExpired;
+
+  /// No description provided for @couldNotReadOrderId.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read order ID'**
+  String get couldNotReadOrderId;
+
+  /// No description provided for @moyasarKeyMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Moyasar publishable key is missing'**
+  String get moyasarKeyMissing;
+
+  /// No description provided for @confirmingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirming your payment...'**
+  String get confirmingPayment;
+
+  /// No description provided for @paymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment failed'**
+  String get paymentFailed;
+
+  /// No description provided for @paymentNotConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment could not be confirmed. Please try again from checkout.'**
+  String get paymentNotConfirmed;
 }
 
 class _AppLocalizationsDelegate

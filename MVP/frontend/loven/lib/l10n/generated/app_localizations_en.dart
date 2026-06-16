@@ -626,4 +626,117 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentLanguage => 'English';
+
+  @override
+  String get categoryAll => 'All';
+
+  @override
+  String get categoryPainting => 'Painting';
+
+  @override
+  String get categorySculpture => 'Sculpture';
+
+  @override
+  String get categoryPhotography => 'Photography';
+
+  @override
+  String get categoryDigitalArt => 'Digital Art';
+
+  @override
+  String get categoryCalligraphy => 'Calligraphy';
+
+  @override
+  String get loadingCollection => 'Loading your collection…';
+
+  @override
+  String get couldNotLoadFavorites => 'Could not load favorites';
+
+  @override
+  String get noFavoritesYet => 'No favorites yet';
+
+  @override
+  String get noFavoritesSubtitle =>
+      'Save artworks you love to easily find them later.';
+
+  @override
+  String get yourCollection => 'Your collection';
+
+  @override
+  String savedWorksCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved works',
+      one: '1 saved work',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cart => 'Cart';
+
+  @override
+  String get loadingCart => 'Loading cart…';
+
+  @override
+  String get couldNotLoadCart => 'Could not load cart';
+
+  @override
+  String get yourCartIsEmpty => 'Your cart is empty';
+
+  @override
+  String get cartEmptySubtitle =>
+      'Add artworks you love and they will appear here.';
+
+  @override
+  String get exploreArtworks => 'Explore artworks';
+
+  @override
+  String get onlyOneItemAvailable => 'Only 1 item is available in stock.';
+
+  @override
+  String itemsAvailableInStock(Object count) {
+    return 'Only $count items are available in stock.';
+  }
+
+  @override
+  String get subtotal => 'Subtotal';
+
+  @override
+  String get shipping => 'Shipping';
+
+  @override
+  String get free => 'Free';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String get checkout => 'Checkout';
+
+  @override
+  String get clearCart => 'Clear cart';
+
+  @override
+  String get each => 'each';
+
+  @override
+  String get paymentExpired =>
+      'Your previous payment session expired. Creating a new order...';
+
+  @override
+  String get couldNotReadOrderId => 'Could not read order ID';
+
+  @override
+  String get moyasarKeyMissing => 'Moyasar publishable key is missing';
+
+  @override
+  String get confirmingPayment => 'Confirming your payment...';
+
+  @override
+  String get paymentFailed => 'Payment failed';
+
+  @override
+  String get paymentNotConfirmed =>
+      'Payment could not be confirmed. Please try again from checkout.';
 }

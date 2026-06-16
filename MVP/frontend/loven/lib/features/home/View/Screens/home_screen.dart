@@ -105,73 +105,70 @@ class _HomeDiscoverBody extends StatelessWidget {
     final allArtworks = state.allArtworks;
     final l10n = AppLocalizations.of(context)!;
 
-return SafeArea(
-  bottom: false,
-  child: CustomScrollView(
-    physics: const BouncingScrollPhysics(
-      parent: AlwaysScrollableScrollPhysics(),
-    ),
-    slivers: [
-      CupertinoSliverRefreshControl(
-        onRefresh: () async {
-          context.read<HomeBloc>().add(FetchHomeData(silent: true));
-          await Future.delayed(const Duration(seconds: 1));
-        },
-      ),
-
-      SliverToBoxAdapter(
-        child: _DiscoverPageHeader(
-          onSearchTap: () => _openSearchSheet(context),
+    return SafeArea(
+      bottom: false,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
         ),
-      ),
-
-      if (_isFiltered)
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenPadding,
+        slivers: [
+          CupertinoSliverRefreshControl(
+            onRefresh: () async {
+              context.read<HomeBloc>().add(FetchHomeData(silent: true));
+              await Future.delayed(const Duration(seconds: 1));
+            },
+          ),
+          SliverToBoxAdapter(
+            child: _DiscoverPageHeader(
+              onSearchTap: () => _openSearchSheet(context),
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: GalleryChip(
-                label: state.selectedCategory == 'All'
-                    ? l10n.clearFilters
-                    : '${state.selectedCategory} · Clear',
-                selected: true,
-                onTap: onClearAllFilters,
+          ),
+          if (_isFiltered)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screenPadding,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: GalleryChip(
+                    label: state.selectedCategory == 'All'
+                        ? l10n.clearFilters
+                        : '${getLocalizedCategory(context, state.selectedCategory)} · ${l10n.clearFilters}',
+                    selected: true,
+                    onTap: onClearAllFilters,
+                  ),
+                ),
               ),
             ),
+          if (artworks.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: GalleryEmptyState(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                icon: Icons.search_off_rounded,
+                title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
+                subtitle:
+                    _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
+                actionLabel: _isFiltered ? l10n.reset : null,
+                onAction: _isFiltered ? onClearAllFilters : null,
+              ),
+            )
+          else if (_isFiltered)
+            ..._buildFilteredSlivers(context, artworks, l10n)
+          else
+            ..._buildDiscoverSlivers(
+              context,
+              artworks,
+              allArtworks,
+              l10n,
+            ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppSpacing.bottomNavClearance + 40.0),
           ),
-        ),
-
-      if (artworks.isEmpty)
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: GalleryEmptyState(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            icon: Icons.search_off_rounded,
-            title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
-            subtitle: _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
-            actionLabel: _isFiltered ? l10n.reset : null,
-            onAction: _isFiltered ? onClearAllFilters : null,
-          ),
-        )
-      else if (_isFiltered)
-        ..._buildFilteredSlivers(context, artworks, l10n)
-      else
-        ..._buildDiscoverSlivers(
-          context,
-          artworks,
-          allArtworks,
-          l10n,
-        ),
-
-      const SliverToBoxAdapter(
-        child: SizedBox(height: AppSpacing.bottomNavClearance),
+        ],
       ),
-    ],
-  ),
-);
+    );
   }
 
   List<Widget> _buildFilteredSlivers(BuildContext context,
@@ -180,6 +177,7 @@ return SafeArea(
       SliverToBoxAdapter(
         child: HomeDiscoverSectionHeader(
           label: l10n.results,
+          actionLabel: l10n.seeAll,
           onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
         ),
       ),
@@ -235,6 +233,7 @@ return SafeArea(
       SliverToBoxAdapter(
         child: HomeDiscoverSectionHeader(
           label: l10n.masterpieces,
+          actionLabel: l10n.seeAll,
           onSeeAll: () => context.push(AppRoutes.artworksListPath('featured')),
         ),
       ),
@@ -245,6 +244,7 @@ return SafeArea(
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
             label: l10n.artists,
+            actionLabel: l10n.seeAll,
             onSeeAll: () => context.push(AppRoutes.artists),
           ),
         ),
@@ -254,6 +254,7 @@ return SafeArea(
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
             label: l10n.genre,
+            actionLabel: l10n.seeAll,
             showDivider: true,
             onSeeAll: () => _openBrowseArtworks(context),
           ),
@@ -272,6 +273,7 @@ return SafeArea(
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
             label: l10n.collection,
+            actionLabel: l10n.seeAll,
             onSeeAll: () =>
                 context.push(AppRoutes.artworksListPath('featured')),
           ),
@@ -287,6 +289,7 @@ return SafeArea(
         SliverToBoxAdapter(
           child: HomeDiscoverSectionHeader(
             label: l10n.trendingWorks,
+            actionLabel: l10n.seeAll,
             onSeeAll: () =>
                 context.push(AppRoutes.artworksListPath('trending')),
           ),
@@ -550,7 +553,7 @@ class _GenreRail extends StatelessWidget {
           final sample = _sampleForGenre(genre, index);
 
           return LovenArtworkCard(
-            title: genre,
+            title: getLocalizedCategory(context, genre),
             imageUrl: sample?.artworkImageUrl,
             variant: LovenArtworkCardVariant.overlay,
             badge: l10n.genres,
@@ -559,5 +562,26 @@ class _GenreRail extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+String getLocalizedCategory(BuildContext context, String rawCategory) {
+  final l10n = AppLocalizations.of(context)!;
+
+  switch (rawCategory.toLowerCase()) {
+    case 'all':
+      return l10n.categoryAll;
+    case 'painting':
+      return l10n.categoryPainting;
+    case 'sculpture':
+      return l10n.categorySculpture;
+    case 'photography':
+      return l10n.categoryPhotography;
+    case 'digital art':
+      return l10n.categoryDigitalArt;
+    case 'calligraphy':
+      return l10n.categoryCalligraphy;
+    default:
+      return rawCategory;
   }
 }
