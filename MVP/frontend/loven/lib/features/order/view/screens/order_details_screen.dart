@@ -5,6 +5,7 @@ import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/order/data/repositories/order_repository.dart';
 import 'package:loven/features/order/view/widgets/order_item_display.dart';
+import 'package:flutter/cupertino.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({
@@ -119,16 +120,23 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         order['tracking_number']?.toString() ?? 'Not available yet';
     final items = OrderItemDisplay.listFromOrder(order);
 
-    return RefreshIndicator(
+return CustomScrollView(
+  physics: const BouncingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
+  ),
+  slivers: [
+    CupertinoSliverRefreshControl(
       onRefresh: _loadOrder,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenPadding,
-          AppSpacing.md,
-          AppSpacing.screenPadding,
-          AppSpacing.xxl,
-        ),
-        children: [
+    ),
+    SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenPadding,
+        AppSpacing.md,
+        AppSpacing.screenPadding,
+        AppSpacing.xxl,
+      ),
+      sliver: SliverList(
+        delegate: SliverChildListDelegate([
           LovenSurfaceCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,9 +210,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ],
             ),
           ),
-        ],
+        ]),
       ),
-    );
+    ),
+  ],
+);
   }
 }
 

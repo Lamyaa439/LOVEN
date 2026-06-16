@@ -18,6 +18,7 @@ import 'package:loven/features/home/controller/bloc/home_state.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_cubit.dart';
 import 'package:loven/features/notifications/controller/cubit/notifications_state.dart';
 import 'package:loven/l10n/generated/app_localizations.dart';
+import 'package:flutter/cupertino.dart';
 
 /// LOVEN Discover home — editorial layout aligned with reference composition.
 class HomeScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (state is HomeError) {
           return GalleryEmptyState(
-              backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             icon: Icons.wifi_off_rounded,
             title: l10n.couldNotLoadArtworks,
             subtitle: state.message,
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         return GalleryEmptyState(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           icon: Icons.palette_outlined,
           title: l10n.galleryAwaitsTitle,
           subtitle: l10n.galleryAwaitsSubtitle,
@@ -104,59 +105,73 @@ class _HomeDiscoverBody extends StatelessWidget {
     final allArtworks = state.allArtworks;
     final l10n = AppLocalizations.of(context)!;
 
-    return SafeArea(
-      bottom: false,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        slivers: [
-          SliverToBoxAdapter(
-            child: _DiscoverPageHeader(
-              onSearchTap: () => _openSearchSheet(context),
-            ),
-          ),
-          if (_isFiltered)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenPadding,
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: GalleryChip(
-                    label: state.selectedCategory == 'All'
-                        ? l10n.clearFilters
-                        : '${state.selectedCategory} · Clear',
-                    selected: true,
-                    onTap: onClearAllFilters,
-                  ),
-                ),
-              ),
-            ),
-          if (artworks.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: GalleryEmptyState(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                icon: Icons.search_off_rounded,
-                title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
-                subtitle:
-                    _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
-                actionLabel: _isFiltered ? l10n.reset : null,
-                onAction: _isFiltered ? onClearAllFilters : null,
-              ),
-            )
-          else if (_isFiltered)
-            ..._buildFilteredSlivers(context, artworks, l10n)
-          else
-            ..._buildDiscoverSlivers(context, artworks, allArtworks, l10n),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppSpacing.bottomNavClearance),
-          ),
-        ],
+return SafeArea(
+  bottom: false,
+  child: CustomScrollView(
+    physics: const BouncingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    ),
+    slivers: [
+      CupertinoSliverRefreshControl(
+        onRefresh: () async {
+          context.read<HomeBloc>().add(FetchHomeData(silent: true));
+          await Future.delayed(const Duration(seconds: 1));
+        },
       ),
-    );
+
+      SliverToBoxAdapter(
+        child: _DiscoverPageHeader(
+          onSearchTap: () => _openSearchSheet(context),
+        ),
+      ),
+
+      if (_isFiltered)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.screenPadding,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: GalleryChip(
+                label: state.selectedCategory == 'All'
+                    ? l10n.clearFilters
+                    : '${state.selectedCategory} · Clear',
+                selected: true,
+                onTap: onClearAllFilters,
+              ),
+            ),
+          ),
+        ),
+
+      if (artworks.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: GalleryEmptyState(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            icon: Icons.search_off_rounded,
+            title: _isFiltered ? l10n.noMatchingWorks : l10n.galleryIsQuiet,
+            subtitle: _isFiltered ? l10n.noResultsSubtitle : l10n.emptySubtitle,
+            actionLabel: _isFiltered ? l10n.reset : null,
+            onAction: _isFiltered ? onClearAllFilters : null,
+          ),
+        )
+      else if (_isFiltered)
+        ..._buildFilteredSlivers(context, artworks, l10n)
+      else
+        ..._buildDiscoverSlivers(
+          context,
+          artworks,
+          allArtworks,
+          l10n,
+        ),
+
+      const SliverToBoxAdapter(
+        child: SizedBox(height: AppSpacing.bottomNavClearance),
+      ),
+    ],
+  ),
+);
   }
 
   List<Widget> _buildFilteredSlivers(BuildContext context,
@@ -497,25 +512,25 @@ class _GenreRail extends StatelessWidget {
   final ValueChanged<String> onGenreTap;
 
   ArtworkModel? _sampleForGenre(String genre, int index) {
-  if (allArtworks.isEmpty) return null;
+    if (allArtworks.isEmpty) return null;
 
-  for (final art in allArtworks) {
-    final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
-    final normalized = genre.toLowerCase();
+    for (final art in allArtworks) {
+      final haystack = '${art.title} ${art.description ?? ''}'.toLowerCase();
+      final normalized = genre.toLowerCase();
 
-    if (haystack.contains(normalized)) {
-      return art;
-    }
-
-    for (final word in normalized.split(RegExp(r'\s+'))) {
-      if (word.length >= 4 && haystack.contains(word)) {
+      if (haystack.contains(normalized)) {
         return art;
       }
-    }
-  }
 
-  return allArtworks[index % allArtworks.length];
-}
+      for (final word in normalized.split(RegExp(r'\s+'))) {
+        if (word.length >= 4 && haystack.contains(word)) {
+          return art;
+        }
+      }
+    }
+
+    return allArtworks[index % allArtworks.length];
+  }
 
   @override
   Widget build(BuildContext context) {

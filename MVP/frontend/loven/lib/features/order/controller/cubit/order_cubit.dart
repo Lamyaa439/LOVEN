@@ -109,21 +109,27 @@ return order;
     }
   }
 
-  Future<void> getMyOrders() async {
-    if (!_guardSession()) {
-      return;
-    }
+Future<void> getMyOrders() async {
+  if (!_guardSession()) {
+    return;
+  }
 
+  final hadOrdersLoaded = state is OrdersLoaded;
+
+  if (!hadOrdersLoaded) {
     _emit(OrderLoading());
+  }
 
-    try {
-      final data = await _repository.getMyOrders();
+  try {
+    final data = await _repository.getMyOrders();
 
-      _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
-    } catch (e) {
+    _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
+  } catch (e) {
+    if (!hadOrdersLoaded) {
       _emit(OrderError(e.toString()));
     }
   }
+}
 
   Future<void> getBuyerOrders({
     required String buyerId,
@@ -145,25 +151,31 @@ return order;
     }
   }
 
-  Future<void> getArtistOrders({
-    required String artistProfileId,
-  }) async {
-    if (!_guardSession()) {
-      return;
-    }
+Future<void> getArtistOrders({
+  required String artistProfileId,
+}) async {
+  if (!_guardSession()) {
+    return;
+  }
 
+  final hadOrdersLoaded = state is OrdersLoaded;
+
+  if (!hadOrdersLoaded) {
     _emit(OrderLoading());
+  }
 
-    try {
-      final data = await _repository.getArtistOrders(
-        artistProfileId: artistProfileId,
-      );
+  try {
+    final data = await _repository.getArtistOrders(
+      artistProfileId: artistProfileId,
+    );
 
-      _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
-    } catch (e) {
+    _emit(OrdersLoaded(data['orders'] ?? data['data'] ?? []));
+  } catch (e) {
+    if (!hadOrdersLoaded) {
       _emit(OrderError(e.toString()));
     }
   }
+}
 
 Future<void> updateOrderStatus({
   required String orderId,

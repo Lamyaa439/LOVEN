@@ -37,33 +37,43 @@ class _AccountScreenState extends State<AccountScreen> {
     });
   }
 
-  Future<void> _confirmLogout() async {
-    final l10n = AppLocalizations.of(context)!;
+Future<void> _confirmLogout() async {
+  final l10n = AppLocalizations.of(context)!;
 
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.logout),
-          content: Text(l10n.logoutConfirmation),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.logout),
-            ),
-          ],
-        );
-      },
-    );
+  final shouldLogout = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirmation),
+        actionsPadding: const EdgeInsets.all(AppSpacing.lg),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(l10n.cancel),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: Text(l10n.logout),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
 
-    if (shouldLogout == true && mounted) {
-      await context.read<AuthCubit>().logout();
-    }
+  if (shouldLogout == true && mounted) {
+    await context.read<AuthCubit>().logout();
   }
+}
 
   void _openFavoritesTab() {
     context.go(AppRoutes.home);
@@ -129,7 +139,7 @@ class _SignedInAccountHub extends StatelessWidget {
           AppSpacing.screenPadding,
           AppSpacing.lg,
           AppSpacing.screenPadding,
-          AppSpacing.bottomNavClearance,
+          AppSpacing.bottomNavClearance + 20.0,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,6 +262,19 @@ class _SignedInAccountHub extends StatelessWidget {
                 subtitle: l10n.signOut,
                 isDanger: true,
                 onTap: onLogout),
+            const SizedBox(height: AppSpacing.xxl),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Text(
+                  "© 2026 DevNext. All rights reserved.",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textMuted,
+                        fontSize: 11,
+                      ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -438,7 +461,7 @@ class _GuestAccountView extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return GalleryEmptyState(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       icon: Icons.person_outline,
       title: l10n.signIn,
       subtitle: l10n.signInSubtitle,

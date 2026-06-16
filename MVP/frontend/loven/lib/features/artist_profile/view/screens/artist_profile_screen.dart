@@ -9,7 +9,7 @@ import 'package:loven/features/artwork/view/widgets/artwork_grid_widget.dart';
 import 'package:loven/features/auth/controller/cubit/auth_cubit.dart';
 import 'package:loven/features/auth/controller/cubit/auth_state.dart';
 import 'package:loven/l10n/generated/app_localizations.dart';
-
+import 'package:flutter/cupertino.dart';
 import '../../controller/artist_profile_cubit.dart';
 import '../../controller/artist_profile_state.dart';
 import '../widgets/artist_about_card.dart';
@@ -165,12 +165,14 @@ class _SuccessContent extends StatelessWidget {
     final showArtistFeatures = isPublicView || sessionRole == 'artist';
     final artworkCount = state.artworks.length;
 
-    return RefreshIndicator(
-      color: AppColors.brandPrimary,
+return CustomScrollView(
+  physics: const BouncingScrollPhysics(
+    parent: AlwaysScrollableScrollPhysics(),
+  ),
+  slivers: [
+    CupertinoSliverRefreshControl(
       onRefresh: onRefresh,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
+    ),
           SliverToBoxAdapter(
             child: ArtistProfileHeroWidget(
               artist: artist,
@@ -256,7 +258,6 @@ class _SuccessContent extends StatelessWidget {
             child: SizedBox(height: AppSpacing.bottomNavClearance),
           ),
         ],
-      ),
     );
   }
 }
