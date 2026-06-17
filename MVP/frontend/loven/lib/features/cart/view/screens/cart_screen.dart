@@ -5,6 +5,9 @@ import 'package:loven/core/res/design_system.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/cart/data/models/cart_item_model.dart';
+import 'package:loven/features/home/controller/bloc/home_bloc.dart';
+import 'package:loven/features/home/controller/bloc/home_event.dart';
+import 'package:loven/features/navigation/controller/cubit/navigation_bar_cubit.dart';
 import 'package:loven/l10n/generated/app_localizations.dart';
 
 import '../../controller/cubit/cart_cubit.dart';
@@ -19,6 +22,12 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  void _goToHomeFromEmptyCart() {
+    context.read<NavigationBarCubit>().navigateTo(0);
+    context.read<HomeBloc>().add(FetchHomeData(silent: true));
+    context.go(AppRoutes.home);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -117,7 +126,7 @@ class _CartScreenState extends State<CartScreen> {
                 title: l10n.yourCartIsEmpty,
                 subtitle: l10n.cartEmptySubtitle,
                 actionLabel: l10n.exploreArtworks,
-                onAction: () => context.go('/'),
+                onAction: _goToHomeFromEmptyCart,
               );
             }
 
