@@ -6,6 +6,7 @@ import 'package:loven/core/router/router_helpers.dart';
 import 'package:loven/core/widgets/loven_widgets.dart';
 import 'package:loven/features/feedback/controller/cubit/feedback_cubit.dart';
 import 'package:loven/features/feedback/controller/cubit/feedback_state.dart';
+import 'package:loven/l10n/generated/app_localizations.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -39,6 +40,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return BlocConsumer<FeedbackCubit, FeedbackState>(
@@ -63,7 +65,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           appBar: AppBar(
             leading: lovenPushedScreenBackLeading(context),
             centerTitle: true,
-            title: const Text('Feedback'),
+            title: Text(l10n.feedback),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -78,19 +80,19 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Help us improve LOVEN',
+                    l10n.helpUsImprove,
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Share your thoughts, suggestions, or issues with us.',
+                    l10n.shareThoughts,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   Text(
-                    'Subject',
+                    l10n.subject,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -98,12 +100,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   LovenTextField(
                     controller: subjectController,
-                    hintText: 'Optional subject',
+                    hintText: l10n.optionalSubject,
                     readOnly: isLoading,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Message',
+                    l10n.message,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: AppColors.textMuted,
                     ),
@@ -111,22 +113,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   LovenTextField(
                     controller: messageController,
-                    hintText: 'Write your feedback here',
+                    hintText: l10n.writeFeedback,
                     maxLines: 6,
                     readOnly: isLoading,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Feedback message is required';
+                        return l10n.feedbackRequired;
                       }
                       if (value.trim().length < 5) {
-                        return 'Please write a little more detail';
+                        return l10n.feedbackTooShort;
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: AppSpacing.sectionGap),
                   LovenPrimaryButton(
-                    label: 'Submit feedback',
+                    label: l10n.submitFeedback,
                     onPressed: isLoading ? null : _submit,
                     isLoading: isLoading,
                   ),

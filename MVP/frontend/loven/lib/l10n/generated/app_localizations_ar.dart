@@ -638,7 +638,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sendFeedback => 'إرسال ملاحظات';
 
   @override
-  String get shareThoughts => 'شاركنا أفكارك';
+  String get shareThoughts => 'شاركنا أفكارك، اقتراحاتك، أو أي مشاكل واجهتها.';
 
   @override
   String get signOut => 'تسجيل الخروج من حسابك';
@@ -761,4 +761,31 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paymentNotConfirmed =>
       'تعذر تأكيد الدفع. يرجى المحاولة مرة أخرى من صفحة إتمام الشراء.';
+
+  @override
+  String get feedback => 'الآراء والمقترحات';
+
+  @override
+  String get helpUsImprove => 'ساعدنا في تحسين LOVEN';
+
+  @override
+  String get subject => 'الموضوع';
+
+  @override
+  String get optionalSubject => 'موضوع اختياري';
+
+  @override
+  String get message => 'الرسالة';
+
+  @override
+  String get writeFeedback => 'اكتب رأيك أو ملاحظاتك هنا';
+
+  @override
+  String get feedbackRequired => 'رسالة الملاحظات مطلوبة';
+
+  @override
+  String get feedbackTooShort => 'يرجى كتابة المزيد من التفاصيل';
+
+  @override
+  String get submitFeedback => 'إرسال الملاحظات';
 }

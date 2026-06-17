@@ -242,5 +242,15 @@
   "moyasarKeyMissing": "مفتاح Moyasar مفقود",
   "confirmingPayment": "جاري تأكيد عملية الدفع...",
   "paymentFailed": "فشلت عملية الدفع",
-  "paymentNotConfirmed": "تعذر تأكيد الدفع. يرجى المحاولة مرة أخرى من صفحة إتمام الشراء."
+  "paymentNotConfirmed": "تعذر تأكيد الدفع. يرجى المحاولة مرة أخرى من صفحة إتمام الشراء.",
+  "feedback": "الآراء والمقترحات",
+  "helpUsImprove": "ساعدنا في تحسين LOVEN",
+  "shareThoughts": "شاركنا أفكارك، اقتراحاتك، أو أي مشاكل واجهتها.",
+  "subject": "الموضوع",
+  "optionalSubject": "موضوع اختياري",
+  "message": "الرسالة",
+  "writeFeedback": "اكتب رأيك أو ملاحظاتك هنا",
+  "feedbackRequired": "رسالة الملاحظات مطلوبة",
+  "feedbackTooShort": "يرجى كتابة المزيد من التفاصيل",
+  "submitFeedback": "إرسال الملاحظات"
 }

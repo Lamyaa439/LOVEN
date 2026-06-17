@@ -242,5 +242,15 @@
   "moyasarKeyMissing": "Moyasar publishable key is missing",
   "confirmingPayment": "Confirming your payment...",
   "paymentFailed": "Payment failed",
-  "paymentNotConfirmed": "Payment could not be confirmed. Please try again from checkout."
+  "paymentNotConfirmed": "Payment could not be confirmed. Please try again from checkout.",
+  "feedback": "Feedback",
+  "helpUsImprove": "Help us improve LOVEN",
+  "shareThoughts": "Share your thoughts, suggestions, or issues with us.",
+  "subject": "Subject",
+  "optionalSubject": "Optional subject",
+  "message": "Message",
+  "writeFeedback": "Write your feedback here",
+  "feedbackRequired": "Feedback message is required",
+  "feedbackTooShort": "Please write a little more detail",
+  "submitFeedback": "Submit feedback"
 }
