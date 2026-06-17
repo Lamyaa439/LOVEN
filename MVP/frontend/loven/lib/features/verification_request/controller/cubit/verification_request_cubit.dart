@@ -23,7 +23,7 @@ Future<void> submitRequest({
       documentNumber: documentNumber,
     );
 
-    await fetchMyRequest();
+    emit(VerificationRequestSuccess('Verification request submitted'));
   } catch (e) {
     emit(VerificationRequestError(e.toString()));
   }
@@ -43,23 +43,6 @@ Future<void> submitRequest({
       emit(VerificationRequestError(e.toString()));
     }
   }
-
-  Future<void> fetchMyRequest() async {
-  emit(VerificationRequestLoading());
-
-  try {
-    final raw = await _repository.fetchAllRequests();
-
-    final requests =
-        (raw as List).map((e) => Map<String, dynamic>.from(e)).toList();
-
-    final myRequest = requests.isNotEmpty ? requests.first : null;
-
-    emit(VerificationMyRequestLoaded(myRequest));
-  } catch (e) {
-    emit(VerificationRequestError(e.toString()));
-  }
-}
 
   Future<void> approveRequest(String requestId) async {
     try {

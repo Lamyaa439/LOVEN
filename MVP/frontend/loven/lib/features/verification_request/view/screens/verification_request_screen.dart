@@ -22,6 +22,8 @@ class _VerificationRequestScreenState extends State<VerificationRequestScreen> {
 
   String _selectedDocumentType = 'National ID';
 
+  bool _hasSubmittedRequest = false;
+
   final _institutionNameController = TextEditingController();
   final _documentNumberController = TextEditingController();
 
@@ -33,16 +35,6 @@ class _VerificationRequestScreenState extends State<VerificationRequestScreen> {
     'Portfolio Proof',
     'Other',
   ];
-
-  @override
-void initState() {
-  super.initState();
-
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
-    context.read<VerificationRequestCubit>().fetchMyRequest();
-  });
-}
 
   @override
   void dispose() {
@@ -70,10 +62,12 @@ void initState() {
     return BlocListener<VerificationRequestCubit, VerificationRequestState>(
       listener: (context, state) {
         if (state is VerificationRequestSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
+  setState(() => _hasSubmittedRequest = true);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(state.message)),
+  );
+}
 
         if (state is VerificationRequestError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -92,10 +86,7 @@ void initState() {
           builder: (context, state) {
             final isLoading = state is VerificationRequestLoading;
 
-            if (state is VerificationMyRequestLoaded && state.request != null) {
-  final request = state.request!;
-  final status = request['status']?.toString() ?? 'pending';
-
+            if (_hasSubmittedRequest) {
   return Center(
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -104,29 +95,29 @@ void initState() {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.verified_outlined,
+              Icons.hourglass_top_rounded,
               size: AppSizes.iconLg,
-              color: AppColors.brandPrimary,
+              color: AppColors.warning,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
               'Verification request submitted',
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Status: ${status.toUpperCase()}',
+              'Status: Pending',
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'You can only have one verification request. Admins will review it soon.',
+              'Admins will review your request soon. You can only send one verification request.',
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textMuted,
                   ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
