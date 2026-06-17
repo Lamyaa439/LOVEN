@@ -968,6 +968,48 @@ abstract class AppLocalizations {
   /// **'Title is required'**
   String get titleIsRequired;
 
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select category'**
+  String get selectCategory;
+
+  /// No description provided for @categoryIsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Category is required'**
+  String get categoryIsRequired;
+
+  /// No description provided for @oilPainting.
+  ///
+  /// In en, this message translates to:
+  /// **'Oil Painting'**
+  String get oilPainting;
+
+  /// No description provided for @calligraphy.
+  ///
+  /// In en, this message translates to:
+  /// **'Calligraphy'**
+  String get calligraphy;
+
+  /// No description provided for @photography.
+  ///
+  /// In en, this message translates to:
+  /// **'Photography'**
+  String get photography;
+
+  /// No description provided for @digitalArt.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital Art'**
+  String get digitalArt;
+
   /// No description provided for @description.
   ///
   /// In en, this message translates to:

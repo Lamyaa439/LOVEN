@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:loven/core/router/app_router_deps.dart';
 import 'package:loven/core/router/app_routes.dart';
 import 'package:loven/features/admin/view/screens/admin_dashboard_screen.dart';
+import 'package:loven/features/admin/view/screens/admin_feedback_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_reports_screen.dart';
 import 'package:loven/features/admin/view/screens/admin_verification_requests_screen.dart';
 import 'package:loven/features/verification_request/controller/cubit/verification_request_cubit.dart';
@@ -45,6 +46,12 @@ List<RouteBase> buildAdminRoutes(AppRouterDeps deps) {
       )..loadReports(),
       child: const AdminReportsScreen(),
     );
+  },
+),
+GoRoute(
+  path: AppRoutes.adminFeedback,
+  builder: (context, state) {
+    return const AdminFeedbackScreen();
   },
 ),
 GoRoute(

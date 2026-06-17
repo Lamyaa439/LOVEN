@@ -472,6 +472,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleIsRequired => 'Title is required';
 
   @override
+  String get category => 'Category';
+
+  @override
+  String get selectCategory => 'Select category';
+
+  @override
+  String get categoryIsRequired => 'Category is required';
+
+  @override
+  String get oilPainting => 'Oil Painting';
+
+  @override
+  String get calligraphy => 'Calligraphy';
+
+  @override
+  String get photography => 'Photography';
+
+  @override
+  String get digitalArt => 'Digital Art';
+
+  @override
   String get description => 'Description';
 
   @override

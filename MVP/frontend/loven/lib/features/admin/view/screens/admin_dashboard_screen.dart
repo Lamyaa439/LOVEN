@@ -132,6 +132,15 @@ class AdminDashboardScreen extends StatelessWidget {
                     context.push(AppRoutes.adminReports);
                   },
                 ),
+                const SizedBox(height: 12),
+AdminActionTile(
+  icon: Icons.feedback_outlined,
+  title: 'Feedback',
+  subtitle: 'Review user feedback and suggestions',
+  onTap: () {
+    context.push(AppRoutes.adminFeedback);
+  },
+),
                 AdminActionTile(
   icon: Icons.people_outline,
   title: 'Users',

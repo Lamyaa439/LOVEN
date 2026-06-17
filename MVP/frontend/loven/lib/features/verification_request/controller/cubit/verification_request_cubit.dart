@@ -9,25 +9,25 @@ class VerificationRequestCubit extends Cubit<VerificationRequestState> {
   VerificationRequestCubit(this._repository)
       : super(VerificationRequestInitial());
 
-  Future<void> submitRequest({
-    required String documentType,
-    required String institutionName,
-    required String documentNumber,
-  }) async {
-    emit(VerificationRequestLoading());
+Future<void> submitRequest({
+  required String documentType,
+  required String institutionName,
+  required String documentNumber,
+}) async {
+  emit(VerificationRequestLoading());
 
-    try {
-      await _repository.submitRequest(
-        documentType: documentType,
-        institutionName: institutionName,
-        documentNumber: documentNumber,
-      );
+  try {
+    await _repository.submitRequest(
+      documentType: documentType,
+      institutionName: institutionName,
+      documentNumber: documentNumber,
+    );
 
-      emit(VerificationRequestSuccess('Verification request submitted'));
-    } catch (e) {
-      emit(VerificationRequestError(e.toString()));
-    }
+    emit(VerificationRequestSuccess('Verification request submitted'));
+  } catch (e) {
+    emit(VerificationRequestError(e.toString()));
   }
+}
 
   Future<void> fetchAllRequests() async {
     emit(VerificationRequestLoading());
