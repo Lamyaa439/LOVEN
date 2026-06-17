@@ -1253,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareThoughts.
   ///
   /// In en, this message translates to:
-  /// **'Share your thoughts'**
+  /// **'Share your thoughts, suggestions, or issues with us.'**
   String get shareThoughts;
 
   /// No description provided for @signOut.
@@ -1471,6 +1471,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment could not be confirmed. Please try again from checkout.'**
   String get paymentNotConfirmed;
+
+  /// No description provided for @feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get feedback;
+
+  /// No description provided for @helpUsImprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Help us improve LOVEN'**
+  String get helpUsImprove;
+
+  /// No description provided for @subject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get subject;
+
+  /// No description provided for @optionalSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional subject'**
+  String get optionalSubject;
+
+  /// No description provided for @message.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get message;
+
+  /// No description provided for @writeFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your feedback here'**
+  String get writeFeedback;
+
+  /// No description provided for @feedbackRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback message is required'**
+  String get feedbackRequired;
+
+  /// No description provided for @feedbackTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Please write a little more detail'**
+  String get feedbackTooShort;
+
+  /// No description provided for @submitFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit feedback'**
+  String get submitFeedback;
 }
 
 class _AppLocalizationsDelegate
