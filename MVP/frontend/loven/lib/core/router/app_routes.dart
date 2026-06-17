@@ -65,6 +65,8 @@ abstract final class AppRoutes {
       '/admin/verification-requests';
 
   static const String adminReports = '/admin/reports';
+
+  static const String adminFeedback = '/admin/feedback';
   
   static const String adminUsers = '/admin/users';
 
