@@ -17,8 +17,6 @@ class AdminFeedbackCubit extends Cubit<AdminFeedbackState> {
       emit(
         AdminFeedbackLoaded(
           feedback
-              .map((item) => Map<String, dynamic>.from(item as Map))
-              .toList(),
         ),
       );
     } catch (e) {
