@@ -11,6 +11,7 @@ import 'package:loven/features/report/controller/cubit/report_cubit.dart';
 import 'package:loven/features/admin/controller/cubit/admin_dashboard_cubit.dart';
 import 'package:loven/features/admin/controller/cubit/admin_users_cubit.dart';
 import 'package:loven/features/admin/view/screens/admin_users_screen.dart';
+import 'package:loven/features/admin/controller/cubit/admin_feedback_cubit.dart';
 
 /// System administrator dashboards.
 List<RouteBase> buildAdminRoutes(AppRouterDeps deps) {
@@ -51,7 +52,12 @@ List<RouteBase> buildAdminRoutes(AppRouterDeps deps) {
 GoRoute(
   path: AppRoutes.adminFeedback,
   builder: (context, state) {
-    return const AdminFeedbackScreen();
+    return BlocProvider(
+      create: (_) => AdminFeedbackCubit(
+        deps.adminDashboardRepository,
+      )..loadFeedback(),
+      child: const AdminFeedbackScreen(),
+    );
   },
 ),
 GoRoute(

@@ -14,12 +14,17 @@ class AdminDashboardRepository {
 
     return Map<String, dynamic>.from(response.data as Map);
   }
-
-  Future<List<dynamic>> getAllFeedback() async {
+  
+  Future<List<Map<String, dynamic>>> getAllFeedback() async {
   final response = await _apiClient.get(
     ApiEndpoints.feedback,
   );
 
-  return response.data['feedback'] ?? [];
+  final data = response.data as Map<String, dynamic>;
+  final feedback = data['feedback'] as List? ?? [];
+
+  return feedback
+      .map((item) => Map<String, dynamic>.from(item as Map))
+      .toList();
 }
 }
