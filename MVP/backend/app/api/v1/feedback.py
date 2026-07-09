@@ -3,7 +3,6 @@ from flask_jwt_extended import jwt_required
 
 from app.core.auth_utils import get_authenticated_user_id
 from app.persistence.repositories.feedback_repo import feedback_repo
-from app.core.auth_utils import require_admin
 
 from app.services.facade.feedback_facade import (
     FeedbackFacade,
@@ -33,8 +32,6 @@ def create_feedback():
 @feedback_bp.get("/")
 @jwt_required()
 def list_feedback():
-    require_admin()
-
     feedback_items = feedback_repo.list_feedback()
 
     return jsonify({
